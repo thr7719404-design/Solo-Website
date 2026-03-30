@@ -11,7 +11,7 @@ interface Props {
 export default function ProductCarouselSection({ section, products, onAddToCart }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const d = section.data;
+  const d = section.data ?? {};
   const showArrows = d.showArrows !== false;
   const title = section.title ?? (d.title as string | undefined);
 
