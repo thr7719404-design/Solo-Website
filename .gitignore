@@ -165,6 +165,7 @@ app.*.map.json
 # Package Managers
 # ============================================================================
 package-lock.json
+!frontend-react/package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
