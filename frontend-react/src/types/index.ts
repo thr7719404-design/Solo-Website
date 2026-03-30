@@ -276,3 +276,8 @@ export interface PaymentMethodDto {
   expiryYear?: number;
   isDefault?: boolean;
 }
+
+// Re-export from sub-modules
+export * from './admin';
+export * from './stripe';
+export * from './media';
