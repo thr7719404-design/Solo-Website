@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Solo Ecommerce - Premium Products">
+  
+  <!-- Cache control for development -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Solo">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Solo</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Stripe.js for secure client-side payment processing (PCI SAQ A-EP) -->
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <script>
+    // Stripe helper functions called from Dart via js_interop
+    var _stripeInstance = null;
+    var _stripeElements = null;
+    var _cardElement = null;
+
+    function initStripe(publishableKey) {
+      _stripeInstance = Stripe(publishableKey);
+    }
+
+    function mountCardElement(selector, styleJson) {
+      if (!_stripeInstance) return;
+      _stripeElements = _stripeInstance.elements();
+      var style = styleJson ? JSON.parse(styleJson) : {
+        base: {
+          fontSize: '16px',
+          color: '#32325d',
+          fontFamily: '"Segoe UI", Roboto, sans-serif',
+          '::placeholder': { color: '#aab7c4' }
+        },
+        invalid: { color: '#fa755a', iconColor: '#fa755a' }
+      };
+      _cardElement = _stripeElements.create('card', { style: style });
+      _cardElement.mount(selector);
+    }
+
+    function unmountCardElement() {
+      if (_cardElement) {
+        _cardElement.unmount();
+        _cardElement.destroy();
+        _cardElement = null;
+      }
+    }
+
+    async function confirmStripePayment(clientSecret, cardholderName) {
+      if (!_stripeInstance || !_cardElement) {
+        return JSON.stringify({ error: 'Stripe not initialized' });
+      }
+      var paymentData = {
+        payment_method: {
+          card: _cardElement,
+          billing_details: {}
+        }
+      };
+      if (cardholderName) {
+        paymentData.payment_method.billing_details.name = cardholderName;
+      }
+      var result = await _stripeInstance.confirmCardPayment(clientSecret, paymentData);
+      if (result.error) {
+        return JSON.stringify({
+          error: result.error.message || 'Payment failed'
+        });
+      }
+      return JSON.stringify({
+        paymentIntentId: result.paymentIntent.id,
+        status: result.paymentIntent.status
+      });
+    }
+  </script>
+  
+  <script>
+    // Development cache buster - unregister service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+          console.log('Service worker unregistered for dev mode');
+        }
+      });
+    }
+  </script>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

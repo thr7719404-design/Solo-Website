@@ -1,0 +1,223 @@
+
+============================================================================
+  SECTION 1: SCHEMAS (dn)
+============================================================================
+   List of schemas
+   Name    |  Owner   
+-----------+----------
+ inventory | postgres
+ public    | postgres
+(2 rows)
+
+
+============================================================================
+  SECTION 2: TABLES IN public SCHEMA (dt public.*)
+============================================================================
+                     List of relations
+ Schema |             Name              | Type  |  Owner   
+--------+-------------------------------+-------+----------
+ public | _prisma_migrations            | table | postgres
+ public | _v2_migration_log             | table | postgres
+ public | addresses                     | table | postgres
+ public | analytics_events              | table | postgres
+ public | banners                       | table | postgres
+ public | blog_categories               | table | postgres
+ public | blog_post_tags                | table | postgres
+ public | blog_posts                    | table | postgres
+ public | blog_tags                     | table | postgres
+ public | brands                        | table | postgres
+ public | brands_v1_backup              | table | postgres
+ public | cart_items                    | table | postgres
+ public | carts                         | table | postgres
+ public | categories                    | table | postgres
+ public | categories_v1_backup          | table | postgres
+ public | category_landing_page_configs | table | postgres
+ public | category_landing_sections     | table | postgres
+ public | content_blocks                | table | postgres
+ public | countries                     | table | postgres
+ public | departments_v1_backup         | table | postgres
+ public | designers                     | table | postgres
+ public | email_outbox                  | table | postgres
+ public | email_verification_tokens     | table | postgres
+ public | favorites                     | table | postgres
+ public | finance_settings              | table | postgres
+ public | global_sales                  | table | postgres
+ public | home_page_configs             | table | postgres
+ public | home_page_sections            | table | postgres
+ public | import_job_rows               | table | postgres
+ public | import_jobs                   | table | postgres
+ public | inventory_transactions        | table | postgres
+ public | invoice_counters              | table | postgres
+ public | invoices                      | table | postgres
+ public | landing_pages                 | table | postgres
+ public | landing_sections              | table | postgres
+ public | loyalty_page_config           | table | postgres
+ public | loyalty_transactions          | table | postgres
+ public | loyalty_wallets               | table | postgres
+ public | media_assets                  | table | postgres
+ public | navigation_menu_items         | table | postgres
+ public | navigation_menus              | table | postgres
+ public | order_items                   | table | postgres
+ public | order_status_history          | table | postgres
+ public | order_status_master           | table | postgres
+ public | orders                        | table | postgres
+ public | package_items                 | table | postgres
+ public | packages                      | table | postgres
+ public | password_reset_tokens         | table | postgres
+ public | product_collection_items      | table | postgres
+ public | product_collections           | table | postgres
+ public | product_dimensions            | table | postgres
+ public | product_images                | table | postgres
+ public | product_overrides             | table | postgres
+ public | product_overrides_v1_backup   | table | postgres
+ public | product_packaging             | table | postgres
+ public | product_pricing               | table | postgres
+ public | product_specifications        | table | postgres
+ public | product_variants              | table | postgres
+ public | products                      | table | postgres
+ public | promo_codes                   | table | postgres
+ public | refresh_tokens                | table | postgres
+ public | saved_payment_methods         | table | postgres
+ public | saved_search_terms            | table | postgres
+ public | site_settings                 | table | postgres
+ public | subcategories                 | table | postgres
+ public | users                         | table | postgres
+(66 rows)
+
+
+============================================================================
+  SECTION 3: TABLES IN inventory SCHEMA (dt inventory.*)
+============================================================================
+                        List of relations
+  Schema   |               Name               | Type  |  Owner   
+-----------+----------------------------------+-------+----------
+ inventory | brands_v1_backup                 | table | postgres
+ inventory | categories_v1_backup             | table | postgres
+ inventory | countries_v1_backup              | table | postgres
+ inventory | designers_v1_backup              | table | postgres
+ inventory | inventory_transactions_v1_backup | table | postgres
+ inventory | product_dimensions_v1_backup     | table | postgres
+ inventory | product_images_v1_backup         | table | postgres
+ inventory | product_packaging_v1_backup      | table | postgres
+ inventory | product_pricing_v1_backup        | table | postgres
+ inventory | product_specifications_v1_backup | table | postgres
+ inventory | products_v1_backup               | table | postgres
+ inventory | subcategories_v1_backup          | table | postgres
+(12 rows)
+
+
+============================================================================
+  SECTION 4: ROW COUNTS (Safe Tables Only)
+============================================================================
+public.categories:
+ row_count 
+-----------
+         8
+(1 row)
+
+
+public.products:
+ row_count 
+-----------
+        36
+(1 row)
+
+
+public.brands:
+ row_count 
+-----------
+         9
+(1 row)
+
+
+public.product_variants:
+ row_count 
+-----------
+        36
+(1 row)
+
+
+============================================================================
+  SECTION 5: DATABASE SIZE
+============================================================================
+ database_name  | size  
+----------------+-------
+ solo_ecommerce | 16 MB
+(1 row)
+
+
+============================================================================
+  SECTION 6: TABLE SIZES (Top 20)
+============================================================================
+             table_name             | total_size 
+------------------------------------+------------
+ public.media_assets                | 480 kB
+ public.refresh_tokens              | 352 kB
+ inventory.products_v1_backup       | 344 kB
+ public.products                    | 216 kB
+ public.banners                     | 176 kB
+ public.orders                      | 160 kB
+ public.categories_v1_backup        | 160 kB
+ public.blog_posts                  | 128 kB
+ inventory.brands_v1_backup         | 128 kB
+ public.departments_v1_backup       | 128 kB
+ public.users                       | 128 kB
+ inventory.categories_v1_backup     | 128 kB
+ public.landing_sections            | 120 kB
+ inventory.product_images_v1_backup | 112 kB
+ public.categories                  | 112 kB
+ public.promo_codes                 | 112 kB
+ public.landing_pages               | 112 kB
+ public.product_variants            | 112 kB
+ public.favorites                   | 96 kB
+ public.brands                      | 96 kB
+(20 rows)
+
+
+============================================================================
+  SECTION 7: INDEX USAGE
+============================================================================
+
+============================================================================
+  SECTION 8: PostgreSQL VERSION
+============================================================================
+psql:C:/Users/user/AppData/Local/Temp/diag_queries_20260201_231328.sql:80: ERROR:  column "tablename" does not exist
+LINE 3:     tablename,
+            ^
+                                 version                                 
+-------------------------------------------------------------------------
+ PostgreSQL 17.7 on x86_64-windows, compiled by msvc-19.44.35221, 64-bit
+(1 row)
+
+
+============================================================================
+  END OF DIAGNOSTICS
+============================================================================
+
+
+============================================================================
+  SECTION 9: SERVER LOGS (Last 50 Lines)
+============================================================================
+Log file: postgresql-2026-02-01_180622.log
+
+2026-02-01 18:06:22 +04 LOG:  database system was shut down at 2026-02-01 18:05:35 +04
+2026-02-01 18:11:22 +04 LOG:  checkpoint starting: time
+2026-02-01 18:11:24 +04 LOG:  checkpoint complete: wrote 21 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=2.006 s, sync=0.036 s, total=2.059 s; sync files=17, longest=0.003 s, average=0.003 s; distance=93 kB, estimate=93 kB; lsn=0/D6CF610, redo lsn=0/D6CF580
+2026-02-01 23:13:28 +04 ERROR:  column "tablename" does not exist at character 31
+2026-02-01 23:13:28 +04 STATEMENT:  SELECT 
+
+	    schemaname,
+
+	    tablename,
+
+	    indexname,
+
+	    idx_scan AS times_used
+
+	FROM pg_stat_user_indexes
+
+	WHERE schemaname IN ('public', 'inventory')
+
+	ORDER BY idx_scan DESC
+
+	LIMIT 20;

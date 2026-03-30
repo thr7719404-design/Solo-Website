@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Bowl -->
+  <path d="M40 100 Q40 120, 60 130 L140 130 Q160 120, 160 100" 
+        fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Base of bowl -->
+  <path d="M60 130 Q70 135, 100 135 Q130 135, 140 130" 
+        fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Center leaf/plant stem -->
+  <path d="M100 100 L100 60" 
+        fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  
+  <!-- Left leaves -->
+  <ellipse cx="75" cy="70" rx="12" ry="20" 
+           transform="rotate(-30 75 70)" fill="currentColor"/>
+  <ellipse cx="85" cy="60" rx="10" ry="18" 
+           transform="rotate(-15 85 60)" fill="currentColor"/>
+  
+  <!-- Right leaves -->
+  <ellipse cx="125" cy="70" rx="12" ry="20" 
+           transform="rotate(30 125 70)" fill="currentColor"/>
+  <ellipse cx="115" cy="60" rx="10" ry="18" 
+           transform="rotate(15 115 60)" fill="currentColor"/>
+  
+  <!-- Center top leaves -->
+  <ellipse cx="95" cy="50" rx="8" ry="15" 
+           transform="rotate(-10 95 50)" fill="currentColor"/>
+  <ellipse cx="105" cy="50" rx="8" ry="15" 
+           transform="rotate(10 105 50)" fill="currentColor"/>
+</svg>

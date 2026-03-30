@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────────────
+  # PostgreSQL 15
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: solo-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: solo_ecommerce
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Redis 7 (rate limiting, caching)
+  # ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: solo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # MinIO (S3-compatible object storage)
+  # ─────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: solo-minio
+    ports:
+      - "9000:9000"    # API
+      - "9001:9001"    # Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # MailHog (SMTP testing)
+  # ─────────────────────────────────────────────
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: solo-mailhog
+    ports:
+      - "1025:1025"   # SMTP server
+      - "8025:8025"   # Web UI
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

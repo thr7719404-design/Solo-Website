@@ -1,0 +1,37 @@
+
+> solo-backend@1.0.0 build
+> nest build
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:91:5[39m[22m
+TS2322: Type '{ userId: string; }' is not assignable to type 'CartWhereUniqueInput'.
+  Type '{ userId: string; }' is not assignable to type '{ id: string; } & { id?: string | undefined; AND?: CartWhereInput | CartWhereInput[] | undefined; OR?: CartWhereInput[] | undefined; ... 10 more ...; user?: (Without<...> & UserWhereInput) | ... 2 more ... | undefined; }'.
+    Property 'id' is missing in type '{ userId: string; }' but required in type '{ id: string; }'.
+  [0m [90m 89 |[39m   [90m// Create cart for customer[39m
+   [90m 90 |[39m   [36mawait[39m prisma[33m.[39mcart[33m.[39mupsert({
+  [31m[1m>[22m[39m[90m 91 |[39m     where[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 92 |[39m     update[33m:[39m {}[33m,[39m
+   [90m 93 |[39m     create[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m 94 |[39m   })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./scripts/test-setup.ts:87:7[39m[22m
+TS2322: Type '{ userId: string; }' is not assignable to type 'CartWhereUniqueInput'.
+  Type '{ userId: string; }' is not assignable to type '{ id: string; } & { id?: string | undefined; AND?: CartWhereInput | CartWhereInput[] | undefined; OR?: CartWhereInput[] | undefined; ... 10 more ...; user?: (Without<...> & UserWhereInput) | ... 2 more ... | undefined; }'.
+    Property 'id' is missing in type '{ userId: string; }' but required in type '{ id: string; }'.
+  [0m [90m 85 |[39m     [90m// Create cart for customer[39m
+   [90m 86 |[39m     [36mawait[39m prisma[33m.[39mcart[33m.[39mupsert({
+  [31m[1m>[22m[39m[90m 87 |[39m       where[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 88 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 89 |[39m       create[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m 90 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:1:60[39m[22m
+TS2305: Module '"@nestjs/common"' has no exported member 'Gone'.
+  [0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mInjectable[39m[33m,[39m [33mNotFoundException[39m[33m,[39m [33mConflictException[39m[33m,[39m [33mGone[39m } [36mfrom[39m [32m'@nestjs/common'[39m[33m;[39m
+   [90m   |[39m                                                            [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 2 |[39m [36mimport[39m { [33mPrismaService[39m } [36mfrom[39m [32m'../prisma/prisma.service'[39m[33m;[39m
+   [90m 3 |[39m [36mimport[39m { [33mCreateDepartmentDto[39m } [36mfrom[39m [32m'./dto/create-department.dto'[39m[33m;[39m
+   [90m 4 |[39m [36mimport[39m { [33mUpdateDepartmentDto[39m } [36mfrom[39m [32m'./dto/update-department.dto'[39m[33m;[39m[0m
+
+webpack 5.97.1 compiled with [1m[31m3 errors[39m[22m in 3592 ms

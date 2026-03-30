@@ -1,0 +1,205 @@
+.account-page {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.account-page h1 {
+  font-size: 26px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 28px;
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 36px;
+}
+
+.account-nav {
+  list-style: none;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.account-nav li {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.account-nav li:last-child {
+  border-bottom: none;
+}
+
+.account-nav li a,
+.account-nav li button {
+  display: block;
+  width: 100%;
+  padding: 13px 18px;
+  font-size: 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--color-text);
+  transition: all var(--transition-fast);
+}
+
+.account-nav li a:hover,
+.account-nav li button:hover {
+  color: var(--color-accent);
+  background: var(--color-bg-alt);
+}
+
+.account-nav li a.active {
+  color: var(--color-accent);
+  font-weight: 600;
+  background: var(--color-bg-alt);
+  border-left: 3px solid var(--color-accent);
+}
+
+.account-content {
+  min-height: 400px;
+}
+
+.account-content h2 {
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--color-border-light);
+}
+
+.profile-form {
+  max-width: 480px;
+}
+
+.profile-form .form-group {
+  margin-bottom: 18px;
+}
+
+.profile-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.profile-form input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.profile-form input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-glow);
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.order-card {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: box-shadow var(--transition-fast);
+}
+
+.order-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.order-card-info h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.order-card-info p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.order-status {
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: var(--radius-full);
+}
+
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-processing { background: #dbeafe; color: #1e40af; }
+.status-shipped { background: #d1fae5; color: #065f46; }
+.status-delivered { background: #d1fae5; color: #065f46; }
+.status-cancelled { background: #fecaca; color: #991b1b; }
+
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.address-card {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  position: relative;
+  transition: box-shadow var(--transition-fast);
+}
+
+.address-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.address-card.default {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.address-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.address-card p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.address-default-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .account-layout { grid-template-columns: 1fr; }
+  .address-grid { grid-template-columns: 1fr; }
+}

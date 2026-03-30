@@ -1,0 +1,24 @@
+name: solo-ecommerce
+
+services:
+  backend:
+    project: ./backend
+    host: containerapp
+    language: js
+    docker:
+      path: ./Dockerfile
+      context: .
+
+  frontend:
+    project: ./frontend-react
+    host: staticwebapp
+    language: js
+    dist: dist
+
+hooks:
+  postprovision:
+    shell: pwsh
+    run: |
+      $backendUri = (azd env get-value BACKEND_URI)
+      "VITE_API_BASE_URL=$backendUri/api" | Set-Content -Path "frontend-react/.env.production"
+      Write-Host "Frontend .env.production created with API URL: $backendUri/api"

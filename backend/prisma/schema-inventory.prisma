@@ -1,0 +1,272 @@
+// Prisma Schema for Inventory Database (inventory_db)
+// This is a separate database from the main application database
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/inventory-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("INVENTORY_DATABASE_URL")
+}
+
+// ============================================================================
+// MASTER DATA MODELS
+// ============================================================================
+
+model Country {
+  id          Int       @id @default(autoincrement())
+  countryCode String    @unique @map("country_code") @db.VarChar(3)
+  countryName String    @map("country_name") @db.VarChar(100)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([countryCode])
+  @@map("countries")
+}
+
+model Brand {
+  id          Int       @id @default(autoincrement())
+  brandName   String    @unique @map("brand_name") @db.VarChar(100)
+  description String?   @db.Text
+  website     String?   @db.VarChar(255)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([brandName])
+  @@index([isActive])
+  @@map("brands")
+}
+
+model Designer {
+  id           Int       @id @default(autoincrement())
+  designerName String    @unique @map("designer_name") @db.VarChar(100)
+  bio          String?   @db.Text
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([designerName])
+  @@map("designers")
+}
+
+model Category {
+  id           Int       @id @default(autoincrement())
+  categoryName String    @unique @map("category_name") @db.VarChar(100)
+  description  String?   @db.Text
+  displayOrder Int       @default(0) @map("display_order")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  subcategories Subcategory[]
+  products      Product[]
+
+  @@index([categoryName])
+  @@index([isActive])
+  @@map("categories")
+}
+
+model Subcategory {
+  id              Int       @id @default(autoincrement())
+  categoryId      Int       @map("category_id")
+  subcategoryName String    @map("subcategory_name") @db.VarChar(100)
+  description     String?   @db.Text
+  displayOrder    Int       @default(0) @map("display_order")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@unique([categoryId, subcategoryName])
+  @@index([categoryId])
+  @@index([subcategoryName])
+  @@map("subcategories")
+}
+
+// ============================================================================
+// PRODUCT MODELS
+// ============================================================================
+
+model Product {
+  id             Int       @id @default(autoincrement())
+  sku            String    @unique @db.VarChar(50)
+  sku2025        String?   @map("sku_2025") @db.VarChar(50)
+  sku2026        String?   @map("sku_2026") @db.VarChar(50)
+  productName    String    @map("name") @db.VarChar(255)
+  nameEnglish    String?   @map("name_english") @db.VarChar(255)
+  description    String?   @db.Text
+  categoryId     Int?      @map("category_id")
+  subcategoryId  Int?      @map("subcategory_id")
+  brandId        Int?      @map("brand_id")
+  designerId     Int?      @map("designer_id")
+  countryId      Int?      @map("country_id")
+  material       String?   @db.VarChar(255)
+  colour         String?   @db.VarChar(100)
+  size           String?   @db.VarChar(50)
+  ean            BigInt?
+  eanSecondary   BigInt?   @map("ean_secondary")
+  customsTariff  BigInt?   @map("customs_tariff_number")
+  dishwasherSafe Boolean?  @map("dishwasher_safe")
+  cleaningMaint  String?   @map("cleaning_maintenance") @db.Text
+  isActive       Boolean   @default(true) @map("is_active")
+  isDiscontinued Boolean   @default(false) @map("is_discontinued")
+  isFeatured     Boolean   @default(false) @map("is_featured")
+  isNew          Boolean   @default(false) @map("is_new")
+  isBestSeller   Boolean   @default(false) @map("is_best_seller")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategory    Subcategory?    @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  brand          Brand?          @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  designer       Designer?       @relation(fields: [designerId], references: [id], onDelete: SetNull)
+  country        Country?        @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  
+  dimensions     ProductDimension?
+  packaging      ProductPackaging?
+  pricing        ProductPricing?
+  images         ProductImage[]
+  specifications ProductSpecification[]
+  transactions   InventoryTransaction[]
+
+  @@index([sku])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([isNew])
+  @@index([isBestSeller])
+  @@map("products")
+}
+
+model ProductDimension {
+  id                       Int      @id @default(autoincrement())
+  productId                Int      @unique @map("product_id")
+  functionalDepthCm        Decimal? @map("functional_depth_cm") @db.Decimal(10, 2)
+  functionalWidthCm        Decimal? @map("functional_width_cm") @db.Decimal(10, 2)
+  functionalHeightCm       Decimal? @map("functional_height_cm") @db.Decimal(10, 2)
+  functionalDiameterCm     Decimal? @map("functional_diameter_cm") @db.Decimal(10, 2)
+  functionalCapacityLiter  Decimal? @map("functional_capacity_liter") @db.Decimal(10, 3)
+  packedWeightKg           Decimal? @map("packed_weight_kg") @db.Decimal(10, 3)
+  packedDepthCm            Decimal? @map("packed_depth_cm") @db.Decimal(10, 2)
+  packedWidthCm            Decimal? @map("packed_width_cm") @db.Decimal(10, 2)
+  packedHeightCm           Decimal? @map("packed_height_cm") @db.Decimal(10, 2)
+  productWeightKg          Decimal? @map("product_weight_kg") @db.Decimal(10, 3)
+  technicalCapacityLiter   Decimal? @map("technical_capacity_liter") @db.Decimal(10, 3)
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_dimensions")
+}
+
+model ProductPackaging {
+  id                   Int      @id @default(autoincrement())
+  productId            Int      @unique @map("product_id")
+  packagingType        String?  @map("packaging_type") @db.VarChar(100)
+  colliSize            Int?     @map("colli_size")
+  colliWeightKg        Decimal? @map("colli_weight_kg") @db.Decimal(10, 3)
+  colliLengthCm        Decimal? @map("colli_length_cm") @db.Decimal(10, 2)
+  colliWidthCm         Decimal? @map("colli_width_cm") @db.Decimal(10, 2)
+  colliHeightCm        Decimal? @map("colli_height_cm") @db.Decimal(10, 2)
+  masterColliWeightKg  Decimal? @map("master_colli_weight_kg") @db.Decimal(10, 3)
+  masterColliLengthCm  Decimal? @map("master_colli_length_cm") @db.Decimal(10, 2)
+  masterColliWidthCm   Decimal? @map("master_colli_width_cm") @db.Decimal(10, 2)
+  masterColliHeightCm  Decimal? @map("master_colli_height_cm") @db.Decimal(10, 2)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_packaging")
+}
+
+model ProductPricing {
+  id               Int       @id @default(autoincrement())
+  productId        Int       @unique @map("product_id")
+  rrpAedExclVat    Decimal?  @map("rrp_aed_excl_vat") @db.Decimal(10, 2)
+  priceInclVat     Decimal?  @map("price_incl_vat") @db.Decimal(10, 2)
+  listedPriceVat   Decimal?  @map("listed_price_incl_vat") @db.Decimal(10, 2)
+  currency         String    @default("AED") @db.VarChar(3)
+  vatRate          Decimal?  @map("vat_rate") @db.Decimal(5, 2)
+  isCurrent        Boolean   @default(true) @map("is_current")
+  effectiveFrom    DateTime? @map("effective_from") @db.Date
+  effectiveTo      DateTime? @map("effective_to") @db.Date
+  remarks          String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_pricing")
+}
+
+model ProductImage {
+  id           Int      @id @default(autoincrement())
+  productId    Int      @map("product_id")
+  imageUrl     String   @map("image_url") @db.VarChar(500)
+  imageType    String?  @map("image_type") @db.VarChar(50)
+  altText      String?  @map("alt_text") @db.VarChar(255)
+  displayOrder Int      @default(0) @map("display_order")
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([displayOrder])
+  @@map("product_images")
+}
+
+model ProductSpecification {
+  id           Int      @id @default(autoincrement())
+  productId    Int      @map("product_id")
+  specKey      String   @map("spec_key") @db.VarChar(100)
+  specValue    String?  @map("spec_value") @db.Text
+  specUnit     String?  @map("spec_unit") @db.VarChar(50)
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_specifications")
+}
+
+model InventoryTransaction {
+  id              Int      @id @default(autoincrement())
+  productId       Int      @map("product_id")
+  transactionType String   @map("transaction_type") @db.VarChar(50)
+  quantity        Int
+  quantityBefore  Int      @map("quantity_before")
+  quantityAfter   Int      @map("quantity_after")
+  reference       String?  @db.VarChar(100)
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdBy       String?  @map("created_by") @db.VarChar(100)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([transactionType])
+  @@index([createdAt])
+  @@map("inventory_transactions")
+}

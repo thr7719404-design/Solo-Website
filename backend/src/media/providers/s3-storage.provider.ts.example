@@ -1,0 +1,112 @@
+# S3 Storage Provider Example
+# 
+# For production deployment, implement this provider for AWS S3 storage
+# Install: npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import {
+  IStorageProvider,
+  UploadOptions,
+  GetUrlOptions,
+} from '../interfaces/storage-provider.interface';
+
+@Injectable()
+export class S3StorageProvider implements IStorageProvider {
+  private readonly logger = new Logger(S3StorageProvider.name);
+  private readonly s3Client: S3Client;
+  private readonly bucketName: string;
+  private readonly region: string;
+  private readonly cdnUrl?: string;
+
+  constructor(private configService: ConfigService) {
+    this.region = this.configService.getOrThrow<string>('AWS_REGION');
+    this.bucketName = this.configService.getOrThrow<string>('AWS_S3_BUCKET');
+    this.cdnUrl = this.configService.get<string>('AWS_CDN_URL');
+
+    this.s3Client = new S3Client({
+      region: this.region,
+      credentials: {
+        accessKeyId: this.configService.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
+      },
+    });
+  }
+
+  async upload(
+    file: Buffer | NodeJS.ReadableStream,
+    filename: string,
+    options?: UploadOptions,
+  ): Promise<string> {
+    const folder = options?.folder || 'general';
+    const key = `${folder}/${filename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: file,
+      ContentType: options?.mimetype,
+      ACL: options?.isPublic ? 'public-read' : 'private',
+      Metadata: options?.metadata,
+    });
+
+    await this.s3Client.send(command);
+
+    this.logger.log(`File uploaded to S3: ${key}`);
+
+    // Return CDN URL if configured, otherwise S3 URL
+    if (this.cdnUrl) {
+      return `${this.cdnUrl}/${key}`;
+    }
+    return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
+  }
+
+  async delete(url: string): Promise<void> {
+    try {
+      // Extract key from URL
+      const urlObj = new URL(url);
+      const key = urlObj.pathname.replace(/^\//, '');
+
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+
+      await this.s3Client.send(command);
+      this.logger.log(`File deleted from S3: ${key}`);
+    } catch (error) {
+      this.logger.error(`Failed to delete file from S3: ${url}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getUrl(filename: string, options?: GetUrlOptions): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucketName,
+      Key: filename,
+      ResponseContentDisposition: options?.download
+        ? 'attachment'
+        : 'inline',
+    });
+
+    // Generate signed URL if expiry is set
+    if (options?.expiresIn) {
+      return getSignedUrl(this.s3Client, command, {
+        expiresIn: options.expiresIn,
+      });
+    }
+
+    // Return public URL
+    if (this.cdnUrl) {
+      return `${this.cdnUrl}/${filename}`;
+    }
+    return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${filename}`;
+  }
+}

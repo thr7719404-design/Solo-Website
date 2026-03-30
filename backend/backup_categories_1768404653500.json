@@ -1,0 +1,235 @@
+{
+  "timestamp": "2026-01-14T15:30:53.500Z",
+  "invCategoryCount": 14,
+  "invSubcategoryCount": 10,
+  "invCategory": [
+    {
+      "id": 1,
+      "categoryName": "Cookware",
+      "description": "Pots, pans, and cooking essentials",
+      "displayOrder": 1,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.056Z",
+      "updatedAt": "2026-01-14T12:48:40.613Z"
+    },
+    {
+      "id": 2,
+      "categoryName": "Bakeware",
+      "description": "Baking trays, molds, and accessories",
+      "displayOrder": 2,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.058Z",
+      "updatedAt": "2026-01-14T12:48:40.616Z"
+    },
+    {
+      "id": 3,
+      "categoryName": "Kitchen Tools",
+      "description": "Utensils, gadgets, and helpers",
+      "displayOrder": 3,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.059Z",
+      "updatedAt": "2026-01-14T12:48:40.617Z"
+    },
+    {
+      "id": 4,
+      "categoryName": "Drinkware",
+      "description": "Cups, mugs, and beverage containers",
+      "displayOrder": 4,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.059Z",
+      "updatedAt": "2026-01-14T12:48:40.618Z"
+    },
+    {
+      "id": 5,
+      "categoryName": "Food Storage",
+      "description": "Containers and organization",
+      "displayOrder": 5,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.060Z",
+      "updatedAt": "2026-01-14T12:48:40.619Z"
+    },
+    {
+      "id": 6,
+      "categoryName": "Cutlery",
+      "description": "Knives, forks, and eating utensils",
+      "displayOrder": 6,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.061Z",
+      "updatedAt": "2026-01-14T12:48:40.620Z"
+    },
+    {
+      "id": 7,
+      "categoryName": "Small Appliances",
+      "description": "Blenders, mixers, and gadgets",
+      "displayOrder": 7,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.062Z",
+      "updatedAt": "2026-01-14T12:48:40.621Z"
+    },
+    {
+      "id": 8,
+      "categoryName": "Outdoor & Travel",
+      "description": "Portable and travel-friendly items",
+      "displayOrder": 8,
+      "isActive": true,
+      "createdAt": "2026-01-14T11:49:06.062Z",
+      "updatedAt": "2026-01-14T12:48:40.621Z"
+    },
+    {
+      "id": 9,
+      "categoryName": "Kitchenware",
+      "description": "Essential tools and equipment for your kitchen",
+      "displayOrder": 1,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.434Z",
+      "updatedAt": "2026-01-14T13:59:53.434Z"
+    },
+    {
+      "id": 10,
+      "categoryName": "Tableware",
+      "description": "Elegant dining and serving essentials",
+      "displayOrder": 2,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.436Z",
+      "updatedAt": "2026-01-14T13:59:53.436Z"
+    },
+    {
+      "id": 11,
+      "categoryName": "Home Decor",
+      "description": "Beautiful accents for your living space",
+      "displayOrder": 3,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.438Z",
+      "updatedAt": "2026-01-14T13:59:53.438Z"
+    },
+    {
+      "id": 12,
+      "categoryName": "Outdoor & Garden",
+      "description": "Products for outdoor living",
+      "displayOrder": 4,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.439Z",
+      "updatedAt": "2026-01-14T13:59:53.439Z"
+    },
+    {
+      "id": 13,
+      "categoryName": "Storage & Organization",
+      "description": "Keep your home tidy and organized",
+      "displayOrder": 5,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.440Z",
+      "updatedAt": "2026-01-14T13:59:53.440Z"
+    },
+    {
+      "id": 14,
+      "categoryName": "Accessories",
+      "description": "Stylish accessories for every occasion",
+      "displayOrder": 6,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.441Z",
+      "updatedAt": "2026-01-14T13:59:53.441Z"
+    }
+  ],
+  "invSubcategory": [
+    {
+      "id": 1,
+      "categoryId": 9,
+      "subcategoryName": "Cookware",
+      "description": null,
+      "displayOrder": 1,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.443Z",
+      "updatedAt": "2026-01-14T13:59:53.443Z"
+    },
+    {
+      "id": 2,
+      "categoryId": 9,
+      "subcategoryName": "Bakeware",
+      "description": null,
+      "displayOrder": 2,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.444Z",
+      "updatedAt": "2026-01-14T13:59:53.444Z"
+    },
+    {
+      "id": 3,
+      "categoryId": 9,
+      "subcategoryName": "Kitchen Tools",
+      "description": null,
+      "displayOrder": 3,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.445Z",
+      "updatedAt": "2026-01-14T13:59:53.445Z"
+    },
+    {
+      "id": 4,
+      "categoryId": 10,
+      "subcategoryName": "Dinnerware",
+      "description": null,
+      "displayOrder": 1,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.446Z",
+      "updatedAt": "2026-01-14T13:59:53.446Z"
+    },
+    {
+      "id": 5,
+      "categoryId": 10,
+      "subcategoryName": "Glassware",
+      "description": null,
+      "displayOrder": 2,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.446Z",
+      "updatedAt": "2026-01-14T13:59:53.446Z"
+    },
+    {
+      "id": 6,
+      "categoryId": 10,
+      "subcategoryName": "Flatware",
+      "description": null,
+      "displayOrder": 3,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.447Z",
+      "updatedAt": "2026-01-14T13:59:53.447Z"
+    },
+    {
+      "id": 7,
+      "categoryId": 11,
+      "subcategoryName": "Vases & Planters",
+      "description": null,
+      "displayOrder": 1,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.447Z",
+      "updatedAt": "2026-01-14T13:59:53.447Z"
+    },
+    {
+      "id": 8,
+      "categoryId": 11,
+      "subcategoryName": "Candles & Holders",
+      "description": null,
+      "displayOrder": 2,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.447Z",
+      "updatedAt": "2026-01-14T13:59:53.447Z"
+    },
+    {
+      "id": 9,
+      "categoryId": 12,
+      "subcategoryName": "Camping",
+      "description": null,
+      "displayOrder": 1,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.448Z",
+      "updatedAt": "2026-01-14T13:59:53.448Z"
+    },
+    {
+      "id": 10,
+      "categoryId": 12,
+      "subcategoryName": "Garden Tools",
+      "description": null,
+      "displayOrder": 2,
+      "isActive": true,
+      "createdAt": "2026-01-14T13:59:53.448Z",
+      "updatedAt": "2026-01-14T13:59:53.448Z"
+    }
+  ]
+}

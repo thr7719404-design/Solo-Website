@@ -1,0 +1,176 @@
+249-model CartItem {
+250-  id        String       @id @default(uuid())
+251-  cartId    String
+252-  type      CartItemType
+253-  packageId String?
+254-  quantity  Int          @default(1)
+255-  createdAt DateTime     @default(now())
+256-  updatedAt DateTime     @updatedAt
+257-  productId Int?
+258-  cart      Cart         @relation(fields: [cartId], references: [id], onDelete: Cascade)
+259-  package   Package?     @relation(fields: [packageId], references: [id], onDelete: Cascade)
+260-
+261-  @@index([cartId])
+262-  @@index([productId])
+263-  @@index([packageId])
+264-  @@map("cart_items")
+265-}
+266-
+267-model Order {
+268-  id                      String               @id @default(uuid())
+269-  orderNumber             String               @unique
+--
+267-model Order {
+268-  id                      String               @id @default(uuid())
+269-  orderNumber             String               @unique
+270-  userId                  String
+271-  status                  OrderStatus          @default(PENDING)
+272-  paymentStatus           PaymentStatus        @default(PENDING)
+273-  shippingAddressId       String
+274-  billingAddressId        String
+275-  shippingMethod          ShippingMethod
+276-  shippingCost            Decimal              @db.Decimal(10, 2)
+277-  trackingNumber          String?
+278-  subtotal                Decimal              @db.Decimal(10, 2)
+279-  discount                Decimal              @default(0) @db.Decimal(10, 2)
+280-  vat                     Decimal              @map("tax") @db.Decimal(10, 2)
+281-  total                   Decimal              @db.Decimal(10, 2)
+282-  promoCode               String?
+283-  paymentIntentId         String?
+284-  notes                   String?
+285-  createdAt               DateTime             @default(now())
+286-  updatedAt               DateTime             @updatedAt
+287-  paidAt                  DateTime?
+--
+329-model OrderItem {
+330-  id                  String       @id @default(uuid())
+331-  orderId             String
+332-  type                CartItemType
+333-  packageId           String?
+334-  name                String
+335-  sku                 String?
+336-  quantity            Int
+337-  price               Decimal      @db.Decimal(10, 2)
+338-  subtotal            Decimal      @db.Decimal(10, 2)
+339-  createdAt           DateTime     @default(now())
+340-  productId           Int?
+341-  currencyCode        String?      @default("AED") @db.VarChar(3)
+342-  lineDiscountExclVat Decimal?     @default(0) @db.Decimal(12, 2)
+343-  lineSubtotalExclVat Decimal?     @db.Decimal(12, 2)
+344-  lineTotalInclVat    Decimal?     @db.Decimal(12, 2)
+345-  lineVatAmount       Decimal?     @db.Decimal(12, 2)
+346-  unitDiscountExclVat Decimal?     @default(0) @db.Decimal(10, 2)
+347-  unitPriceExclVat    Decimal?     @db.Decimal(10, 2)
+348-  unitPriceInclVat    Decimal?     @db.Decimal(10, 2)
+349-  unitVatAmount       Decimal?     @db.Decimal(10, 2)
+--
+804-model Product {
+805-  id                Int                      @id(map: "v2_products_pkey") @default(autoincrement())
+806-  sku               String                   @unique(map: "v2_products_sku_key") @db.VarChar(50)
+807-  productName       String                   @map("name") @db.VarChar(255)
+808-  name_ar           String?                  @db.VarChar(255)
+809-  slug              String                   @unique(map: "v2_products_slug_key") @db.VarChar(255)
+810-  description       String?
+811-  shortDescription  String?                  @map("short_description") @db.VarChar(500)
+812-  fullDescription   String?                  @map("full_description")
+813-  categoryId        Int?                     @map("category_id")
+814-  subcategoryId     Int?                     @map("subcategory_id")
+815-  brandId           Int?                     @map("brand_id")
+816-  designerId        Int?                     @map("designer_id")
+817-  countryId         Int?                     @map("country_id")
+818-  material          String?                  @db.VarChar(255)
+819-  colour            String?                  @db.VarChar(100)
+820-  size              String?                  @db.VarChar(50)
+821-  ean               BigInt?
+822-  barcode           String?                  @db.VarChar(100)
+823-  highlights        Json?                    @default("[]")
+824-  specs             Json?                    @default("[]")
+--
+1052-enum OrderStatus {
+1053-  PENDING
+1054-  PAYMENT_PENDING
+1055-  PAID
+1056-  PROCESSING
+1057-  SHIPPED
+1058-  DELIVERED
+1059-  CANCELLED
+1060-  REFUNDED
+1061-}
+1062-
+1063-enum PaymentStatus {
+1064-  PENDING
+1065-  AUTHORIZED
+1066-  PAID
+1067-  FAILED
+1068-  REFUNDED
+1069-}
+1070-
+1071-enum PaymentMethod {
+1072-  CREDIT_CARD
+--
+1063-enum PaymentStatus {
+1064-  PENDING
+1065-  AUTHORIZED
+1066-  PAID
+1067-  FAILED
+1068-  REFUNDED
+1069-}
+1070-
+1071-enum PaymentMethod {
+1072-  CREDIT_CARD
+1073-  CASH_ON_DELIVERY
+1074-}
+1075-
+1076-enum ShippingMethod {
+1077-  STANDARD
+1078-  EXPRESS
+1079-  OVERNIGHT
+1080-  PICKUP
+1081-}
+1082-
+1083-enum PromoType {
+--
+1071-enum PaymentMethod {
+1072-  CREDIT_CARD
+1073-  CASH_ON_DELIVERY
+1074-}
+1075-
+1076-enum ShippingMethod {
+1077-  STANDARD
+1078-  EXPRESS
+1079-  OVERNIGHT
+1080-  PICKUP
+1081-}
+1082-
+1083-enum PromoType {
+1084-  PERCENTAGE
+1085-  FIXED_AMOUNT
+1086-  FREE_SHIPPING
+1087-}
+1088-
+1089-enum BannerPlacement {
+1090-  HOME_HERO
+1091-  HOME_TOP
+--
+1076-enum ShippingMethod {
+1077-  STANDARD
+1078-  EXPRESS
+1079-  OVERNIGHT
+1080-  PICKUP
+1081-}
+1082-
+1083-enum PromoType {
+1084-  PERCENTAGE
+1085-  FIXED_AMOUNT
+1086-  FREE_SHIPPING
+1087-}
+1088-
+1089-enum BannerPlacement {
+1090-  HOME_HERO
+1091-  HOME_TOP
+1092-  HOME_MID
+1093-  HOME_BOTTOM
+1094-  CATEGORY_TOP
+1095-  CART_TOP
+1096-}
+--

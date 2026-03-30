@@ -1,0 +1,468 @@
+
+> solo-backend@1.0.0 build
+> nest build
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:25:18[39m[22m
+TS2551: Property 'invCountry' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'country'?
+  [0m [90m 23 |[39m
+   [90m 24 |[39m   [36mfor[39m ([36mconst[39m country [36mof[39m countries) {
+  [31m[1m>[22m[39m[90m 25 |[39m     [36mawait[39m prisma[33m.[39minvCountry[33m.[39mupsert({
+   [90m    |[39m                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 26 |[39m       where[33m:[39m { countryCode[33m:[39m country[33m.[39mcountryCode }[33m,[39m
+   [90m 27 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 28 |[39m       create[33m:[39m country[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:49:34[39m[22m
+TS2339: Property 'invBrand' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+  [0m [90m 47 |[39m   [36mconst[39m createdBrands[33m:[39m { id[33m:[39m number[33m;[39m brandName[33m:[39m string }[] [33m=[39m [][33m;[39m
+   [90m 48 |[39m   [36mfor[39m ([36mconst[39m brand [36mof[39m brands) {
+  [31m[1m>[22m[39m[90m 49 |[39m     [36mconst[39m created [33m=[39m [36mawait[39m prisma[33m.[39minvBrand[33m.[39mupsert({
+   [90m    |[39m                                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 50 |[39m       where[33m:[39m { brandName[33m:[39m brand[33m.[39mbrandName }[33m,[39m
+   [90m 51 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 52 |[39m       create[33m:[39m brand[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:72:34[39m[22m
+TS2551: Property 'invDesigner' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'designer'?
+  [0m [90m 70 |[39m   [36mconst[39m createdDesigners[33m:[39m { id[33m:[39m number[33m;[39m designerName[33m:[39m string }[] [33m=[39m [][33m;[39m
+   [90m 71 |[39m   [36mfor[39m ([36mconst[39m designer [36mof[39m designers) {
+  [31m[1m>[22m[39m[90m 72 |[39m     [36mconst[39m created [33m=[39m [36mawait[39m prisma[33m.[39minvDesigner[33m.[39mupsert({
+   [90m    |[39m                                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 73 |[39m       where[33m:[39m { designerName[33m:[39m designer[33m.[39mdesignerName }[33m,[39m
+   [90m 74 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 75 |[39m       create[33m:[39m designer[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:97:34[39m[22m
+TS2551: Property 'invCategory' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'category'?
+  [0m [90m  95 |[39m   [36mconst[39m createdCategories[33m:[39m { id[33m:[39m number[33m;[39m categoryName[33m:[39m string }[] [33m=[39m [][33m;[39m
+   [90m  96 |[39m   [36mfor[39m ([36mconst[39m category [36mof[39m categories) {
+  [31m[1m>[22m[39m[90m  97 |[39m     [36mconst[39m created [33m=[39m [36mawait[39m prisma[33m.[39minvCategory[33m.[39mupsert({
+   [90m     |[39m                                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m  98 |[39m       where[33m:[39m { categoryName[33m:[39m category[33m.[39mcategoryName }[33m,[39m
+   [90m  99 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 100 |[39m       create[33m:[39m category[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:132:20[39m[22m
+TS2551: Property 'invSubcategory' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'subcategory'?
+  [0m [90m 130 |[39m   [36mfor[39m ([36mconst[39m subcat [36mof[39m subcategories) {
+   [90m 131 |[39m     [36mtry[39m {
+  [31m[1m>[22m[39m[90m 132 |[39m       [36mawait[39m prisma[33m.[39minvSubcategory[33m.[39mcreate({
+   [90m     |[39m                    [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 133 |[39m         data[33m:[39m subcat[33m,[39m
+   [90m 134 |[39m       })[33m;[39m
+   [90m 135 |[39m       subcatCount[33m++[39m[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:147:35[39m[22m
+TS2551: Property 'invCountry' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'country'?
+  [0m [90m 145 |[39m   console[33m.[39mlog([32m'\nCreating products...'[39m)[33m;[39m
+   [90m 146 |[39m
+  [31m[1m>[22m[39m[90m 147 |[39m   [36mconst[39m usaCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'USA'[39m } })[33m;[39m
+   [90m     |[39m                                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 148 |[39m   [36mconst[39m chinaCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'CHN'[39m } })[33m;[39m
+   [90m 149 |[39m   [36mconst[39m japanCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'JPN'[39m } })[33m;[39m
+   [90m 150 |[39m   [0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:148:37[39m[22m
+TS2551: Property 'invCountry' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'country'?
+  [0m [90m 146 |[39m
+   [90m 147 |[39m   [36mconst[39m usaCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'USA'[39m } })[33m;[39m
+  [31m[1m>[22m[39m[90m 148 |[39m   [36mconst[39m chinaCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'CHN'[39m } })[33m;[39m
+   [90m     |[39m                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 149 |[39m   [36mconst[39m japanCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'JPN'[39m } })[33m;[39m
+   [90m 150 |[39m   
+   [90m 151 |[39m   [36mconst[39m soloHomeBrand [33m=[39m createdBrands[33m.[39mfind(b [33m=>[39m b[33m.[39mbrandName [33m===[39m [32m'Solo Home'[39m)[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:149:37[39m[22m
+TS2551: Property 'invCountry' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'country'?
+  [0m [90m 147 |[39m   [36mconst[39m usaCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'USA'[39m } })[33m;[39m
+   [90m 148 |[39m   [36mconst[39m chinaCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'CHN'[39m } })[33m;[39m
+  [31m[1m>[22m[39m[90m 149 |[39m   [36mconst[39m japanCountry [33m=[39m [36mawait[39m prisma[33m.[39minvCountry[33m.[39mfindUnique({ where[33m:[39m { countryCode[33m:[39m [32m'JPN'[39m } })[33m;[39m
+   [90m     |[39m                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 150 |[39m   
+   [90m 151 |[39m   [36mconst[39m soloHomeBrand [33m=[39m createdBrands[33m.[39mfind(b [33m=>[39m b[33m.[39mbrandName [33m===[39m [32m'Solo Home'[39m)[33m;[39m
+   [90m 152 |[39m   [36mconst[39m eliteKitchenBrand [33m=[39m createdBrands[33m.[39mfind(b [33m=>[39m b[33m.[39mbrandName [33m===[39m [32m'Elite Kitchen'[39m)[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:294:20[39m[22m
+TS2551: Property 'invProduct' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'product'?
+  [0m [90m 292 |[39m   [36mfor[39m ([36mconst[39m product [36mof[39m products) {
+   [90m 293 |[39m     [36mtry[39m {
+  [31m[1m>[22m[39m[90m 294 |[39m       [36mawait[39m prisma[33m.[39minvProduct[33m.[39mupsert({
+   [90m     |[39m                    [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 295 |[39m         where[33m:[39m { sku[33m:[39m product[33m.[39msku }[33m,[39m
+   [90m 296 |[39m         update[33m:[39m {}[33m,[39m
+   [90m 297 |[39m         create[33m:[39m product[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:308:36[39m[22m
+TS2551: Property 'invProduct' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'product'?
+  [0m [90m 306 |[39m   [90m// Add pricing for products[39m
+   [90m 307 |[39m   console[33m.[39mlog([32m'\nCreating product pricing...'[39m)[33m;[39m
+  [31m[1m>[22m[39m[90m 308 |[39m   [36mconst[39m allProducts [33m=[39m [36mawait[39m prisma[33m.[39minvProduct[33m.[39mfindMany()[33m;[39m
+   [90m     |[39m                                    [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 309 |[39m   
+   [90m 310 |[39m   [36mconst[39m pricingData [33m=[39m [
+   [90m 311 |[39m     { sku[33m:[39m [32m'SOLO-PAN-001'[39m[33m,[39m rrpAedExclVat[33m:[39m [35m49.99[39m[33m,[39m priceInclVat[33m:[39m [35m52.49[39m }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:324:35[39m[22m
+TS7006: Parameter 'p' implicitly has an 'any' type.
+  [0m [90m 322 |[39m
+   [90m 323 |[39m   [36mfor[39m ([36mconst[39m pricing [36mof[39m pricingData) {
+  [31m[1m>[22m[39m[90m 324 |[39m     [36mconst[39m prod [33m=[39m allProducts[33m.[39mfind(p [33m=>[39m p[33m.[39msku [33m===[39m pricing[33m.[39msku)[33m;[39m
+   [90m     |[39m                                   [31m[1m^[22m[39m
+   [90m 325 |[39m     [36mif[39m (prod) {
+   [90m 326 |[39m       [36mtry[39m {
+   [90m 327 |[39m         [36mawait[39m prisma[33m.[39minvProductPricing[33m.[39mupsert({[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed-inventory.ts:327:22[39m[22m
+TS2551: Property 'invProductPricing' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'productPricing'?
+  [0m [90m 325 |[39m     [36mif[39m (prod) {
+   [90m 326 |[39m       [36mtry[39m {
+  [31m[1m>[22m[39m[90m 327 |[39m         [36mawait[39m prisma[33m.[39minvProductPricing[33m.[39mupsert({
+   [90m     |[39m                      [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 328 |[39m           where[33m:[39m { productId[33m:[39m prod[33m.[39mid }[33m,[39m
+   [90m 329 |[39m           update[33m:[39m {}[33m,[39m
+   [90m 330 |[39m           create[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:91:5[39m[22m
+TS2322: Type '{ userId: string; }' is not assignable to type 'CartWhereUniqueInput'.
+  Type '{ userId: string; }' is not assignable to type '{ id: string; } & { id?: string | undefined; AND?: CartWhereInput | CartWhereInput[] | undefined; OR?: CartWhereInput[] | undefined; ... 10 more ...; user?: (Without<...> & UserWhereInput) | ... 2 more ... | undefined; }'.
+    Property 'id' is missing in type '{ userId: string; }' but required in type '{ id: string; }'.
+  [0m [90m 89 |[39m   [90m// Create cart for customer[39m
+   [90m 90 |[39m   [36mawait[39m prisma[33m.[39mcart[33m.[39mupsert({
+  [31m[1m>[22m[39m[90m 91 |[39m     where[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 92 |[39m     update[33m:[39m {}[33m,[39m
+   [90m 93 |[39m     create[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m 94 |[39m   })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:113:37[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+  [0m [90m 111 |[39m   [36mconst[39m createdDepartments [33m=[39m [][33m;[39m
+   [90m 112 |[39m   [36mfor[39m ([36mconst[39m [index[33m,[39m dept] [36mof[39m departments[33m.[39mentries()) {
+  [31m[1m>[22m[39m[90m 113 |[39m     [36mconst[39m department [33m=[39m [36mawait[39m prisma[33m.[39mdepartment[33m.[39mupsert({
+   [90m     |[39m                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 114 |[39m       where[33m:[39m { slug[33m:[39m dept[33m.[39mslug }[33m,[39m
+   [90m 115 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 116 |[39m       create[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:160:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'departmentId' does not exist in type '(Without<CategoryUpdateInput, CategoryUncheckedUpdateInput> & CategoryUncheckedUpdateInput) | (Without<...> & CategoryUpdateInput)'.
+  [0m [90m 158 |[39m         name[33m:[39m cat[33m.[39mname[33m,[39m 
+   [90m 159 |[39m         description[33m:[39m cat[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m 160 |[39m         departmentId[33m:[39m cat[33m.[39mdepartmentId [33m||[39m kitchenwareDept[33m?[39m[33m.[39mid [33m||[39m [32m''[39m[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 161 |[39m       }[33m,[39m
+   [90m 162 |[39m       create[33m:[39m {
+   [90m 163 |[39m         name[33m:[39m cat[33m.[39mname[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:166:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'departmentId' does not exist in type '(Without<CategoryCreateInput, CategoryUncheckedCreateInput> & CategoryUncheckedCreateInput) | (Without<...> & CategoryCreateInput)'.
+  [0m [90m 164 |[39m         slug[33m,[39m
+   [90m 165 |[39m         description[33m:[39m cat[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m 166 |[39m         departmentId[33m:[39m cat[33m.[39mdepartmentId [33m||[39m kitchenwareDept[33m?[39m[33m.[39mid [33m||[39m [32m''[39m[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 167 |[39m         sortOrder[33m:[39m index[33m,[39m
+   [90m 168 |[39m         isActive[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 169 |[39m       }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:177:38[39m[22m
+TS2551: Property 'invCategory' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'category'?
+  [0m [90m 175 |[39m   [36mconst[39m createdInvCategories [33m=[39m [][33m;[39m
+   [90m 176 |[39m   [36mfor[39m ([36mconst[39m [index[33m,[39m cat] [36mof[39m categories[33m.[39mentries()) {
+  [31m[1m>[22m[39m[90m 177 |[39m     [36mconst[39m invCategory [33m=[39m [36mawait[39m prisma[33m.[39minvCategory[33m.[39mupsert({
+   [90m     |[39m                                      [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 178 |[39m       where[33m:[39m { id[33m:[39m index [33m+[39m [35m1[39m }[33m,[39m
+   [90m 179 |[39m       update[33m:[39m { categoryName[33m:[39m cat[33m.[39mname[33m,[39m description[33m:[39m cat[33m.[39mdescription }[33m,[39m
+   [90m 180 |[39m       create[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:217:9[39m[22m
+TS2561: Object literal may only specify known properties, but 'sortOrder' does not exist in type '(Without<BrandCreateInput, BrandUncheckedCreateInput> & BrandUncheckedCreateInput) | (Without<...> & BrandCreateInput)'. Did you mean to write 'sort_order'?
+  [0m [90m 215 |[39m         slug[33m,[39m
+   [90m 216 |[39m         description[33m:[39m brand[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m 217 |[39m         sortOrder[33m:[39m index[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 218 |[39m         isActive[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 219 |[39m       }[33m,[39m
+   [90m 220 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:228:35[39m[22m
+TS2339: Property 'invBrand' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+  [0m [90m 226 |[39m   [36mconst[39m createdInvBrands [33m=[39m [][33m;[39m
+   [90m 227 |[39m   [36mfor[39m ([36mconst[39m brand [36mof[39m brands) {
+  [31m[1m>[22m[39m[90m 228 |[39m     [36mconst[39m existing [33m=[39m [36mawait[39m prisma[33m.[39minvBrand[33m.[39mfindFirst({
+   [90m     |[39m                                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 229 |[39m       where[33m:[39m { brandName[33m:[39m brand[33m.[39mname }[33m,[39m
+   [90m 230 |[39m     })[33m;[39m
+   [90m 231 |[39m     [0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:235:36[39m[22m
+TS2339: Property 'invBrand' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+  [0m [90m 233 |[39m       createdInvBrands[33m.[39mpush(existing)[33m;[39m
+   [90m 234 |[39m     } [36melse[39m {
+  [31m[1m>[22m[39m[90m 235 |[39m       [36mconst[39m created [33m=[39m [36mawait[39m prisma[33m.[39minvBrand[33m.[39mcreate({
+   [90m     |[39m                                    [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 236 |[39m         data[33m:[39m {
+   [90m 237 |[39m           brandName[33m:[39m brand[33m.[39mname[33m,[39m
+   [90m 238 |[39m           description[33m:[39m brand[33m.[39mdescription[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:733:35[39m[22m
+TS2551: Property 'invProduct' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'product'?
+  [0m [90m 731 |[39m   [36mlet[39m productCount [33m=[39m [35m0[39m[33m;[39m
+   [90m 732 |[39m   [36mfor[39m ([36mconst[39m prod [36mof[39m products) {
+  [31m[1m>[22m[39m[90m 733 |[39m     [36mconst[39m existing [33m=[39m [36mawait[39m prisma[33m.[39minvProduct[33m.[39mfindUnique({ where[33m:[39m { sku[33m:[39m prod[33m.[39msku } })[33m;[39m
+   [90m     |[39m                                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 734 |[39m     
+   [90m 735 |[39m     [36mlet[39m productId[33m:[39m number[33m;[39m
+   [90m 736 |[39m     [0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:738:20[39m[22m
+TS2551: Property 'invProduct' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'product'?
+  [0m [90m 736 |[39m     
+   [90m 737 |[39m     [36mif[39m (existing) {
+  [31m[1m>[22m[39m[90m 738 |[39m       [36mawait[39m prisma[33m.[39minvProduct[33m.[39mupdate({
+   [90m     |[39m                    [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 739 |[39m         where[33m:[39m { sku[33m:[39m prod[33m.[39msku }[33m,[39m
+   [90m 740 |[39m         data[33m:[39m {
+   [90m 741 |[39m           productName[33m:[39m prod[33m.[39mname[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:756:39[39m[22m
+TS2551: Property 'invProduct' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'product'?
+  [0m [90m 754 |[39m       productId [33m=[39m existing[33m.[39mid[33m;[39m
+   [90m 755 |[39m     } [36melse[39m {
+  [31m[1m>[22m[39m[90m 756 |[39m       [36mconst[39m newProduct [33m=[39m [36mawait[39m prisma[33m.[39minvProduct[33m.[39mcreate({
+   [90m     |[39m                                       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 757 |[39m         data[33m:[39m {
+   [90m 758 |[39m           sku[33m:[39m prod[33m.[39msku[33m,[39m
+   [90m 759 |[39m           productName[33m:[39m prod[33m.[39mname[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./prisma/seed.ts:782:18[39m[22m
+TS2551: Property 'invProductPricing' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'productPricing'?
+  [0m [90m 780 |[39m     
+   [90m 781 |[39m     [90m// Create or update pricing for product[39m
+  [31m[1m>[22m[39m[90m 782 |[39m     [36mawait[39m prisma[33m.[39minvProductPricing[33m.[39mupsert({
+   [90m     |[39m                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 783 |[39m       where[33m:[39m { productId[33m:[39m productId }[33m,[39m
+   [90m 784 |[39m       update[33m:[39m {
+   [90m 785 |[39m         priceInclVat[33m:[39m prod[33m.[39mprice[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./scripts/test-setup.ts:87:7[39m[22m
+TS2322: Type '{ userId: string; }' is not assignable to type 'CartWhereUniqueInput'.
+  Type '{ userId: string; }' is not assignable to type '{ id: string; } & { id?: string | undefined; AND?: CartWhereInput | CartWhereInput[] | undefined; OR?: CartWhereInput[] | undefined; ... 10 more ...; user?: (Without<...> & UserWhereInput) | ... 2 more ... | undefined; }'.
+    Property 'id' is missing in type '{ userId: string; }' but required in type '{ id: string; }'.
+  [0m [90m 85 |[39m     [90m// Create cart for customer[39m
+   [90m 86 |[39m     [36mawait[39m prisma[33m.[39mcart[33m.[39mupsert({
+  [31m[1m>[22m[39m[90m 87 |[39m       where[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 88 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 89 |[39m       create[33m:[39m { userId[33m:[39m customer[33m.[39mid }[33m,[39m
+   [90m 90 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./scripts/test-setup.ts:93:37[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaClient<{ datasources: { db: { url: string | undefined; }; }; }, never, DefaultArgs>'.
+  [0m [90m 91 |[39m
+   [90m 92 |[39m     [90m// Create test department[39m
+  [31m[1m>[22m[39m[90m 93 |[39m     [36mconst[39m department [33m=[39m [36mawait[39m prisma[33m.[39mdepartment[33m.[39mupsert({
+   [90m    |[39m                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 94 |[39m       where[33m:[39m { slug[33m:[39m [32m'e2e-test-department'[39m }[33m,[39m
+   [90m 95 |[39m       update[33m:[39m {}[33m,[39m
+   [90m 96 |[39m       create[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./scripts/test-setup.ts:112:11[39m[22m
+TS2353: Object literal may only specify known properties, and 'departmentId' does not exist in type '(Without<CategoryCreateInput, CategoryUncheckedCreateInput> & CategoryUncheckedCreateInput) | (Without<...> & CategoryCreateInput)'.
+  [0m [90m 110 |[39m           name[33m:[39m [32m`E2E Test Category ${i}`[39m[33m,[39m
+   [90m 111 |[39m           slug[33m:[39m [32m`e2e-test-category-${i}`[39m[33m,[39m
+  [31m[1m>[22m[39m[90m 112 |[39m           departmentId[33m:[39m department[33m.[39mid[33m,[39m
+   [90m     |[39m           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 113 |[39m           sortOrder[33m:[39m i[33m,[39m
+   [90m 114 |[39m           isActive[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 115 |[39m         }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./scripts/test-setup.ts:212:16[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+  [0m [90m 210 |[39m
+   [90m 211 |[39m   [90m// Clean up test departments[39m
+  [31m[1m>[22m[39m[90m 212 |[39m   [36mawait[39m prisma[33m.[39mdepartment[33m.[39mdeleteMany({
+   [90m     |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 213 |[39m     where[33m:[39m { slug[33m:[39m { startsWith[33m:[39m [32m'e2e-test-'[39m } }[33m,[39m
+   [90m 214 |[39m   })[33m;[39m
+   [90m 215 |[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/admin.service.ts:144:19[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 142 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mcategory[33m.[39mcount()[33m,[39m
+   [90m 143 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mbrand[33m.[39mcount()[33m,[39m
+  [31m[1m>[22m[39m[90m 144 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mcount()[33m,[39m
+   [90m     |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 145 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mcount()[33m,[39m
+   [90m 146 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mcount({ where[33m:[39m { isActive[33m:[39m [36mtrue[39m } })[33m,[39m
+   [90m 147 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mcount({ where[33m:[39m { isFeatured[33m:[39m [36mtrue[39m } })[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/admin.service.ts:293:39[39m[22m
+TS2339: Property 'imageUrl' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; displayOrder: number; productId: number; media_asset_id: string; altText: string | null; isPrimary: boolean; }'.
+  [0m [90m 291 |[39m         sku[33m:[39m product[33m?[39m[33m.[39msku [33m||[39m [32m'N/A'[39m[33m,[39m
+   [90m 292 |[39m         name[33m:[39m product[33m?[39m[33m.[39mproductName [33m||[39m [32m'Unknown Product'[39m[33m,[39m
+  [31m[1m>[22m[39m[90m 293 |[39m         imageUrl[33m:[39m product[33m?[39m[33m.[39mimages[[35m0[39m][33m?[39m[33m.[39mimageUrl [33m||[39m [32m''[39m[33m,[39m
+   [90m     |[39m                                       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 294 |[39m         totalOrders[33m:[39m item[33m.[39m_count[33m.[39morderId[33m,[39m
+   [90m 295 |[39m         totalRevenue[33m:[39m [33mNumber[39m(item[33m.[39m_sum[33m.[39msubtotal [33m||[39m [35m0[39m)[33m,[39m
+   [90m 296 |[39m         totalQuantity[33m:[39m item[33m.[39m_sum[33m.[39mquantity [33m||[39m [35m0[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/admin.service.ts:549:41[39m[22m
+TS2339: Property 'imageUrl' does not exist on type '{ id: number; createdAt: Date; updatedAt: Date; displayOrder: number; productId: number; media_asset_id: string; altText: string | null; isPrimary: boolean; }'.
+  [0m [90m 547 |[39m           sku[33m:[39m product[33m?[39m[33m.[39msku [33m||[39m [32m'N/A'[39m[33m,[39m
+   [90m 548 |[39m           name[33m:[39m product[33m?[39m[33m.[39mproductName [33m||[39m [32m'Unknown Product'[39m[33m,[39m
+  [31m[1m>[22m[39m[90m 549 |[39m           imageUrl[33m:[39m product[33m?[39m[33m.[39mimages[[35m0[39m][33m?[39m[33m.[39mimageUrl [33m||[39m [32m''[39m[33m,[39m
+   [90m     |[39m                                         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 550 |[39m           quantity[33m:[39m item[33m.[39mquantity[33m,[39m
+   [90m 551 |[39m           unitPrice[33m:[39m [33mNumber[39m(item[33m.[39mprice)[33m,[39m
+   [90m 552 |[39m           subtotal[33m:[39m item[33m.[39msubtotal[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/categories/categories.service.ts:28:9[39m[22m
+TS2322: Type 'string | null' is not assignable to type 'number | null | undefined'.
+  Type 'string' is not assignable to type 'number'.
+  [0m [90m 26 |[39m         sort_order[33m:[39m createCategoryDto[33m.[39mdisplayOrder [33m?[39m[33m?[39m [35m0[39m[33m,[39m
+   [90m 27 |[39m         isActive[33m:[39m createCategoryDto[33m.[39misActive [33m?[39m[33m?[39m [36mtrue[39m[33m,[39m
+  [31m[1m>[22m[39m[90m 28 |[39m         parent_id[33m:[39m createCategoryDto[33m.[39mparentId [33m?[39m[33m?[39m [36mnull[39m[33m,[39m
+   [90m    |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 29 |[39m       }[33m,[39m
+   [90m 30 |[39m     })[33m;[39m
+   [90m 31 |[39m   }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:12:40[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 10 |[39m   [36masync[39m create(createDepartmentDto[33m:[39m [33mCreateDepartmentDto[39m) {
+   [90m 11 |[39m     [90m// Check if slug already exists[39m
+  [31m[1m>[22m[39m[90m 12 |[39m     [36mconst[39m existing [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mfindUnique({
+   [90m    |[39m                                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 13 |[39m       where[33m:[39m { slug[33m:[39m createDepartmentDto[33m.[39mslug }[33m,[39m
+   [90m 14 |[39m     })[33m;[39m
+   [90m 15 |[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:20:24[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 18 |[39m     }
+   [90m 19 |[39m
+  [31m[1m>[22m[39m[90m 20 |[39m     [36mreturn[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mcreate({
+   [90m    |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 21 |[39m       data[33m:[39m createDepartmentDto[33m,[39m
+   [90m 22 |[39m     })[33m;[39m
+   [90m 23 |[39m   }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:26:24[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 24 |[39m
+   [90m 25 |[39m   [36masync[39m findAll() {
+  [31m[1m>[22m[39m[90m 26 |[39m     [36mreturn[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mfindMany({
+   [90m    |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 27 |[39m       include[33m:[39m {
+   [90m 28 |[39m         _count[33m:[39m {
+   [90m 29 |[39m           select[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:39:42[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 37 |[39m
+   [90m 38 |[39m   [36masync[39m findOne(id[33m:[39m string) {
+  [31m[1m>[22m[39m[90m 39 |[39m     [36mconst[39m department [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mfindUnique({
+   [90m    |[39m                                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 40 |[39m       where[33m:[39m { id }[33m,[39m
+   [90m 41 |[39m       include[33m:[39m {
+   [90m 42 |[39m         categories[33m:[39m [36mtrue[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:59:42[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 57 |[39m
+   [90m 58 |[39m   [36masync[39m update(id[33m:[39m string[33m,[39m updateDepartmentDto[33m:[39m [33mUpdateDepartmentDto[39m) {
+  [31m[1m>[22m[39m[90m 59 |[39m     [36mconst[39m department [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mfindUnique({
+   [90m    |[39m                                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 60 |[39m       where[33m:[39m { id }[33m,[39m
+   [90m 61 |[39m     })[33m;[39m
+   [90m 62 |[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:69:42[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 67 |[39m     [90m// Check slug uniqueness if slug is being updated[39m
+   [90m 68 |[39m     [36mif[39m (updateDepartmentDto[33m.[39mslug [33m&&[39m updateDepartmentDto[33m.[39mslug [33m!==[39m department[33m.[39mslug) {
+  [31m[1m>[22m[39m[90m 69 |[39m       [36mconst[39m existing [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mfindUnique({
+   [90m    |[39m                                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 70 |[39m         where[33m:[39m { slug[33m:[39m updateDepartmentDto[33m.[39mslug }[33m,[39m
+   [90m 71 |[39m       })[33m;[39m
+   [90m 72 |[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:78:24[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 76 |[39m     }
+   [90m 77 |[39m
+  [31m[1m>[22m[39m[90m 78 |[39m     [36mreturn[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mupdate({
+   [90m    |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 79 |[39m       where[33m:[39m { id }[33m,[39m
+   [90m 80 |[39m       data[33m:[39m updateDepartmentDto[33m,[39m
+   [90m 81 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:85:42[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 83 |[39m
+   [90m 84 |[39m   [36masync[39m remove(id[33m:[39m string) {
+  [31m[1m>[22m[39m[90m 85 |[39m     [36mconst[39m department [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39mfindUnique({
+   [90m    |[39m                                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 86 |[39m       where[33m:[39m { id }[33m,[39m
+   [90m 87 |[39m       include[33m:[39m {
+   [90m 88 |[39m         _count[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/departments/departments.service.ts:106:23[39m[22m
+TS2339: Property 'department' does not exist on type 'PrismaService'.
+  [0m [90m 104 |[39m     }
+   [90m 105 |[39m
+  [31m[1m>[22m[39m[90m 106 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mdepartment[33m.[39m[36mdelete[39m({
+   [90m     |[39m                       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 107 |[39m       where[33m:[39m { id }[33m,[39m
+   [90m 108 |[39m     })[33m;[39m
+   [90m 109 |[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./test/products-admin-auth.e2e-spec.ts:82:7[39m[22m
+TS2322: Type '{ name: string; description: string; }' is not assignable to type '(Without<CategoryCreateInput, CategoryUncheckedCreateInput> & CategoryUncheckedCreateInput) | (Without<...> & CategoryCreateInput)'.
+  Type '{ name: string; description: string; }' is not assignable to type 'Without<CategoryUncheckedCreateInput, CategoryCreateInput> & CategoryCreateInput'.
+    Property 'slug' is missing in type '{ name: string; description: string; }' but required in type 'CategoryCreateInput'.
+  [0m [90m 80 |[39m     [90m// Create test category and brand for product creation[39m
+   [90m 81 |[39m     [36mconst[39m testCategory [33m=[39m [36mawait[39m prisma[33m.[39mcategory[33m.[39mcreate({
+  [31m[1m>[22m[39m[90m 82 |[39m       data[33m:[39m {
+   [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 83 |[39m         name[33m:[39m [32m`Test Category ${timestamp}`[39m[33m,[39m
+   [90m 84 |[39m         description[33m:[39m [32m`Test Category EN ${timestamp}`[39m[33m,[39m
+   [90m 85 |[39m       }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./test/products-admin-auth.e2e-spec.ts:90:7[39m[22m
+TS2322: Type '{ name: string; description: string; }' is not assignable to type '(Without<BrandCreateInput, BrandUncheckedCreateInput> & BrandUncheckedCreateInput) | (Without<...> & BrandCreateInput)'.
+  Type '{ name: string; description: string; }' is not assignable to type 'Without<BrandUncheckedCreateInput, BrandCreateInput> & BrandCreateInput'.
+    Property 'slug' is missing in type '{ name: string; description: string; }' but required in type 'BrandCreateInput'.
+  [0m [90m 88 |[39m
+   [90m 89 |[39m     [36mconst[39m testBrand [33m=[39m [36mawait[39m prisma[33m.[39mbrand[33m.[39mcreate({
+  [31m[1m>[22m[39m[90m 90 |[39m       data[33m:[39m {
+   [90m    |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 91 |[39m         name[33m:[39m [32m`Test Brand ${timestamp}`[39m[33m,[39m
+   [90m 92 |[39m         description[33m:[39m [32m`Test Brand EN ${timestamp}`[39m[33m,[39m
+   [90m 93 |[39m       }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./test/products-admin-auth.e2e-spec.ts:99:7[39m[22m
+TS2322: Type '{ sku: string; productName: string; description: string; categoryId: number; brandId: number; }' is not assignable to type '(Without<ProductCreateInput, ProductUncheckedCreateInput> & ProductUncheckedCreateInput) | (Without<...> & ProductCreateInput)'.
+  Type '{ sku: string; productName: string; description: string; categoryId: number; brandId: number; }' is not assignable to type 'Without<ProductCreateInput, ProductUncheckedCreateInput> & ProductUncheckedCreateInput'.
+    Property 'slug' is missing in type '{ sku: string; productName: string; description: string; categoryId: number; brandId: number; }' but required in type 'ProductUncheckedCreateInput'.
+  [0m [90m  97 |[39m     [90m// Create a test product for update/delete tests[39m
+   [90m  98 |[39m     [36mconst[39m testProduct [33m=[39m [36mawait[39m prisma[33m.[39mproduct[33m.[39mcreate({
+  [31m[1m>[22m[39m[90m  99 |[39m       data[33m:[39m {
+   [90m     |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 100 |[39m         sku[33m:[39m [32m`test-product-${timestamp}`[39m[33m,[39m
+   [90m 101 |[39m         productName[33m:[39m [32m'Test Product for E2E'[39m[33m,[39m
+   [90m 102 |[39m         description[33m:[39m [32m'Test product description'[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./test/products-admin-auth.e2e-spec.ts:252:9[39m[22m
+TS2322: Type '{ sku: string; productName: string; description: string; categoryId: number; brandId: number; }' is not assignable to type '(Without<ProductCreateInput, ProductUncheckedCreateInput> & ProductUncheckedCreateInput) | (Without<...> & ProductCreateInput)'.
+  Type '{ sku: string; productName: string; description: string; categoryId: number; brandId: number; }' is not assignable to type 'Without<ProductCreateInput, ProductUncheckedCreateInput> & ProductUncheckedCreateInput'.
+    Property 'slug' is missing in type '{ sku: string; productName: string; description: string; categoryId: number; brandId: number; }' but required in type 'ProductUncheckedCreateInput'.
+  [0m [90m 250 |[39m       [90m// Create a product to delete in each test[39m
+   [90m 251 |[39m       [36mconst[39m product [33m=[39m [36mawait[39m prisma[33m.[39mproduct[33m.[39mcreate({
+  [31m[1m>[22m[39m[90m 252 |[39m         data[33m:[39m {
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 253 |[39m           sku[33m:[39m [32m'test-product-delete-'[39m [33m+[39m [33mDate[39m[33m.[39mnow()[33m,[39m
+   [90m 254 |[39m           productName[33m:[39m [32m'Product to Delete'[39m[33m,[39m
+   [90m 255 |[39m           description[33m:[39m [32m'This product will be deleted'[39m[33m,[39m[0m
+
+webpack 5.97.1 compiled with [1m[31m45 errors[39m[22m in 4020 ms

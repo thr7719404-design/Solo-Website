@@ -1,0 +1,16 @@
+<svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Recycling Symbol -->
+  <path d="M320 150 L380 230 L350 230 L350 280 L280 370 L250 340 L290 280 L260 280 Z" fill="#000000"/>
+  <path d="M380 370 L420 450 L380 450 L330 450 L280 370 L310 340 L350 390 L350 370 Z" fill="#000000"/>
+  <path d="M260 450 L200 370 L230 340 L280 390 L280 450 L260 450 Z" fill="#000000"/>
+  
+  <!-- Arrows forming triangle -->
+  <path d="M 320 140 L 260 250 L 300 250 L 300 280 L 340 280 L 340 250 L 380 250 Z" fill="#000000"/>
+  <path d="M 400 360 L 440 470 L 400 470 L 320 470 L 280 360 L 320 360 L 360 430 L 360 360 Z" fill="#000000"/>
+  <path d="M 240 470 L 180 360 L 220 360 L 280 360 L 280 430 L 240 430 Z" fill="#000000"/>
+  
+  <!-- Text -->
+  <text x="320" y="520" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#000000">Collation</text>
+  <text x="320" y="570" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#000000">Formation</text>
+  <text x="320" y="620" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#000000">Curation</text>
+</svg>
