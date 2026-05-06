@@ -355,7 +355,9 @@ export default function AdminProductsPage() {
   useEffect(loadProducts, [page, search, filterStatus, filterStock, filterCategory, filterTag, limit, sortBy]);
 
   const loadLookups = () => {
-    if (lookupsLoaded) return;
+    // Always refetch: admins frequently toggle subcategory isActive in
+    // another tab and re-open the product drawer; without a refresh the
+    // checklist would silently omit the newly-active subcategory.
     Promise.all([categoriesApi.getAll({ includeSubcategories: true }), brandsApi.getAll()]).then(([c, b]) => {
       setCategories(Array.isArray(c) ? c : []);
       setBrands(Array.isArray(b) ? b : []);
