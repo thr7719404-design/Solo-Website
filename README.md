@@ -1,174 +1,150 @@
-# 🛍️ Solo Ecommerce Platform
+# Solo Ecommerce
 
-A secure, production-grade ecommerce application built with Flutter (Web + Mobile) and NestJS backend.
+Production e-commerce platform for the MENA market. Headless **NestJS** API + **React (Vite)** SPA, deployed on **Azure Container Apps** + **Azure Static Web Apps**, backed by **Azure Database for PostgreSQL Flexible Server** (Prisma ORM).
 
-[![Status](https://img.shields.io/badge/Status-Foundation%20Complete-success)]()
-[![Security](https://img.shields.io/badge/Security-OWASP%20Compliant-blue)]()
-[![License](https://img.shields.io/badge/License-Proprietary-red)]()
+> **Status:** Live in production. Core checkout, BNPL (Tabby + Tamara), Stripe, returns/RMA, loyalty, admin CMS all operational.
 
-## 🎯 Project Status
+---
 
-**✅ FOUNDATION COMPLETE - READY FOR ACTIVE DEVELOPMENT**
-
-All architectural decisions made, security configured, database schema defined, and project structure ready. Start implementing features immediately!
-
-## ⚡ New to This Project?
-
-👉 **[START HERE - Get Running in 15 Minutes](START_HERE.md)** 👈
-
-Quick start guide to get backend + frontend running, then choose your development path.
-
-## 🏗️ Architecture
+## Architecture
 
 ```
-Solo/
-├── frontend/          # Flutter application (Web primary, Android/iOS optional)
-├── backend/           # NestJS + TypeScript + PostgreSQL + Prisma
-├── SECURITY.md        # Security guidelines (OWASP Top 10 + ASVS Level 2)
-├── SETUP_GUIDE.md     # Complete setup instructions
-├── ARCHITECTURE.md    # System architecture & roadmap
-├── QUICK_START.md     # Developer quick reference
-└── PROJECT_SUMMARY.md # What's built & next steps
+┌─────────────────────┐        ┌──────────────────────────┐        ┌────────────────────┐
+│  React SPA (Vite)   │ HTTPS  │  NestJS API              │ TLS    │  PostgreSQL 15     │
+│  Azure Static Web   │ ─────► │  Azure Container Apps    │ ─────► │  Flexible Server   │
+│  Apps (CDN edge)    │        │  (auto-scale, 2+ replicas)│        │  PITR 30d          │
+└─────────────────────┘        └──────────────────────────┘        └────────────────────┘
+                                          │
+                                          ├──► Stripe API   (circuit-broken)
+                                          ├──► Tabby API    (circuit-broken)
+                                          ├──► Tamara API   (circuit-broken)
+                                          ├──► SMTP         (circuit-broken)
+                                          └──► Application Insights (OTel traces, 50% sampling)
 ```
 
-## 🔒 Security Standards
+- **Auth**: JWT + Passport, argon2 password hashing, role-based admin guard.
+- **Payments**: Stripe + Tabby + Tamara with webhook signature verification + idempotency table.
+- **Resilience**: opossum circuit breakers around every outbound integration; structured `pino` logs with `x-request-id` correlation.
+- **Observability**: Azure Monitor / OpenTelemetry auto-instrumentation (HTTP + Postgres).
+- **Security**: Helmet, CORS allowlist, `@nestjs/throttler` rate limiting, Joi env validation, `npm audit` + Dependabot in CI.
 
-- **OWASP Top 10 2021**: Primary risk mitigation baseline
-- **OWASP ASVS 4.0 Level 2**: Security verification standard for transactional apps
+Full details: [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITY.md](SECURITY.md), [BACKEND_API_DOCUMENTATION.md](BACKEND_API_DOCUMENTATION.md).
 
-## 🛍️ Product Departments
+---
 
-1. Accessories
-2. Tableware
-3. Kitchenware
-4. Outdoor
-5. Furniture
-6. On-the-Go
-7. Packages (curated bundles)
+## Repository Layout
 
-## 🚀 Quick Start
+```
+.
+├── backend/              # NestJS API (TypeScript, Prisma, Jest)
+│   ├── src/              #   feature modules: auth, products, orders, stripe, bnpl, ...
+│   ├── prisma/           #   schema, migrations, seeds
+│   ├── scripts/          #   ops scripts (diagnostics/, fixes/, sql/, excel/)
+│   └── Dockerfile
+├── frontend-react/       # React 18 + Vite SPA
+│   └── src/              #   pages, components, hooks, store (zustand)
+├── infra/                # Bicep IaC for Azure (azd-managed)
+│   ├── main.bicep
+│   └── main.parameters.json
+├── .github/
+│   ├── workflows/        # CI: backend-check, SWA deploy
+│   ├── dependabot.yml
+│   └── CODEOWNERS
+├── azure.yaml            # azd service definitions
+└── docker-compose.yml    # local Postgres + backend
+```
 
-**New to the project?** Start here:
+---
 
-1. **Read First:** [`PROJECT_SUMMARY.md`](PROJECT_SUMMARY.md) - What's built & what's next
-2. **Setup Guide:** [`SETUP_GUIDE.md`](SETUP_GUIDE.md) - Detailed step-by-step instructions
-3. **Quick Reference:** [`QUICK_START.md`](QUICK_START.md) - Common commands & tasks
+## Prerequisites
 
-### Instant Start (5 Minutes)
+- **Node.js 20+** and **npm 10+**
+- **Docker Desktop** (for local Postgres via `docker-compose`)
+- **Azure CLI** + **azd** (for cloud deploy)
+- PostgreSQL client (`psql`) for ad-hoc queries
+
+---
+
+## Local Development
 
 ```powershell
-# Backend
-cd backend
-npm install
-cp .env.example .env
-# Edit .env with your database credentials
-npx prisma generate
-npx prisma migrate dev
-npm run start:dev
+# 1. Boot local Postgres
+docker compose up -d db
 
-# Frontend (new terminal)
-cd frontend
-flutter pub get
-flutter run -d chrome
+# 2. Backend
+cd backend
+copy .env.example .env       # then edit DATABASE_URL, JWT_SECRET, STRIPE_*, etc.
+npm install
+npx prisma migrate deploy
+npm run start:dev            # http://localhost:3000/api  (Swagger: /api/docs)
+
+# 3. Frontend (new terminal)
+cd frontend-react
+npm install
+npm run dev                  # http://localhost:5173
 ```
 
-**Detailed instructions available in [`SETUP_GUIDE.md`](SETUP_GUIDE.md)**
+Health checks: `GET /api/health/live`, `GET /api/health/ready`.
 
-## 📦 Tech Stack
+---
 
-### Frontend
-- **Framework**: Flutter 3.16+
-- **State Management**: Riverpod
-- **Routing**: go_router
-- **HTTP Client**: Dio (with SSL pinning)
-- **Design**: Material 3
+## Deployment
 
-### Backend
-- **Framework**: NestJS
-- **Language**: TypeScript
-- **Database**: PostgreSQL 15+
-- **ORM**: Prisma
-- **Auth**: JWT (access + refresh tokens)
-- **Validation**: class-validator
+Azure infrastructure and application deploys are managed via **azd**:
 
-## 🔐 Security Features
+```powershell
+azd auth login
+azd env select <env-name>    # or `azd env new` first time
+azd provision                # apply Bicep changes (idempotent)
+azd deploy backend           # build container, push to ACR, roll Container App
+azd deploy frontend          # build SPA, upload to Static Web Apps
+```
 
-### Backend
-- HTTPS enforcement with HSTS
-- Security headers (CSP, X-Frame-Options, etc.)
-- JWT-based authentication
-- Argon2id password hashing
-- Rate limiting on sensitive endpoints
-- Input validation with DTOs
-- Parameterized queries via Prisma
-- Role-based access control (RBAC)
+Secrets (`STRIPE_SECRET_KEY`, `JWT_SECRET`, `ADMIN_PASSWORD`, etc.) live in azd env vars and are wired to Container App `secretRef`s by `infra/main.bicep`. Never commit secrets — `.env*` and `token.txt` are git-ignored.
 
-### Frontend
-- No hardcoded secrets
-- Secure storage (Keychain/Keystore)
-- SSL certificate pinning
-- Code obfuscation in release builds
-- HTTPS-only communication
+---
 
-## 📱 Features
+## Testing
 
-### Storefront
-- Amazon-style navigation
-- Advanced search with typeahead
-- Department & category browsing
-- Product detail pages
-- Shopping cart
-- Multi-step checkout
-- User accounts & order history
-- Package bundles
+```powershell
+cd backend
+npm test                     # Jest unit
+npm run test:e2e             # supertest e2e
+npm run lint
+npm audit --audit-level=high
+```
 
-### Admin Portal
-- Dashboard with analytics
-- Catalog management (products, categories, brands)
-- Order management
-- Customer management
-- Promo codes
-- Content management (banners, blocks)
-- Rich analytics:
-  - Sales & revenue tracking
-  - Conversion funnels
-  - Product performance
-  - Search analytics
+CI runs the same on every PR via `.github/workflows/backend-check.yml`.
 
-## 📚 Documentation
+---
 
-| Document | Description |
-|----------|-------------|
-| [`PROJECT_SUMMARY.md`](PROJECT_SUMMARY.md) | **Start here!** What's built, what's next, project value |
-| [`SETUP_GUIDE.md`](SETUP_GUIDE.md) | Complete step-by-step setup instructions (20 pages) |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | System architecture, data models, roadmap (12 pages) |
-| [`SECURITY.md`](SECURITY.md) | Security guidelines, OWASP compliance (15 pages) |
-| [`QUICK_START.md`](QUICK_START.md) | Developer quick reference & common commands |
-| [`backend/README.md`](backend/README.md) | Backend development guide & API documentation |
-| [`frontend/README.md`](frontend/README.md) | Flutter development guide & project structure |
+## Operational Scripts
 
-## ✅ What's Included
+Ad-hoc maintenance scripts live under [backend/scripts/](backend/scripts/README.md), organized by purpose:
 
-### Complete Foundation
-- ✅ Monorepo structure with backend and frontend
-- ✅ Full Prisma database schema (15 models, 800+ SKU capacity)
-- ✅ Security-first architecture (OWASP Top 10 + ASVS Level 2)
-- ✅ Authentication system (JWT + Argon2id)
-- ✅ Material 3 theme system for Flutter
-- ✅ 50+ API endpoints defined
-- ✅ Comprehensive documentation (15,000+ words)
+| Folder | Purpose |
+|---|---|
+| `scripts/diagnostics/` | Read-only DB / API inspection |
+| `scripts/fixes/` | One-off mutations — review before running |
+| `scripts/sql/` | Raw SQL (prefer Prisma migrations going forward) |
+| `scripts/excel/` | Python excel import / analysis |
 
-### Ready to Run
-- Backend: `npm install && npm run start:dev`
-- Frontend: `flutter pub get && flutter run`
-- Database: Complete schema with migrations
-- Security: Headers, rate limiting, validation configured
+These are excluded from the Docker image via `backend/.dockerignore`.
 
-### Next: Implement Features
-Follow the roadmap in [`ARCHITECTURE.md`](ARCHITECTURE.md) to implement:
-1. Backend modules (Users, Products, Cart, Orders, etc.)
-2. Flutter UI (Storefront, Account, Admin)
-3. Payment integration (Stripe)
-4. Testing & deployment
+---
 
-**Estimated time to MVP:** 8-10 weeks with dedicated development
+## Documentation Index
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — System design and module boundaries
+- [SECURITY.md](SECURITY.md) — OWASP Top 10 / ASVS Level 2 controls
+- [BACKEND_API_DOCUMENTATION.md](BACKEND_API_DOCUMENTATION.md) — REST endpoints
+- [DATABASE_COMPLETE_DOCUMENTATION.md](DATABASE_COMPLETE_DOCUMENTATION.md) — Prisma schema reference
+- [FRONTEND_ARCHITECTURE.md](FRONTEND_ARCHITECTURE.md) — React app structure
+- [DOCUMENTATION_INDEX.md](DOCUMENTATION_INDEX.md) — Full doc map
+- [README.legacy.md](README.legacy.md) — Previous Flutter-era README, kept for history
+
+---
+
+## License
+
+Proprietary — © Solo. All rights reserved.

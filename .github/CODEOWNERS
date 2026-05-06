@@ -1,0 +1,24 @@
+# CODEOWNERS — every PR auto-requests review from the listed owners.
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Order matters: later patterns take precedence over earlier ones.
+
+# Default owner for everything.
+*                               @thr7719404-design
+
+# Infrastructure & deployment
+/infra/                         @thr7719404-design
+/.github/workflows/             @thr7719404-design
+azure.yaml                      @thr7719404-design
+**/Dockerfile                   @thr7719404-design
+
+# Backend — payments, auth, security-sensitive areas
+/backend/src/auth/              @thr7719404-design
+/backend/src/stripe/            @thr7719404-design
+/backend/src/bnpl/              @thr7719404-design
+/backend/src/orders/            @thr7719404-design
+/backend/src/common/            @thr7719404-design
+/backend/prisma/                @thr7719404-design
+
+# Security policy
+SECURITY.md                     @thr7719404-design

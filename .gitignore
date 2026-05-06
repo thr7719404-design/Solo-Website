@@ -218,3 +218,7 @@ solo-website-*.html
 bulk-order-live.json
 bulk_order_payload.json
 patch_payload.json
+
+# Archify reports
+archify-report-*.html
+

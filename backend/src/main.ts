@@ -16,20 +16,13 @@ import { AppModule } from './app.module';
 // Build marker: subcategories-feature-v1 (forces image rebuild)
 
 // ============================================================================
-// PROCESS EVENT HANDLERS FOR DEBUGGING
+// PROCESS-LEVEL CRASH GUARDS
+// NestJS app.enableShutdownHooks() (called below in bootstrap) registers SIGTERM/
+// SIGINT listeners that drain in-flight HTTP requests, run OnModuleDestroy hooks
+// (Prisma $disconnect), and close the HTTP server. We only add fatal-error guards
+// here so unhandled rejections / uncaught exceptions get logged before the
+// process terminates.
 // ============================================================================
-process.on('exit', (code) => {
-  console.log('PROCESS_EXIT code=' + code);
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received');
-});
-
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received');
-});
-
 process.on('unhandledRejection', (reason, promise) => {
   console.error('UNHANDLED_REJECTION at:', promise, 'reason:', reason);
 });
@@ -150,13 +143,22 @@ async function bootstrap() {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  // 5. Graceful Shutdown
+  // 5. Graceful Shutdown — drain in-flight requests, run OnModuleDestroy
+  // hooks (Prisma $disconnect, queues, etc.), then close HTTP server.
+  // Container Apps sends SIGTERM and waits ~30s before SIGKILL.
   app.enableShutdownHooks();
 
   const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;
   console.log('ABOUT_TO_LISTEN port=' + port);
   await app.listen(port, '0.0.0.0');
   console.log('LISTENING port=' + port + ' address=0.0.0.0');
+
+  // Explicit shutdown logging so platform deploys/restarts are observable.
+  for (const sig of ['SIGTERM', 'SIGINT'] as const) {
+    process.once(sig, () => {
+      console.log(`${sig} received — draining and shutting down gracefully`);
+    });
+  }
 
   console.log(`
   ╔════════════════════════════════════════════════════════════╗
