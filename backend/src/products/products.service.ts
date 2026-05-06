@@ -261,6 +261,8 @@ export class ProductsService {
 
     // Build where clause
     const where: any = {};
+    // Soft-delete: never surface tombstoned products to any caller.
+    where.deletedAt = null;
 
     this.applyStatusFilter(where, status, isActive);
     this.applyStockFilter(where, status, inStock);
@@ -358,6 +360,21 @@ export class ProductsService {
       isNew: product.isNew,
       isBestSeller: product.isBestSeller,
       isActive: product.isActive,
+      isDiscontinued: product.isDiscontinued ?? false,
+      // Effective availability/status — single source of truth so the admin
+      // list badge reflects reality (not the raw isActive boolean alone).
+      availability: (() => {
+        if (product.isActive === false) return 'INACTIVE';
+        if (product.isDiscontinued === true) return 'DISCONTINUED';
+        if ((product.stockQty ?? 0) <= 0) return 'OUT_OF_STOCK';
+        return 'AVAILABLE';
+      })(),
+      status: (() => {
+        if (product.isActive === false) return 'draft';
+        if (product.isDiscontinued === true) return 'archived';
+        if ((product.stockQty ?? 0) <= 0) return 'out-of-stock';
+        return 'active';
+      })(),
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     }));
@@ -375,6 +392,7 @@ export class ProductsService {
   async getFeatured(limit: number = 8) {
     const products = await this.prisma.product.findMany({
       where: {
+        deletedAt: null,
         isActive: true,
         isFeatured: true,
         stockQty: { gt: 0 },
@@ -403,6 +421,7 @@ export class ProductsService {
   async getBestSellers(limit: number = 8) {
     const products = await this.prisma.product.findMany({
       where: {
+        deletedAt: null,
         isActive: true,
         isBestSeller: true,
         stockQty: { gt: 0 },
@@ -431,6 +450,7 @@ export class ProductsService {
   async getNewArrivals(limit: number = 8) {
     const products = await this.prisma.product.findMany({
       where: {
+        deletedAt: null,
         isActive: true,
         isNew: true,
         stockQty: { gt: 0 },
@@ -467,6 +487,7 @@ export class ProductsService {
     } else {
       where = { OR: [{ slug: productIdOrSlug }, { sku: productIdOrSlug }] };
     }
+    where = { AND: [where, { deletedAt: null }] };
     const product = await this.prisma.product.findFirst({
       where,
       include: {
@@ -510,6 +531,7 @@ export class ProductsService {
       const subIds = Array.from(subcategoryIds);
       const sameSubcategory = await this.prisma.product.findMany({
         where: {
+          deletedAt: null,
           isActive: true,
           stockQty: { gt: 0 },
           id: { not: product.id },
@@ -531,6 +553,7 @@ export class ProductsService {
       const catIds = Array.from(categoryIds);
       const sameCategory = await this.prisma.product.findMany({
         where: {
+          deletedAt: null,
           isActive: true,
           stockQty: { gt: 0 },
           id: { notIn: excludeIds },
@@ -552,6 +575,7 @@ export class ProductsService {
       const excludeIds = [product.id, ...relatedProducts.map(p => p.id)];
       const sameBrand = await this.prisma.product.findMany({
         where: {
+          deletedAt: null,
           isActive: true,
           stockQty: { gt: 0 },
           id: { notIn: excludeIds },
@@ -584,6 +608,8 @@ export class ProductsService {
       where = { OR: [{ slug: slugOrId }, { sku: slugOrId }] };
     }
 
+    // Soft-deleted products must not be retrievable from the public detail endpoint.
+    where = { AND: [where, { deletedAt: null }] };
     const product = await this.prisma.product.findFirst({
       where,
       include: {
@@ -1123,12 +1149,12 @@ export class ProductsService {
     this.logger.log(`Deleting product ID: ${productId}`);
 
     try {
-      // Check if product exists
+      // Check if product exists (and is not already soft-deleted)
       const existingProduct = await this.prisma.product.findUnique({
         where: { id: productId },
       });
 
-      if (!existingProduct) {
+      if (!existingProduct || (existingProduct as any).deletedAt) {
         this.logger.warn(`Product not found for deletion with ID: ${productId}`);
         throw new NotFoundException({
           message: `Product with ID ${productId} not found`,
@@ -1136,12 +1162,31 @@ export class ProductsService {
         });
       }
 
-      // Delete product (related records will cascade due to onDelete: Cascade)
-      await this.prisma.product.delete({
+      // Stock guard — a product with on-hand or reserved stock cannot be
+      // deleted. The admin must first move stock to 0 (and clear any
+      // reservations from open orders) before retiring the SKU.
+      const onHand = existingProduct.stockQty ?? 0;
+      const reserved = (existingProduct as any).reservedQty ?? 0;
+      if (onHand > 0 || reserved > 0) {
+        throw new BadRequestException({
+          message: `Cannot delete product "${existingProduct.productName}" — it still has stock (on-hand: ${onHand}, reserved: ${reserved}). Set stock to zero and clear reservations first.`,
+          code: 'PRODUCT_HAS_STOCK',
+          details: { stockQty: onHand, reservedQty: reserved },
+        });
+      }
+
+      // Soft-delete: stamp deletedAt and force isActive=false so the product
+      // disappears from every catalog/admin list, but the row (and every
+      // order_item FK to it) remains intact for sales reconciliation.
+      await this.prisma.product.update({
         where: { id: productId },
+        data: {
+          deletedAt: new Date(),
+          isActive: false,
+        } as any,
       });
 
-      this.logger.log(`Successfully deleted product ID: ${productId}, SKU: ${existingProduct.sku}`);
+      this.logger.log(`Soft-deleted product ID: ${productId}, SKU: ${existingProduct.sku}`);
 
       return {
         success: true,

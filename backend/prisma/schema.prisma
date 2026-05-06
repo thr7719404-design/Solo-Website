@@ -733,6 +733,10 @@ model Product {
   variantAttributes Json?                  @map("variant_attributes")
   variantSortOrder  Int                    @default(0) @map("variant_sort_order")
   isDefaultVariant  Boolean                @default(false) @map("is_default_variant")
+  // Soft-delete tombstone. When non-null, the product is hidden from all
+  // catalog/admin queries but retained in the DB so historical orders, sales
+  // reports and reconciliation reports stay intact.
+  deletedAt         DateTime?              @map("deleted_at") @db.Timestamp(6)
   variantAttrs      VariantAttribute[]
   categories        ProductCategory[]
   subcategoriesLinks ProductSubcategory[]
@@ -759,6 +763,7 @@ model Product {
   @@index([sku], map: "idx_products_sku")
   @@index([slug], map: "idx_products_slug")
   @@index([productGroupId], map: "idx_products_product_group_id")
+  @@index([deletedAt], map: "idx_products_deleted_at")
   @@map("products")
 }
 

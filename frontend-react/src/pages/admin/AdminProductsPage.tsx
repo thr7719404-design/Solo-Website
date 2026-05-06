@@ -551,10 +551,15 @@ export default function AdminProductsPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm('Delete this product permanently?')) return;
-    await productsApi.delete(id);
-    setProducts(prev => prev.filter(p => p.id !== id));
-    setTotal(t => t - 1);
+    if (!confirm('Delete this product?\n\nThe SKU will be retired and removed from the catalog, but kept in the database for sales reconciliation. Products with on-hand or reserved stock cannot be deleted.')) return;
+    try {
+      await productsApi.delete(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+      setTotal(t => t - 1);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? 'Unknown error';
+      alert(`Cannot delete product:\n\n${msg}`);
+    }
   };
 
   const pageNumbers = () => {
