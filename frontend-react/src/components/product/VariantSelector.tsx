@@ -23,9 +23,10 @@ export default function VariantSelector({ variants, axes }: Props) {
     ? dedupeBy(variants, v => String(v.attributes?.color ?? v.attributes?.colorName ?? v.id))
     : [];
 
-  // Show sizes that share the current colour. If that filter yields ≤1 entry
-  // (e.g. no siblings have an explicit colour, or only this product has a size),
-  // fall back to showing all distinct sizes so the picker is still useful.
+  // Show sizes that share the current colour. Only fall back to "all sizes"
+  // when no sibling matches the current colour at all (i.e. malformed data),
+  // otherwise a colour with a single size would wrongly expose every other
+  // size as if it were available.
   let sizeVariants: ProductVariantDto[] = [];
   if (hasSize) {
     const colorFiltered = hasColor
@@ -34,8 +35,8 @@ export default function VariantSelector({ variants, axes }: Props) {
           return c === currentColor;
         })
       : variants;
-    const withSize = (colorFiltered.length > 1 ? colorFiltered : variants)
-      .filter(v => v.attributes?.size != null && v.attributes?.size !== '');
+    const source = colorFiltered.length > 0 ? colorFiltered : variants;
+    const withSize = source.filter(v => v.attributes?.size != null && v.attributes?.size !== '');
     sizeVariants = dedupeBy(withSize, v => String(v.attributes?.size));
   }
 
