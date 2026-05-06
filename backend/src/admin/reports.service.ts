@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { computePromoStatus } from '../promos/promo-status.util';
 
 @Injectable()
 export class ReportsService {
@@ -444,6 +445,11 @@ export class ReportsService {
       usageCount: p.usageCount,
       usageLimit: p.usageLimit,
       isActive: p.isActive,
+      startsAt: p.startsAt,
+      expiresAt: p.expiresAt,
+      // Computed lifecycle status — UI must render this, not raw isActive,
+      // otherwise expired/exhausted codes look "Active" on the dashboard.
+      status: computePromoStatus(p),
       orderCount: promoMap.get(p.code)?.orderCount || 0,
       totalRevenue: Math.round((promoMap.get(p.code)?.totalRevenue || 0) * 100) / 100,
       totalDiscount: Math.round((promoMap.get(p.code)?.totalDiscount || 0) * 100) / 100,

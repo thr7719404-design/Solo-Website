@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePromoCodeDto, UpdatePromoCodeDto } from './dto/promo-code.dto';
 import { PromoType } from '@prisma/client';
+import { computePromoStatus } from './promo-status.util';
 
 @Injectable()
 export class PromosService {
@@ -226,6 +227,9 @@ export class PromosService {
       usageLimit: promo.usageLimit,
       usageCount: promo.usageCount,
       isActive: promo.isActive,
+      // Effective lifecycle status (ACTIVE | INACTIVE | EXPIRED | EXHAUSTED | SCHEDULED)
+      // — single source of truth so admin UI never disagrees with reality.
+      status: computePromoStatus(promo),
       startsAt: promo.startsAt,
       expiresAt: promo.expiresAt,
       createdAt: promo.createdAt,

@@ -683,18 +683,32 @@ export default function AdminDashboardPage() {
                 <tr><th>Code</th><th>Type</th><th>Value</th><th>Usage</th><th>Orders</th><th>Revenue</th><th>Discount</th><th>Status</th></tr>
               </thead>
               <tbody>
-                {report!.promos.slice(0, 10).map(p => (
-                  <tr key={p.id}>
-                    <td style={{ fontWeight: 700 }}>{p.code}</td>
-                    <td>{p.discountType}</td>
-                    <td>{p.discountType === 'PERCENTAGE' ? `${p.discountValue}%` : `AED ${fmt(p.discountValue)}`}</td>
-                    <td>{p.usageCount}{p.usageLimit ? ` / ${p.usageLimit}` : ''}</td>
-                    <td>{p.orderCount}</td>
-                    <td style={{ fontWeight: 600 }}>AED {fmt(p.totalRevenue)}</td>
-                    <td style={{ color: 'var(--admin-rose)' }}>AED {fmt(p.totalDiscount)}</td>
-                    <td><span className={`${styles['table-tag']} ${p.isActive ? styles['table-tag-green'] : styles['table-tag-gray']}`}>{p.isActive ? 'Active' : 'Inactive'}</span></td>
-                  </tr>
-                ))}
+                {report!.promos.slice(0, 10).map(p => {
+                  // Effective status from backend (ACTIVE | INACTIVE | EXPIRED | EXHAUSTED | SCHEDULED).
+                  // Fallback to isActive only if backend hasn't been redeployed yet.
+                  const status: string = (p as any).status ?? (p.isActive ? 'ACTIVE' : 'INACTIVE');
+                  const tagClass =
+                    status === 'ACTIVE'    ? styles['table-tag-green'] :
+                    status === 'SCHEDULED' ? styles['table-tag-amber'] :
+                    status === 'EXPIRED'   ? styles['table-tag-red']   :
+                    status === 'EXHAUSTED' ? styles['table-tag-amber'] :
+                                             styles['table-tag-gray']; // INACTIVE
+                  const label =
+                    status === 'EXHAUSTED' ? 'Used Up' :
+                    status.charAt(0) + status.slice(1).toLowerCase();
+                  return (
+                    <tr key={p.id}>
+                      <td style={{ fontWeight: 700 }}>{p.code}</td>
+                      <td>{p.discountType}</td>
+                      <td>{p.discountType === 'PERCENTAGE' ? `${p.discountValue}%` : `AED ${fmt(p.discountValue)}`}</td>
+                      <td>{p.usageCount}{p.usageLimit ? ` / ${p.usageLimit}` : ''}</td>
+                      <td>{p.orderCount}</td>
+                      <td style={{ fontWeight: 600 }}>AED {fmt(p.totalRevenue)}</td>
+                      <td style={{ color: 'var(--admin-rose)' }}>AED {fmt(p.totalDiscount)}</td>
+                      <td><span className={`${styles['table-tag']} ${tagClass}`}>{label}</span></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

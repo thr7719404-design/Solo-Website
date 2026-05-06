@@ -111,7 +111,7 @@ export default function AdminPromoCodesPage() {
     }
   }, []);
 
-  const activeCount = promos.filter(p => p.isActive).length;
+  const activeCount = promos.filter(p => (p.status ?? (p.isActive ? 'ACTIVE' : 'INACTIVE')) === 'ACTIVE'?? (p.isActive ? 'ACTIVE' : 'INACTIVE')) === 'ACTIVE').length;
   const totalUses = promos.reduce((s, p) => s + (p.usageCount ?? 0), 0);
 
   return (
@@ -152,7 +152,9 @@ export default function AdminPromoCodesPage() {
                 <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No promo codes yet</td></tr>
               ) : (
                 promos.map(p => {
-                  const expired = p.expiresAt && new Date(p.expiresAt) < new Date();
+                  const status: string = p.status ?? (p.isActive ? 'ACTIVE' : 'INACTIVE');
+                  const expired = status === 'EXPIRED';
+                  const exhausted = status === 'EXHAUSTED';
                   return (
                     <tr key={p.id}>
                       <td>
@@ -166,7 +168,19 @@ export default function AdminPromoCodesPage() {
                         return `AED ${p.value}`;
                       })()}</td>
                       <td>{p.minOrderAmount ? `AED ${p.minOrderAmount}` : '—'}</td>
-                      <td>{p.usageCount ?? 0}{p.usageLimit ? ` / ${p.usageLimit}` : ''}</td>
+                      <td>
+                        <span style={{ color: exhausted ? 'var(--admin-rose)' : undefined, fontWeight: exhausted ? 600 : undefined }}>
+                          {p.usageCount ?? 0}{p.usageLimit ? ` / ${p.usageLimit}` : ''}
+                        </span>
+                        {exhausted && <span className={`${styles['table-tag']} ${styles['table-tag-red']}`} style={{ marginLeft: 6 }}>Used Up</span>}
+                      
+                      <td>{p.minOrderAmount ? `AED ${p.minOrderAmount}` : '—'}</td>
+                      <td>
+                        <span style={{ color: exhausted ? 'var(--admin-rose)' : undefined, fontWeight: exhausted ? 600 : undefined }}>
+                          {p.usageCount ?? 0}{p.usageLimit ? ` / ${p.usageLimit}` : ''}
+                        </span>
+                        {exhausted && <span className={`${styles['table-tag']} ${styles['table-tag-red']}`} style={{ marginLeft: 6 }}>Used Up</span>}
+                      </td>
                       <td>
                         {p.expiresAt ? (
                           <span className={`${styles['table-tag']} ${expired ? styles['table-tag-red'] : styles['table-tag-green']}`}>
