@@ -242,22 +242,52 @@ export default function AdminProductGroupDetailPage() {
           </div>
           {searching && <div style={{ marginTop: 8, fontSize: 12 }}>Searching…</div>}
           {searchResults.length > 0 && (
-            <div style={{ marginTop: 8, border: '1px solid var(--border, #e0e0e0)', borderRadius: 8, maxWidth: 480 }}>
-              {searchResults.map(p => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => addVariant(Number(p.id))}
-                  style={{
-                    display: 'block', width: '100%', textAlign: 'left',
-                    padding: '8px 12px', background: 'transparent', border: 'none',
-                    borderBottom: '1px solid var(--border, #f0f0f0)', cursor: 'pointer',
-                  }}
-                >
-                  <strong>{p.productName}</strong>{' '}
-                  <span style={{ fontSize: 12, color: '#888' }}>· {p.sku}</span>
-                </button>
-              ))}
+            <div style={{ marginTop: 8, border: '1px solid var(--border, #e0e0e0)', borderRadius: 8, maxWidth: 560, maxHeight: 420, overflowY: 'auto' }}>
+              {searchResults.map(p => {
+                const img = p.imageUrl || p.images?.[0]?.url;
+                const desc = p.shortDescription || p.description || '';
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => addVariant(Number(p.id))}
+                    style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
+                      width: '100%', textAlign: 'left',
+                      padding: '8px 12px', background: 'transparent', border: 'none',
+                      borderBottom: '1px solid var(--border, #f0f0f0)', cursor: 'pointer',
+                    }}
+                  >
+                    <img
+                      src={img || '/placeholder.svg'}
+                      alt=""
+                      style={{
+                        width: 44, height: 44, objectFit: 'cover',
+                        borderRadius: 6, flexShrink: 0,
+                        background: '#f3f4f6', border: '1px solid #e5e7eb',
+                      }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
+                    />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.name || '(unnamed product)'}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                        SKU: <code>{p.sku ?? '—'}</code>
+                      </div>
+                      {desc && (
+                        <div style={{
+                          fontSize: 11, color: '#6b7280', marginTop: 3,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}>
+                          {desc}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>
