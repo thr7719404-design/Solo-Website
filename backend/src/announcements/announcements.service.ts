@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
+import { computeAnnouncementStatus } from './announcement-status.util';
 
 @Injectable()
 export class AnnouncementsService {
@@ -82,12 +83,16 @@ export class AnnouncementsService {
     const page = opts?.page ?? 1;
     const limit = opts?.limit ?? 100;
     const skip = (page - 1) * limit;
-    return this.prisma.announcement.findMany({
+    const rows = await this.prisma.announcement.findMany({
       include: { promoCode: true },
       orderBy: { sortOrder: 'asc' },
       skip,
       take: limit,
     });
+    // Attach computed lifecycle status (LIVE / SCHEDULED / EXPIRED / INACTIVE)
+    // so the admin UI can render a single honest pill instead of guessing from
+    // raw timestamps.
+    return rows.map((a) => ({ ...a, status: computeAnnouncementStatus(a) }));
   }
 
   /** Admin: get one */

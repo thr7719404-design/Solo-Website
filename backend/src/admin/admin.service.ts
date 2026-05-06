@@ -90,9 +90,20 @@ export class AdminService {
       // Low stock products (placeholder - would need inventory integration)
       this.getLowStockProducts(5),
 
-      // Banner stats
+      // Banner stats: "active" must mean LIVE RIGHT NOW, not just isActive=true.
+      // Mirror getActiveBanners() filter so the dashboard tile matches reality.
       Promise.all([
-        this.prisma.banner.count({ where: { isActive: true } }),
+        this.prisma.banner.count({
+          where: {
+            isActive: true,
+            OR: [
+              { startAt: null, endAt: null },
+              { startAt: { lte: now }, endAt: { gte: now } },
+              { startAt: { lte: now }, endAt: null },
+              { startAt: null, endAt: { gte: now } },
+            ],
+          },
+        }),
         this.prisma.banner.count(),
       ]),
 
@@ -134,24 +145,30 @@ export class AdminService {
    * Uses inventory schema tables (Category, Brand, Product)
    */
   private async getCatalogSummary(): Promise<CatalogSummaryDto> {
+    // Compute low-stock from real product data, honouring per-product
+    // `lowStockAlert` thresholds instead of a hard-coded number.
+    const productsForStock = await this.prisma.product.findMany({
+      where: { isActive: true, isDiscontinued: false },
+      select: { stockQty: true, lowStockAlert: true },
+    });
+    const lowStockCount = productsForStock.filter(
+      (p) => p.stockQty > 0 && p.stockQty <= (p.lowStockAlert ?? 5),
+    ).length;
+
     const [
       totalCategories,
       totalBrands,
       totalProducts,
       activeProducts,
       featuredProducts,
-      lowStockCountResult,
     ] = await Promise.all([
       this.prisma.category.count(),
       this.prisma.brand.count(),
       this.prisma.product.count(),
-      this.prisma.product.count({ where: { isActive: true } }),
-      this.prisma.product.count({ where: { isFeatured: true } }),
-      // Low stock count placeholder - inventory tracking not yet implemented
-      Promise.resolve(0),
+      // "Active" means truly sellable: admin-active AND not discontinued.
+      this.prisma.product.count({ where: { isActive: true, isDiscontinued: false } }),
+      this.prisma.product.count({ where: { isFeatured: true, isActive: true, isDiscontinued: false } }),
     ]);
-
-    const lowStockCount = Number(lowStockCountResult ?? 0);
 
     return {
       totalCategories,
@@ -287,11 +304,32 @@ export class AdminService {
   }
 
   /**
-   * Get low stock products based on product stock_quantity field
+   * Get low stock products based on per-product `lowStockAlert` threshold.
    */
   private async getLowStockProducts(limit: number): Promise<LowStockProductDto[]> {
-    // Return empty list - inventory tracking not yet implemented
-    return [];
+    const products = await this.prisma.product.findMany({
+      where: { isActive: true, isDiscontinued: false },
+      select: {
+        id: true,
+        productName: true,
+        sku: true,
+        stockQty: true,
+        lowStockAlert: true,
+        images: { orderBy: { displayOrder: 'asc' }, take: 1, select: { media_asset_id: true } },
+      },
+    });
+    return products
+      .filter((p) => p.stockQty <= (p.lowStockAlert ?? 5))
+      .sort((a, b) => a.stockQty - b.stockQty)
+      .slice(0, limit)
+      .map((p) => ({
+        id: p.id.toString(),
+        sku: p.sku,
+        name: p.productName,
+        imageUrl: p.images[0]?.media_asset_id || '',
+        stock: p.stockQty,
+        threshold: p.lowStockAlert ?? 5,
+      } as LowStockProductDto));
   }
 
   /**

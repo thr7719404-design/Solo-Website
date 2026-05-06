@@ -160,6 +160,7 @@ export class ReportsService {
         productName: true,
         sku: true,
         stockQty: true,
+        lowStockAlert: true,
         isActive: true,
         product_variants: {
           where: { is_active: true },
@@ -168,9 +169,10 @@ export class ReportsService {
       },
     });
 
-    type Item = { variantId: number | null; productId: number; productName: string; sku: string; stockQty: number; isActive: boolean };
+    type Item = { variantId: number | null; productId: number; productName: string; sku: string; stockQty: number; lowStockAlert: number; isActive: boolean };
     const items: Item[] = [];
     for (const p of products) {
+      const threshold = p.lowStockAlert ?? 5;
       if (p.product_variants.length > 0) {
         for (const v of p.product_variants) {
           items.push({
@@ -179,6 +181,7 @@ export class ReportsService {
             productName: p.productName,
             sku: v.sku || p.sku,
             stockQty: v.stock_qty,
+            lowStockAlert: threshold,
             isActive: p.isActive,
           });
         }
@@ -189,14 +192,17 @@ export class ReportsService {
           productName: p.productName,
           sku: p.sku,
           stockQty: p.stockQty,
+          lowStockAlert: threshold,
           isActive: p.isActive,
         });
       }
     }
 
-    const lowStock = items.filter(v => v.stockQty <= 5 && v.stockQty > 0);
-    const outOfStock = items.filter(v => v.stockQty <= 0);
-    const healthy = items.filter(v => v.stockQty > 5);
+    // Honour each product's own lowStockAlert (default 5) instead of a magic
+    // number, so admins can configure thresholds per product.
+    const lowStock = items.filter((v) => v.stockQty <= v.lowStockAlert && v.stockQty > 0);
+    const outOfStock = items.filter((v) => v.stockQty <= 0);
+    const healthy = items.filter((v) => v.stockQty > v.lowStockAlert);
 
     const distribution = [
       { label: 'Out of Stock (0)', count: outOfStock.length },

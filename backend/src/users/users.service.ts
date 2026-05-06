@@ -37,7 +37,16 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return {
+      ...user,
+      // Effective lifecycle status (single source of truth for the UI).
+      status:
+        user.isActive === false
+          ? 'INACTIVE'
+          : !user.emailVerified
+            ? 'UNVERIFIED'
+            : 'ACTIVE',
+    };
   }
 
   async findByEmail(email: string) {

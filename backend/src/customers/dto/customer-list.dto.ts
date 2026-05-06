@@ -30,6 +30,9 @@ export class CustomerItemDto {
   email: string;
   phone: string | null;
   isActive: boolean;
+  emailVerified?: boolean;
+  /** Effective status: ACTIVE | UNVERIFIED | INACTIVE */
+  status?: 'ACTIVE' | 'UNVERIFIED' | 'INACTIVE';
   createdAt: Date;
   ordersCount: number;
   addressesCount: number;

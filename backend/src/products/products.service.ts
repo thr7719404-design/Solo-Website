@@ -687,12 +687,31 @@ export class ProductsService {
       })) || [],
       stockQty: product.stockQty ?? 0,
       inStock: (product.stockQty ?? 0) > 0,
+      lowStockAlert: product.lowStockAlert ?? 5,
       material: product.material,
       color: product.colour,
       isFeatured: product.isFeatured,
       isNew: product.isNew,
       isBestSeller: product.isBestSeller,
       isActive: product.isActive,
+      isDiscontinued: product.isDiscontinued ?? false,
+      // Single source of truth for the catalog/admin UI. Combines isActive,
+      // isDiscontinued and stockQty into one of: AVAILABLE, OUT_OF_STOCK,
+      // DISCONTINUED, INACTIVE.
+      availability: (() => {
+        if (product.isActive === false) return 'INACTIVE';
+        if (product.isDiscontinued === true) return 'DISCONTINUED';
+        if ((product.stockQty ?? 0) <= 0) return 'OUT_OF_STOCK';
+        return 'AVAILABLE';
+      })(),
+      // Legacy admin status string (kept for compatibility with the products
+      // page which renders by `status`). Now derived from the same logic.
+      status: (() => {
+        if (product.isActive === false) return 'draft';
+        if (product.isDiscontinued === true) return 'archived';
+        if ((product.stockQty ?? 0) <= 0) return 'out-of-stock';
+        return 'active';
+      })(),
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
       

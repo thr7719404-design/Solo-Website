@@ -108,13 +108,24 @@ export default function AdminCustomersPage() {
               {customers.length === 0 ? (
                 <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No customers found</td></tr>
               ) : (
-                customers.map(c => (
-                  <tr key={c.id} style={c.isActive === false ? { opacity: 0.6 } : undefined}>
+                customers.map(c => {
+                  // Backend returns computed `status` (ACTIVE/UNVERIFIED/INACTIVE).
+                  // Fall back to flag-based derivation for older payloads.
+                  const status: string = (c as any).status
+                    ?? (c.isActive === false ? 'INACTIVE'
+                      : (c as any).emailVerified === false ? 'UNVERIFIED'
+                      : 'ACTIVE');
+                  const badge =
+                    status === 'INACTIVE' ? { bg: '#fde2e2', fg: '#a02020', label: 'INACTIVE' } :
+                    status === 'UNVERIFIED' ? { bg: '#fef3c7', fg: '#92400e', label: 'UNVERIFIED' } :
+                    null;
+                  return (
+                  <tr key={c.id} style={status !== 'ACTIVE' ? { opacity: 0.7 } : undefined}>
                     <td>
                       <div className={styles['table-name']}>
                         {c.firstName} {c.lastName}
-                        {c.isActive === false && (
-                          <span style={{ marginLeft: 8, fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#fde2e2', color: '#a02020', fontWeight: 600 }}>INACTIVE</span>
+                        {badge && (
+                          <span style={{ marginLeft: 8, fontSize: 11, padding: '2px 6px', borderRadius: 4, background: badge.bg, color: badge.fg, fontWeight: 600 }}>{badge.label}</span>
                         )}
                       </div>
                       <div className={styles['table-sub']}>{c.role ?? 'customer'}</div>
@@ -164,7 +175,8 @@ export default function AdminCustomersPage() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

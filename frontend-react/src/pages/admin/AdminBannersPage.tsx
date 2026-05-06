@@ -211,13 +211,34 @@ export default function AdminBannersPage() {
           <div className={styles['table-v2-wrap']}>
             <table className={styles['table-v2']}>
               <thead>
-                <tr><th>Preview</th><th>Title</th><th>Position</th><th>Active</th><th>Actions</th></tr>
+                <tr><th>Preview</th><th>Title</th><th>Position</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {banners.length === 0 ? (
                   <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No banners yet</td></tr>
                 ) : (
-                  banners.map(b => (
+                  banners.map(b => {
+                    // Backend now returns a computed `status` (ACTIVE/SCHEDULED/EXPIRED/INACTIVE).
+                    // Fall back to a local computation for older payloads so the UI never lies.
+                    const now = new Date();
+                    const fallback = (() => {
+                      if (!b.isActive) return 'INACTIVE';
+                      if (b.startAt && new Date(b.startAt) > now) return 'SCHEDULED';
+                      if (b.endAt && new Date(b.endAt) < now) return 'EXPIRED';
+                      return 'ACTIVE';
+                    })();
+                    const status: string = (b as any).status ?? fallback;
+                    const tagClass =
+                      status === 'ACTIVE' ? 'table-tag-green' :
+                      status === 'SCHEDULED' ? 'table-tag-amber' :
+                      status === 'EXPIRED' ? 'table-tag-red' :
+                      'table-tag-gray';
+                    const label =
+                      status === 'ACTIVE' ? 'Live' :
+                      status === 'SCHEDULED' ? 'Scheduled' :
+                      status === 'EXPIRED' ? 'Expired' :
+                      'Inactive';
+                    return (
                     <tr key={b.id}>
                       <td>
                         {b.imageDesktopUrl ? (
@@ -230,8 +251,8 @@ export default function AdminBannersPage() {
                       </td>
                       <td><span className={`${styles['table-tag']} ${styles[posTag(b.placement)]}`}>{placementLabel(b.placement)}</span></td>
                       <td>
-                        <span className={`${styles['table-tag']} ${b.isActive ? styles['table-tag-green'] : styles['table-tag-gray']}`}>
-                          {b.isActive ? 'Active' : 'Inactive'}
+                        <span className={`${styles['table-tag']} ${styles[tagClass]}`}>
+                          {label}
                         </span>
                       </td>
                       <td>
@@ -241,7 +262,8 @@ export default function AdminBannersPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

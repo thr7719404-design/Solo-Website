@@ -7,6 +7,7 @@ import { UpdateLandingPageDto } from './dto/update-landing-page.dto';
 import { CreateLandingSectionDto } from './dto/create-landing-section.dto';
 import { UpdateLandingSectionDto } from './dto/update-landing-section.dto';
 import { UpdateLoyaltyConfigDto, LoyaltyConfigResponseDto } from './dto/loyalty-config.dto';
+import { computeBannerStatus } from './banner-status.util';
 
 @Injectable()
 export class ContentService {
@@ -166,9 +167,12 @@ export class ContentService {
   }
 
   async getAllBanners() {
-    return this.prisma.banner.findMany({
+    const banners = await this.prisma.banner.findMany({
       orderBy: { displayOrder: 'asc' },
     });
+    // Attach computed lifecycle status so the admin UI never shows an expired
+    // or scheduled banner as plain "Active".
+    return banners.map((b) => ({ ...b, status: computeBannerStatus(b) }));
   }
 
   async getBanner(id: string) {

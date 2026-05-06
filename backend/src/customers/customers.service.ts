@@ -149,6 +149,7 @@ export class CustomersService {
           lastName: true,
           phone: true,
           isActive: true,
+          emailVerified: true,
           createdAt: true,
           _count: {
             select: {
@@ -167,10 +168,13 @@ export class CustomersService {
       email: user.email,
       phone: user.phone,
       isActive: user.isActive,
+      emailVerified: user.emailVerified,
+      // Effective customer status: INACTIVE > UNVERIFIED > ACTIVE.
+      status: user.isActive === false ? 'INACTIVE' : !user.emailVerified ? 'UNVERIFIED' : 'ACTIVE',
       createdAt: user.createdAt,
       ordersCount: user._count.orders,
       addressesCount: user._count.addresses,
-    }));
+    } as CustomerItemDto));
 
     return {
       items,
@@ -193,6 +197,7 @@ export class CustomersService {
         lastName: true,
         phone: true,
         isActive: true,
+        emailVerified: true,
         createdAt: true,
         _count: {
           select: {
@@ -239,6 +244,8 @@ export class CustomersService {
       email: user.email,
       phone: user.phone,
       isActive: user.isActive,
+      emailVerified: user.emailVerified,
+      status: user.isActive === false ? 'INACTIVE' : !user.emailVerified ? 'UNVERIFIED' : 'ACTIVE',
       createdAt: user.createdAt,
       ordersCount: user._count.orders,
       addressesCount: user._count.addresses,

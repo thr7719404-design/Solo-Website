@@ -29,6 +29,8 @@ export class CustomerDetailsDto {
   email: string;
   phone: string | null;
   isActive: boolean;
+  emailVerified?: boolean;
+  status?: 'ACTIVE' | 'UNVERIFIED' | 'INACTIVE';
   createdAt: Date;
   ordersCount: number;
   addressesCount: number;
