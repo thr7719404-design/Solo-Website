@@ -281,7 +281,10 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
         }
       ]
       scale: {
-        minReplicas: 0
+        // Keep one replica always warm so first-visit users don't wait
+        // 10-20s for a Nest+Prisma cold start. Without this, scale-to-zero
+        // makes the homepage spinner hang on the first request after idle.
+        minReplicas: 1
         maxReplicas: 2
       }
     }
