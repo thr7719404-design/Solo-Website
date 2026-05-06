@@ -187,7 +187,7 @@ describe('Products Admin Authorization (e2e)', () => {
       // Clean up
       if (response.body.id) {
         await prisma.product.delete({
-          where: { id: parseInt(response.body.id) },
+          where: { id: Number.parseInt(response.body.id) },
         });
       }
     });

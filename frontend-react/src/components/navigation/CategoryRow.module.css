@@ -1,0 +1,81 @@
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  height: 40px;
+  padding: 0 16px 0 13px;
+  background: transparent;
+  border: 0;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  color: var(--menu-text);
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  transition: background-color 250ms ease,
+              color 250ms ease,
+              border-color 250ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.row:focus-visible {
+  outline: 0;
+  background: var(--menu-border);
+}
+
+.row:hover:not(.active) {
+  background: color-mix(in srgb, var(--menu-border) 40%, transparent);
+  border-left-color: color-mix(in srgb, var(--menu-accent) 30%, transparent);
+}
+
+.iconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--menu-accent) 12%, transparent);
+  color: var(--menu-accent);
+  flex: 0 0 auto;
+  transition: background-color 250ms ease, color 250ms ease;
+}
+
+.iconBox > svg {
+  width: 18px;
+  height: 18px;
+}
+
+.name {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  color: var(--menu-muted);
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 250ms ease;
+}
+
+.active {
+  background: var(--menu-active-bg);
+  color: var(--menu-active-text);
+  border-left-color: var(--menu-accent);
+}
+
+.active .iconBox {
+  background: var(--menu-accent);
+  color: #ffffff;
+}
+
+.active .chevron {
+  color: var(--menu-active-text);
+  transform: rotate(90deg);
+}

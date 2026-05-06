@@ -7,10 +7,11 @@ export class FavoritesService {
   private readonly uploadsBaseUrl: string;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {
     this.uploadsBaseUrl =
+      this.configService.get<string>('UPLOAD_BASE_URL') ||
       this.configService.get<string>('APP_URL', 'http://localhost:3000') + '/uploads';
   }
 

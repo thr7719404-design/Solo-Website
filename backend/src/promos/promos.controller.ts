@@ -25,9 +25,8 @@ export class PromosController {
   // PUBLIC ENDPOINTS
   // ===========================================================================
 
-  /** Validate a promo code (storefront use) */
+  /** Validate a promo code (storefront use — public, no auth required) */
   @Post('validate')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async validate(@Body() dto: ValidatePromoCodeDto) {
     return this.promosService.validate(dto.code, dto.orderAmount);
@@ -46,8 +45,8 @@ export class PromosController {
     @Query('limit') limit?: string,
   ) {
     return this.promosService.findAll(
-      page ? parseInt(page) : 1,
-      limit ? parseInt(limit) : 20,
+      page ? Number.parseInt(page) : 1,
+      limit ? Number.parseInt(limit) : 20,
     );
   }
 
@@ -70,8 +69,8 @@ export class PromosController {
   ) {
     return this.promosService.getPromoCodeOrders(
       id,
-      page ? parseInt(page) : 1,
-      limit ? parseInt(limit) : 20,
+      page ? Number.parseInt(page) : 1,
+      limit ? Number.parseInt(limit) : 20,
     );
   }
 

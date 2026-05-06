@@ -47,7 +47,7 @@ export default function AdminCustomerDetailPage() {
   const handleAdjustLoyalty = async () => {
     if (!id || !loyaltyAmount) return;
     try {
-      await customersApi.adjustLoyalty(id, { amountAed: parseFloat(loyaltyAmount), description: loyaltyDesc || undefined });
+      await customersApi.adjustLoyalty(id, { amountAed: Number.parseFloat(loyaltyAmount), description: loyaltyDesc || undefined });
       toast.success('Loyalty adjusted');
       setLoyaltyAmount(''); setLoyaltyDesc('');
       load();
@@ -167,7 +167,7 @@ export default function AdminCustomerDetailPage() {
               <tr key={o.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="py-2.5 pr-4"><Link to={`/admin/orders/${o.id}`} className="text-indigo-600 hover:underline">{o.orderNumber}</Link></td>
                 <td className="py-2.5 pr-4 font-medium">AED {o.total.toFixed(2)}</td>
-                <td className="py-2.5 pr-4"><span className={`text-xs px-2 py-0.5 rounded ${STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-600'}`}>{o.status.replace(/_/g, ' ')}</span></td>
+                <td className="py-2.5 pr-4"><span className={`text-xs px-2 py-0.5 rounded ${STATUS_COLORS[o.status] ?? 'bg-gray-100 text-gray-600'}`}>{o.status.replaceAll(/_/g, ' ')}</span></td>
                 <td className="py-2.5 pr-4 text-gray-400">{new Date(o.createdAt).toLocaleDateString()}</td>
               </tr>
             ))}

@@ -58,10 +58,12 @@ export class AdminController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
   ) {
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : 20;
+    const safeLimit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 100);
     return this.adminService.getOrders({
       status,
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
+      page: page ? Number.parseInt(page, 10) : 1,
+      limit: safeLimit,
       search,
     });
   }

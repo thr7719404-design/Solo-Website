@@ -60,6 +60,10 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Security audit (high severity)
+        working-directory: backend
+        run: npm audit --audit-level=high --omit=dev || echo "::warning::npm audit found high-severity issues"
+
       - name: Generate Prisma client
         working-directory: backend
         run: npx prisma generate

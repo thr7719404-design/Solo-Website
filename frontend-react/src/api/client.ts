@@ -34,6 +34,21 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Cache-busting for admin pages: ensure GET requests always hit the server with fresh data.
+  // The backend strips `_t` from query before DTO validation (see main.ts middleware),
+  // but the unique URL produces a CacheInterceptor cache miss so we get fresh data.
+  try {
+    const method = (config.method || 'get').toLowerCase();
+    const isAdminContext =
+      typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+    if (method === 'get' && isAdminContext) {
+      config.params = { ...(config.params || {}), _t: Date.now() };
+      if (config.headers) {
+        config.headers['Cache-Control'] = 'no-cache';
+        config.headers['Pragma'] = 'no-cache';
+      }
+    }
+  } catch { /* ignore */ }
   return config;
 });
 
@@ -48,46 +63,65 @@ function processQueue(error: unknown, token: string | null = null) {
   failedQueue = [];
 }
 
+function redirectToLoginIfNeeded() {
+  if (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/account')) {
+    window.location.href = '/login?session=expired';
+  }
+}
+
+function queueWhileRefreshing(originalRequest: any) {
+  return new Promise((resolve, reject) => {
+    failedQueue.push({ resolve, reject });
+  }).then((token) => {
+    originalRequest.headers.Authorization = `Bearer ${token}`;
+    return api(originalRequest);
+  });
+}
+
+async function attemptTokenRefresh(originalRequest: any, refreshToken: string) {
+  const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+  const newAccess = data.accessToken || data.tokens?.accessToken;
+  const newRefresh = data.refreshToken || data.tokens?.refreshToken;
+  if (newAccess) {
+    setTokens(newAccess, newRefresh || refreshToken);
+    originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+    processQueue(null, newAccess);
+    return api(originalRequest);
+  }
+  return null;
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        });
-      }
-      originalRequest._retry = true;
-      isRefreshing = true;
-      const refreshToken = getRefreshToken();
-      if (!refreshToken) {
-        clearTokens();
-        isRefreshing = false;
-        return Promise.reject(error);
-      }
-      try {
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-        const newAccess = data.accessToken || data.tokens?.accessToken;
-        const newRefresh = data.refreshToken || data.tokens?.refreshToken;
-        if (newAccess) {
-          setTokens(newAccess, newRefresh || refreshToken);
-          originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-          processQueue(null, newAccess);
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        clearTokens();
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      throw error as Error;
     }
-    return Promise.reject(error);
+    if (isRefreshing) {
+      return queueWhileRefreshing(originalRequest);
+    }
+    originalRequest._retry = true;
+    isRefreshing = true;
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      clearTokens();
+      isRefreshing = false;
+      redirectToLoginIfNeeded();
+      throw error as Error;
+    }
+    try {
+      const result = await attemptTokenRefresh(originalRequest, refreshToken);
+      if (result) return result;
+    } catch (refreshError) {
+      processQueue(refreshError, null);
+      clearTokens();
+      redirectToLoginIfNeeded();
+      throw refreshError as Error;
+    } finally {
+      isRefreshing = false;
+    }
+    throw error as Error;
   }
 );
 

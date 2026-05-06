@@ -21,6 +21,10 @@ param jwtAccessSecret string
 @description('JWT refresh token secret')
 param jwtRefreshSecret string
 
+@secure()
+@description('Initial admin user password (bootstrap seed). Rotate after first login.')
+param adminPassword string
+
 // ─── Variables ────────────────────────────────────────────────────
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var backendAppName = 'backend-${resourceToken}'
@@ -111,7 +115,10 @@ resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
       storageSizeGB: 32
     }
     backup: {
-      backupRetentionDays: 7
+      // 30-day retention enables a 30-day Point-in-Time-Restore window on
+      // PostgreSQL Flexible Server. Geo-redundant backup is left disabled to
+      // keep the Burstable SKU costs low; revisit if RPO requires cross-region.
+      backupRetentionDays: 30
       geoRedundantBackup: 'Disabled'
     }
     highAvailability: {
@@ -162,17 +169,23 @@ resource mediaContainer 'Microsoft.Storage/storageAccounts/blobServices/containe
   }
 }
 
-// ─── Static Web App (Frontend) ────────────────────────────────────
+// ─── Frontend Static Web App ──────────────────────────────────────
+// Canonical SWA for the frontend. The custom domain https://www.solotestsite.site
+// is bound to this resource (out-of-band hostname binding via az CLI).
 resource staticWebApp 'Microsoft.Web/staticSites@2022-09-01' = {
   name: 'swa-${resourceToken}'
   location: location
   tags: {
     'azd-service-name': 'frontend'
   }
-  properties: {}
   sku: {
     name: 'Free'
     tier: 'Free'
+  }
+  properties: {
+    stagingEnvironmentPolicy: 'Enabled'
+    allowConfigFileUpdates: true
+    provider: 'Custom'
   }
 }
 
@@ -219,6 +232,10 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
           value: jwtRefreshSecret
         }
         {
+          name: 'admin-password'
+          value: adminPassword
+        }
+        {
           name: 'azure-storage-connection-string'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
         }
@@ -256,9 +273,10 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
               value: appInsights.properties.ConnectionString
             }
             { name: 'ADMIN_EMAIL', value: 'admin@solo-ecommerce.com' }
-            { name: 'ADMIN_PASSWORD', value: 'AdminPassword123!' }
+            { name: 'ADMIN_PASSWORD', secretRef: 'admin-password' }
             { name: 'THROTTLE_TTL', value: '60' }
             { name: 'THROTTLE_LIMIT', value: '1000' }
+            { name: 'LOG_LEVEL', value: 'info' }
           ]
         }
       ]
@@ -276,4 +294,6 @@ output AZURE_CONTAINER_REGISTRY_NAME string = acr.name
 output BACKEND_URI string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
 output UPLOAD_BASE_URL string = 'https://${storageAccount.name}.blob.core.windows.net/media'
 output POSTGRES_FQDN string = postgres.properties.fullyQualifiedDomainName
-output STATIC_WEB_APP_URL string = 'https://${staticWebApp.properties.defaultHostname}'
+output STATIC_WEB_APP_URL string = 'https://www.solotestsite.site'
+output STATIC_WEB_APP_DEFAULT_HOSTNAME string = staticWebApp.properties.defaultHostname
+output STATIC_WEB_APP_NAME string = staticWebApp.name

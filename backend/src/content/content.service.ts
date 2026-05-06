@@ -10,7 +10,7 @@ import { UpdateLoyaltyConfigDto, LoyaltyConfigResponseDto } from './dto/loyalty-
 
 @Injectable()
 export class ContentService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   // ============================================================================
   // HOME PAGE METHODS
@@ -402,7 +402,7 @@ export class ContentService {
     return this.prisma.landingSection.create({
       data: {
         landingPageId: dto.landingPageId,
-        type: dto.type,
+        type: dto.type as any,
         title: dto.title,
         subtitle: dto.subtitle,
         data: dto.data,
@@ -414,6 +414,15 @@ export class ContentService {
         landingPage: true,
       },
     });
+  }
+
+  private validateJsonField(value: string | undefined, fieldName: string): void {
+    if (!value) return;
+    try {
+      JSON.parse(value);
+    } catch {
+      throw new ConflictException(`Invalid JSON format for ${fieldName} field`);
+    }
   }
 
   async updateSection(id: string, dto: UpdateLandingSectionDto) {
@@ -429,29 +438,14 @@ export class ContentService {
       }
     }
 
-    // Validate JSON data if provided
-    if (dto.data) {
-      try {
-        JSON.parse(dto.data);
-      } catch (error) {
-        throw new ConflictException('Invalid JSON format for data field');
-      }
-    }
-
-    // Validate JSON config if provided
-    if (dto.config) {
-      try {
-        JSON.parse(dto.config);
-      } catch (error) {
-        throw new ConflictException('Invalid JSON format for config field');
-      }
-    }
+    this.validateJsonField(dto.data, 'data');
+    this.validateJsonField(dto.config, 'config');
 
     return this.prisma.landingSection.update({
       where: { id },
       data: {
         ...(dto.landingPageId && { landingPageId: dto.landingPageId }),
-        ...(dto.type && { type: dto.type }),
+        ...(dto.type && { type: dto.type as any }),
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.subtitle !== undefined && { subtitle: dto.subtitle }),
         ...(dto.data && { data: dto.data }),
@@ -502,8 +496,7 @@ export class ContentService {
     });
 
     // Auto-seed if no config exists
-    if (!config) {
-      config = await this.prisma.loyaltyPageConfig.create({
+    config ??= await this.prisma.loyaltyPageConfig.create({
         data: {
           key: 'default',
           title: 'Join Our Loyalty Program',
@@ -563,7 +556,6 @@ export class ContentService {
           ],
         },
       });
-    }
 
     return {
       title: config.title,

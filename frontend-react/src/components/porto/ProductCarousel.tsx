@@ -10,7 +10,7 @@ interface Props {
   viewAllLink?: string;
 }
 
-export default function ProductCarousel({ title, products, viewAllLink }: Props) {
+export default function ProductCarousel({ title, products, viewAllLink }: Readonly<Props>) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -53,7 +53,7 @@ export default function ProductCarousel({ title, products, viewAllLink }: Props)
     <section className={styles['carousel-section']}>
       <div className={styles['carousel-header']}>
         <h2>{title}</h2>
-        {viewAllLink && <Link to={viewAllLink}>View All →</Link>}
+        {viewAllLink && <Link to={viewAllLink}>See all</Link>}
       </div>
       <div className={styles['carousel-wrapper']}>
         {canScrollLeft && (

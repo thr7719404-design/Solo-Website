@@ -1,5 +1,8 @@
 name: solo-ecommerce
 
+# Canonical frontend SWA: swa-${resourceToken} in this rg (rg-Solo-Website),
+# bound to custom domain https://www.solotestsite.site.
+
 services:
   backend:
     project: ./backend
@@ -8,7 +11,6 @@ services:
     docker:
       path: ./Dockerfile
       context: .
-
   frontend:
     project: ./frontend-react
     host: staticwebapp

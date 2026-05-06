@@ -17,7 +17,7 @@ export interface CreatePaymentMethodDto {
 
 @Injectable()
 export class PaymentMethodsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Get all payment methods for a user

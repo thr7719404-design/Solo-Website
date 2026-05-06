@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { CategoryDto, BrandDto } from '../types';
 import { categoriesApi } from '../api/categories';
 import { brandsApi } from '../api/brands';
@@ -12,7 +12,7 @@ interface CatalogContextType {
 
 const CatalogContext = createContext<CatalogContextType | null>(null);
 
-export function CatalogProvider({ children }: { children: ReactNode }) {
+export function CatalogProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [brands, setBrands] = useState<BrandDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,8 +37,13 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     load();
   }, [load]);
 
+  const value = useMemo(
+    () => ({ categories, brands, isLoading, refresh: load }),
+    [categories, brands, isLoading, load],
+  );
+
   return (
-    <CatalogContext.Provider value={{ categories, brands, isLoading, refresh: load }}>
+    <CatalogContext.Provider value={value}>
       {children}
     </CatalogContext.Provider>
   );

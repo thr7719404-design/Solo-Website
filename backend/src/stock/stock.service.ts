@@ -1,11 +1,20 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { StockMovementType } from '@prisma/client';
+import { OrderStatus, StockMovementType } from '@prisma/client';
 
 interface StockItem {
   productId: number;
   quantity: number;
 }
+
+/**
+ * Prisma transaction client type. Methods that mutate stock accept an optional
+ * `tx` so callers can enroll the work in an existing $transaction (avoids the
+ * nested-transaction split-brain problem where an inner self-managed
+ * transaction commits even after the outer one rolls back).
+ */
+type TxClient = Prisma.TransactionClient;
 
 export interface AvailabilityResult {
   productId: number;
@@ -131,31 +140,34 @@ export class StockService {
     });
   }
 
-  async reserveStockBatch(items: StockItem[], orderId: string, userId?: string): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+  async reserveStockBatch(items: StockItem[], orderId: string, userId?: string, tx?: TxClient): Promise<void> {
+    const run = async (client: TxClient | PrismaService) => {
       for (const item of items) {
-        const product = await tx.product.findUnique({
-          where: { id: item.productId },
-          select: { id: true, productName: true, stockQty: true, reservedQty: true },
-        });
+        // Atomic conditional update: increment reservedQty only if (stock_qty - reserved_qty) >= quantity.
+        // This eliminates the TOCTOU race between read-check and write that the previous
+        // findUnique-then-update pattern allowed (two concurrent buyers of the last unit).
+        const updated = await client.$executeRaw`
+          UPDATE products
+          SET reserved_qty = reserved_qty + ${item.quantity}, updated_at = NOW()
+          WHERE id = ${item.productId} AND (stock_qty - reserved_qty) >= ${item.quantity}
+        `;
 
-        if (!product) {
-          throw new NotFoundException(`Product ${item.productId} not found`);
-        }
-
-        const available = product.stockQty - product.reservedQty;
-        if (available < item.quantity) {
+        if (updated === 0) {
+          // Either product missing or insufficient stock — fetch to give a precise error.
+          const product = await client.product.findUnique({
+            where: { id: item.productId },
+            select: { id: true, productName: true, stockQty: true, reservedQty: true },
+          });
+          if (!product) {
+            throw new NotFoundException(`Product ${item.productId} not found`);
+          }
+          const available = product.stockQty - product.reservedQty;
           throw new BadRequestException(
             `Insufficient stock for ${product.productName}: requested ${item.quantity}, available ${available}`,
           );
         }
 
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { reservedQty: { increment: item.quantity } },
-        });
-
-        await tx.stockMovement.create({
+        await client.stockMovement.create({
           data: {
             productId: item.productId,
             quantity: item.quantity,
@@ -168,7 +180,15 @@ export class StockService {
       }
 
       this.logger.log(`Batch reserved stock for ${items.length} products on order ${orderId}`);
-    });
+    };
+
+    // If caller passed a transaction client, enroll in it (correct, single transaction).
+    // Otherwise open our own.
+    if (tx) {
+      await run(tx);
+    } else {
+      await this.prisma.$transaction(async (innerTx) => run(innerTx));
+    }
   }
 
   async confirmReservation(productId: number, quantity: number, orderId: string, userId?: string): Promise<void> {
@@ -475,5 +495,91 @@ export class StockService {
       movements,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
+  }
+
+  async recalculateReservedQuantities(): Promise<{ fixed: number; details: any[] }> {
+    // Statuses that hold a stock reservation
+    const reservingStatuses: OrderStatus[] = [
+      OrderStatus.PENDING,
+      OrderStatus.PAYMENT_PENDING,
+    ];
+
+    // Sum quantities per product across all orders that are holding a reservation
+    const pendingItems = await this.prisma.orderItem.findMany({
+      where: {
+        productId: { not: null },
+        order: { status: { in: reservingStatuses } },
+      },
+      select: { productId: true, quantity: true },
+    });
+
+    const reservedMap = new Map<number, number>();
+    for (const item of pendingItems) {
+      if (item.productId != null) {
+        reservedMap.set(item.productId, (reservedMap.get(item.productId) ?? 0) + item.quantity);
+      }
+    }
+
+    // Collect all products that either currently have reservedQty > 0 or should have reservations
+    const productsWithReserved = await this.prisma.product.findMany({
+      where: { reservedQty: { gt: 0 } },
+      select: { id: true, productName: true, reservedQty: true },
+    });
+
+    const allProductIds = new Set<number>([
+      ...productsWithReserved.map(p => p.id),
+      ...reservedMap.keys(),
+    ]);
+
+    const details: any[] = [];
+    let fixed = 0;
+
+    for (const productId of allProductIds) {
+      const correctReserved = reservedMap.get(productId) ?? 0;
+      const product = await this.prisma.product.findUnique({
+        where: { id: productId },
+        select: { id: true, productName: true, sku: true, stockQty: true, reservedQty: true },
+      });
+
+      if (!product) continue;
+
+      if (product.reservedQty === correctReserved) {
+        details.push({
+          productId,
+          sku: product.sku,
+          name: product.productName,
+          reservedQty: product.reservedQty,
+          available: product.stockQty - product.reservedQty,
+          status: 'ok',
+        });
+      } else {
+        await this.prisma.product.update({
+          where: { id: productId },
+          data: { reservedQty: correctReserved },
+        });
+
+        await this.prisma.stockMovement.create({
+          data: {
+            productId,
+            quantity: correctReserved - product.reservedQty,
+            type: StockMovementType.MANUAL_ADJUST,
+            notes: `Recalculated reservedQty: ${product.reservedQty} → ${correctReserved} (stale reservation fix)`,
+          },
+        });
+
+        details.push({
+          productId,
+          sku: product.sku,
+          name: product.productName,
+          oldReservedQty: product.reservedQty,
+          newReservedQty: correctReserved,
+          available: product.stockQty - correctReserved,
+        });
+        fixed++;
+      }
+    }
+
+    this.logger.log(`recalculateReservedQuantities: fixed=${fixed}, checked=${allProductIds.size}`);
+    return { fixed, details };
   }
 }

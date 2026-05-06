@@ -7,7 +7,7 @@ import {
   UseGuards,
   Get,
 } from '@nestjs/common';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -15,14 +15,14 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   /**
    * Register new user
    * Rate limited: 3 requests per hour per IP
    */
   @Post('register')
-  @Throttle({ strict: { ttl: 900000, limit: 5 } })
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -33,7 +33,7 @@ export class AuthController {
    * Rate limited: 5 requests per 15 minutes per IP
    */
   @Post('login')
-  @Throttle({ strict: { ttl: 900000, limit: 5 } })
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
@@ -86,7 +86,7 @@ export class AuthController {
    * Generates a reset token and (in production) sends an email
    */
   @Post('forgot-password')
-  @Throttle({ strict: { ttl: 900000, limit: 5 } })
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body('email') email: string) {
     return this.authService.requestPasswordReset(email);
@@ -96,7 +96,7 @@ export class AuthController {
    * Reset password using token
    */
   @Post('reset-password')
-  @Throttle({ strict: { ttl: 900000, limit: 5 } })
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   async resetPassword(
     @Body('token') token: string,
@@ -109,7 +109,7 @@ export class AuthController {
    * Verify email address using token
    */
   @Post('verify-email')
-  @Throttle({ strict: { ttl: 900000, limit: 5 } })
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   async verifyEmail(@Body('token') token: string) {
     return this.authService.verifyEmail(token);
@@ -119,7 +119,7 @@ export class AuthController {
    * Resend verification email
    */
   @Post('resend-verification')
-  @Throttle({ strict: { ttl: 900000, limit: 5 } })
+  @Throttle({ default: { ttl: 900000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   async resendVerification(@Body('email') email: string) {
     return this.authService.resendVerificationEmail(email);

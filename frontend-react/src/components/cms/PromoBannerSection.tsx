@@ -1,6 +1,6 @@
 import type { LandingSectionDto } from '@/types';
 
-export default function PromoBannerSection({ section }: { section: LandingSectionDto }) {
+export default function PromoBannerSection({ section }: Readonly<{ section: LandingSectionDto }>) {
   const d = section.data;
   const title = (d.title as string) ?? section.title;
   const subtitle = (d.subtitle as string) ?? section.subtitle;
@@ -12,8 +12,10 @@ export default function PromoBannerSection({ section }: { section: LandingSectio
   const alignment = (d.alignment as string) ?? 'center';
   const height = (d.height as number) ?? 300;
 
-  const alignClass =
-    alignment === 'left' ? 'items-start text-left' : alignment === 'right' ? 'items-end text-right' : 'items-center text-center';
+  let alignClass: string;
+  if (alignment === 'left') alignClass = 'items-start text-left';
+  else if (alignment === 'right') alignClass = 'items-end text-right';
+  else alignClass = 'items-center text-center';
 
   return (
     <section

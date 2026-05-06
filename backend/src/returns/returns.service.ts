@@ -18,7 +18,7 @@ export class ReturnsService {
   /** Generate return number like RMA-20260327-0001 */
   private async generateReturnNumber(): Promise<string> {
     const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const dateStr = today.toISOString().slice(0, 10).replaceAll(/-/g, '');
     const count = await this.prisma.return.count({
       where: {
         createdAt: {
@@ -60,7 +60,7 @@ export class ReturnsService {
     const existingReturn = await this.prisma.return.findFirst({
       where: {
         orderId: dto.orderId,
-        status: { notIn: ['REJECTED', 'CANCELLED', 'COMPLETED'] },
+        status: { notIn: ['REJECTED', 'CANCELLED', 'CLOSED'] },
       },
     });
     if (existingReturn) {
@@ -170,7 +170,9 @@ export class ReturnsService {
     page?: number;
     limit?: number;
   }) {
-    const { status, search, page = 1, limit = 20 } = filters;
+    const { status, search } = filters;
+    const page = Number(filters.page) || 1;
+    const limit = Number(filters.limit) || 20;
     const where: any = {};
 
     if (status) where.status = status;
@@ -258,25 +260,37 @@ export class ReturnsService {
         updateData.approvedAt = new Date();
         break;
 
-      case 'ITEMS_RECEIVED':
-        updateData.receivedAt = new Date();
-        // Restore stock for returned items
+      case 'PICKED_UP':
+        break;
+
+      case 'QC':
+        // Restore stock for returned items after quality check passes
         if (!returnReq.stockRestored) {
           await this.restoreReturnStock(returnReq);
           updateData.stockRestored = true;
         }
         break;
 
-      case 'COMPLETED':
+      case 'CLOSED':
         updateData.completedAt = new Date();
+        // Restore stock if QC step was skipped
+        if (!returnReq.stockRestored) {
+          await this.restoreReturnStock(returnReq);
+          updateData.stockRestored = true;
+        }
         // Process refund
         await this.processRefund(returnReq, dto.refundMethod ?? returnReq.refundMethod, dto.refundAmount ?? Number(returnReq.refundAmount));
         // Reverse loyalty earned on the original order (proportional)
         await this.reverseLoyaltyEarned(returnReq);
+        // Mark the order itself as RETURNED so no further returns can be submitted
+        await this.prisma.order.update({
+          where: { id: returnReq.orderId },
+          data: { status: 'RETURNED' as any },
+        });
+        this.logger.log(`Order ${returnReq.order.orderNumber} marked as RETURNED`);
         break;
 
       case 'REJECTED':
-        // If stock was already restored (edge case), we don't un-restore
         break;
 
       case 'CANCELLED':
@@ -374,13 +388,15 @@ export class ReturnsService {
 
   /** Dashboard stats */
   async getReturnStats() {
-    const [requested, approved, processing, completed, total] = await Promise.all([
+    const [requested, approved, pickedUp, qc, closed, rejected, total] = await Promise.all([
       this.prisma.return.count({ where: { status: 'REQUESTED' } }),
       this.prisma.return.count({ where: { status: 'APPROVED' } }),
-      this.prisma.return.count({ where: { status: { in: ['ITEMS_RECEIVED', 'REFUND_PROCESSING'] } } }),
-      this.prisma.return.count({ where: { status: 'COMPLETED' } }),
+      this.prisma.return.count({ where: { status: 'PICKED_UP' } }),
+      this.prisma.return.count({ where: { status: 'QC' } }),
+      this.prisma.return.count({ where: { status: 'CLOSED' } }),
+      this.prisma.return.count({ where: { status: 'REJECTED' } }),
       this.prisma.return.count(),
     ]);
-    return { requested, approved, processing, completed, total };
+    return { requested, approved, pickedUp, qc, closed, rejected, total };
   }
 }

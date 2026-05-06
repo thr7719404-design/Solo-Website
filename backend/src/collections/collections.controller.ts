@@ -81,7 +81,7 @@ export class CollectionsController {
     @Param('id') id: string,
     @Param('productId') productId: string,
   ) {
-    return this.collectionsService.removeCollectionItem(id, parseInt(productId, 10));
+    return this.collectionsService.removeCollectionItem(id, Number.parseInt(productId, 10));
   }
 
   @Post('admin/:id/items/reorder')

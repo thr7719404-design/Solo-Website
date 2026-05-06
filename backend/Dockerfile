@@ -1,8 +1,8 @@
 # ─── Build stage ────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
-# Build tools for native modules (argon2, etc.)
-RUN apk add --no-cache python3 make g++
+# Build tools for native modules (argon2, etc.) + openssl for Prisma
+RUN apk add --no-cache python3 make g++ openssl openssl-dev
 
 WORKDIR /app
 
@@ -31,7 +31,10 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma/
 
-RUN mkdir -p uploads
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN mkdir -p uploads && chown appuser:appgroup uploads
+
+USER appuser
 
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

@@ -21,9 +21,9 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
-    private usersService: UsersService,
-    private loyaltyService: LoyaltyService,
-    private paymentMethodsService: PaymentMethodsService,
+    private readonly usersService: UsersService,
+    private readonly loyaltyService: LoyaltyService,
+    private readonly paymentMethodsService: PaymentMethodsService,
   ) {}
 
   @Get('profile')

@@ -138,7 +138,7 @@ export class PromosService {
         discountAmount = Math.min(Number(promo.value), orderAmount);
         break;
       case 'FREE_SHIPPING':
-        discountAmount = 0; // Applied at shipping
+        // discountAmount stays 0; shipping discount applied at shipping calc
         break;
     }
 

@@ -1,6 +1,6 @@
 import type { LandingSectionDto } from '@/types';
 
-export default function TopPromoBar({ section }: { section: LandingSectionDto }) {
+export default function TopPromoBar({ section }: Readonly<{ section: LandingSectionDto }>) {
   const d = section.data;
   const text = (d.text as string) ?? section.title ?? '';
   const bgColor = (d.backgroundColor as string) ?? '#B8860B';

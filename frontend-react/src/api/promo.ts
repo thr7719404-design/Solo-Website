@@ -43,7 +43,13 @@ export type UpdatePromoCodeBody = Partial<Omit<CreatePromoCodeBody, 'code'>>;
 export const promoApi = {
   async validate(body: ValidatePromoRequest): Promise<PromoValidationResult> {
     const { data } = await api.post('/promo-codes/validate', body);
-    return data;
+    // Normalise backend field names to match PromoValidationResult
+    return {
+      valid: data.valid ?? false,
+      discount: data.discount ?? data.discountAmount ?? 0,
+      discountType: data.discountType ?? (data.type === 'PERCENTAGE' ? 'percentage' : 'fixed'),
+      message: data.message ?? data.description,
+    };
   },
 
   async list(page = 1, limit = 20): Promise<PromoListResult> {
@@ -73,5 +79,15 @@ export const promoApi = {
 
   async remove(id: string): Promise<void> {
     await api.delete(`/promo-codes/${encodeURIComponent(id)}`);
+  },
+
+  async toggleActive(id: string, isActive: boolean): Promise<PromoCode> {
+    const { data } = await api.put(`/promo-codes/${encodeURIComponent(id)}`, { isActive });
+    return data;
+  },
+
+  async getOrders(id: string, page = 1, limit = 30): Promise<any> {
+    const { data } = await api.get(`/promo-codes/${encodeURIComponent(id)}/orders`, { params: { page, limit } });
+    return data;
   },
 };

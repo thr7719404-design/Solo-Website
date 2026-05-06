@@ -24,7 +24,7 @@ export class RegisterDto {
   @IsString()
   @MaxLength(30, { message: 'Phone number must not exceed 30 characters' })
   // Allow digits, spaces, dashes, parentheses, and optional leading +
-  @Matches(/^[+]?[\d\s\-\(\)]{7,30}$/, { message: 'Please provide a valid phone number' })
+  @Matches(/^\+?[\d\s\-()]{7,30}$/, { message: 'Please provide a valid phone number' })
   @IsOptional()
   phone?: string;
 }

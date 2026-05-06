@@ -8,7 +8,7 @@ interface Props {
   onAddToCart?: (product: ProductDto) => void;
 }
 
-export default function ProductCarouselSection({ section, products, onAddToCart }: Props) {
+export default function ProductCarouselSection({ section, products, onAddToCart }: Readonly<Props>) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const d = section.data ?? {};

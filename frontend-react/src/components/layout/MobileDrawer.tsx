@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth';
 import { categoriesApi } from '@/api/categories';
+import { useNavMenu } from '@/hooks/useNavMenu';
 import type { CategoryDto } from '@/types';
 
 interface MobileDrawerProps {
@@ -9,10 +10,11 @@ interface MobileDrawerProps {
   onClose: () => void;
 }
 
-export default function MobileDrawer({ open, onClose }: MobileDrawerProps) {
+export default function MobileDrawer({ open, onClose }: Readonly<MobileDrawerProps>) {
   const { isAuthenticated, user, logout } = useAuthStore();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [catExpanded, setCatExpanded] = useState(false);
+  const mainNavItems = useNavMenu('main-nav');
 
   const initials = user
     ? `${(user.firstName?.[0] ?? '').toUpperCase()}${(user.lastName?.[0] ?? '').toUpperCase()}`
@@ -20,7 +22,7 @@ export default function MobileDrawer({ open, onClose }: MobileDrawerProps) {
 
   useEffect(() => {
     if (open && categories.length === 0) {
-      categoriesApi.getCategories().then(setCategories).catch(() => {});
+      categoriesApi.getAll({ includeSubcategories: false }).then(setCategories).catch(() => {});
     }
   }, [open, categories.length]);
 
@@ -28,7 +30,12 @@ export default function MobileDrawer({ open, onClose }: MobileDrawerProps) {
     <>
       {/* Backdrop */}
       {open && (
-        <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+        <button
+          type="button"
+          aria-label="Close menu"
+          className="fixed inset-0 bg-black/40 z-40 cursor-default"
+          onClick={onClose}
+        />
       )}
 
       {/* Panel */}
@@ -65,10 +72,26 @@ export default function MobileDrawer({ open, onClose }: MobileDrawerProps) {
           <NavItem to="/" label="Home" onClick={onClose} />
 
           <p className="px-4 text-[10px] uppercase tracking-wider text-gray-400 mt-4 mb-2">Shop</p>
-          <NavItem to="/products" label="All Products" onClick={onClose} />
-          <NavItem to="/products?bestSellers=true" label="Best Sellers" onClick={onClose} />
-          <NavItem to="/products?newArrivals=true" label="New Arrivals" onClick={onClose} />
-          <NavItem to="/products?featured=true" label="Featured" onClick={onClose} />
+          {mainNavItems.length > 0 ? (
+            mainNavItems.map((item) => (
+              <NavItem
+                key={item.id}
+                to={item.url || '#'}
+                label={item.label}
+                badge={item.badge ?? undefined}
+                badgeColor={item.badgeColor ?? undefined}
+                onClick={onClose}
+              />
+            ))
+          ) : (
+            <>
+              <NavItem to="/products" label="All Products" onClick={onClose} />
+              <NavItem to="/products?bestSellers=true" label="Best Sellers" onClick={onClose} />
+              <NavItem to="/products?newArrivals=true" label="New Arrivals" onClick={onClose} />
+              <NavItem to="/products?featured=true" label="Featured" onClick={onClose} />
+              <NavItem to="/bulk-order" label="Bulk Order" onClick={onClose} />
+            </>
+          )}
 
           {/* Categories section */}
           <button
@@ -122,14 +145,28 @@ export default function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   );
 }
 
-function NavItem({ to, label, onClick }: { to: string; label: string; onClick: () => void }) {
+function NavItem({ to, label, badge, badgeColor, onClick }: Readonly<{ to: string; label: string; badge?: string; badgeColor?: string; onClick: () => void }>) {
   return (
     <Link
       to={to}
       onClick={onClick}
-      className="block px-6 py-3 text-sm font-medium text-[#1A1A1A] hover:bg-white hover:shadow-sm"
+      className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-[#1A1A1A] hover:bg-white hover:shadow-sm"
     >
       {label}
+      {badge && (
+        <span style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: 0.5,
+          padding: '2px 6px',
+          borderRadius: 4,
+          background: badgeColor || '#dc3545',
+          color: '#fff',
+          lineHeight: 1.5,
+        }}>
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }

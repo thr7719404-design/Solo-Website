@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsArray, IsOptional, ValidateNested, IsNotEmpty, Min } from 'class-validator';
+import { IsString, IsInt, IsArray, ValidateNested, IsNotEmpty, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class HowItWorksItemDto {

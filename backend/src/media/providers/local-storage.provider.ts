@@ -18,7 +18,7 @@ export class LocalStorageProvider implements IStorageProvider {
   private readonly uploadDir: string;
   private readonly baseUrl: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(private readonly configService: ConfigService) {
     // Default to 'uploads' folder in project root
     this.uploadDir = this.configService.get<string>(
       'UPLOAD_DIR',
@@ -28,18 +28,7 @@ export class LocalStorageProvider implements IStorageProvider {
     this.baseUrl =
       this.configService.get<string>('UPLOAD_BASE_URL') ||
       `${this.configService.get<string>('APP_URL', 'http://localhost:3000')}/uploads`;
-
-    // Ensure upload directory exists
-    this.ensureUploadDir();
-  }
-
-  private async ensureUploadDir(): Promise<void> {
-    try {
-      await fs.access(this.uploadDir);
-    } catch {
-      this.logger.log(`Creating upload directory: ${this.uploadDir}`);
-      await fs.mkdir(this.uploadDir, { recursive: true });
-    }
+    // Note: upload directory is created lazily in upload() via fs.mkdir({ recursive: true }).
   }
 
   async upload(

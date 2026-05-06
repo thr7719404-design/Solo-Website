@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { favoritesApi } from '../api/favorites';
 import { useAuth } from './AuthContext';
 
@@ -11,7 +11,7 @@ interface FavoritesContextType {
 
 const FavoritesContext = createContext<FavoritesContextType | null>(null);
 
-export function FavoritesProvider({ children }: { children: ReactNode }) {
+export function FavoritesProvider({ children }: Readonly<{ children: ReactNode }>) {
   const { isAuthenticated } = useAuth();
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +24,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const ids = await favoritesApi.getIds();
-      setFavoriteIds(new Set(ids));
+      // Normalize to strings so they match product.id (which the backend returns as a string)
+      setFavoriteIds(new Set(ids.map(String)));
     } catch {
       setFavoriteIds(new Set());
     } finally {
@@ -37,13 +38,14 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   }, [loadFavorites]);
 
   const toggle = useCallback(async (productId: string) => {
+    const key = String(productId);
     const prev = new Set(favoriteIds);
     const newSet = new Set(favoriteIds);
-    if (newSet.has(productId)) newSet.delete(productId);
-    else newSet.add(productId);
+    if (newSet.has(key)) newSet.delete(key);
+    else newSet.add(key);
     setFavoriteIds(newSet);
     try {
-      await favoritesApi.toggle(productId);
+      await favoritesApi.toggle(key);
     } catch {
       setFavoriteIds(prev);
     }
@@ -51,8 +53,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   const isFavorite = useCallback((productId: string) => favoriteIds.has(productId), [favoriteIds]);
 
+  const value = useMemo(
+    () => ({ favoriteIds, isLoading, toggle, isFavorite }),
+    [favoriteIds, isLoading, toggle, isFavorite],
+  );
+
   return (
-    <FavoritesContext.Provider value={{ favoriteIds, isLoading, toggle, isFavorite }}>
+    <FavoritesContext.Provider value={value}>
       {children}
     </FavoritesContext.Provider>
   );

@@ -11,7 +11,6 @@ import {
   setupTestApp,
   teardownTestApp,
   loginAsCustomer,
-  loginAsAdmin,
   cleanupTestUsers,
   authGet,
   authPost,
@@ -118,7 +117,7 @@ describe('Favorites Module (e2e) - GAP-006', () => {
       expect([200, 201]).toContain(response.status);
       // productId might be returned as string or number
       expect(response.body).toHaveProperty('productId');
-      expect(parseInt(String(response.body.productId), 10)).toBe(testProductId);
+      expect(Number.parseInt(String(response.body.productId), 10)).toBe(testProductId);
 
       // Verify in database
       const favorite = await prisma.favorite.findFirst({

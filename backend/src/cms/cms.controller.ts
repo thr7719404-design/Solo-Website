@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards, Header } from '@nestjs/common';
 import { CmsService } from './cms.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -11,11 +11,13 @@ export class CmsController {
   // ========================= PUBLIC =========================
 
   @Get('home-page')
+  @Header('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
   getHomePage() {
     return this.cms.getHomePage();
   }
 
   @Get('category/:categoryId')
+  @Header('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
   getCategoryLanding(@Param('categoryId') categoryId: string) {
     return this.cms.getCategoryLanding(categoryId);
   }

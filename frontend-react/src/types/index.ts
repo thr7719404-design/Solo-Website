@@ -1,3 +1,5 @@
+export { LandingSectionType } from './content';
+
 // ── Auth ──
 export interface UserDto {
   id: string;
@@ -72,6 +74,33 @@ export interface ProductDto {
   metaDescription?: string;
   createdAt?: string;
   updatedAt?: string;
+  // Variants
+  productGroupId?: string | null;
+  productGroup?: {
+    id: string;
+    name: string;
+    slug?: string;
+    description?: string | null;
+    category?: string | null;
+    tags?: string[];
+    variantAxes: string[];
+  };
+  isDefaultVariant?: boolean;
+  variants?: ProductVariantDto[];
+  variantAttributes?: Record<string, any> | null;
+}
+
+export interface ProductVariantDto {
+  id: string;
+  sku: string;
+  slug?: string;
+  name: string;
+  attributes: Record<string, any>;
+  price: number;
+  stockQty: number;
+  inStock: boolean;
+  primaryImage: string | null;
+  isCurrent: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -121,6 +150,9 @@ export interface CartItemDto {
   quantity: number;
   size?: string;
   color?: string;
+  inStock?: boolean;
+  stockQty?: number;
+  available?: number;
   product?: ProductDto;
 }
 
@@ -144,9 +176,16 @@ export interface OrderDto {
   total: number;
   subtotal: number;
   tax?: number;
+  vat?: number;
+  shippingCost?: number;
   shipping?: number;
   discount?: number;
+  vatAmount?: number;
+  subtotalExclVat?: number;
+  totalInclVat?: number;
+  vatRateSnapshot?: number;
   items: OrderItemDto[];
+  itemsCount?: number;
   shippingAddress?: AddressDto;
   createdAt: string;
   updatedAt?: string;
@@ -157,10 +196,20 @@ export interface OrderDto {
 export interface OrderItemDto {
   id: string;
   productId: string;
-  productName: string;
+  name: string;
+  productName?: string;
+  sku?: string;
   quantity: number;
   price: number;
+  subtotal?: number;
   imageUrl?: string;
+  unitPriceExclVat?: number;
+  unitPriceInclVat?: number;
+  unitVatAmount?: number;
+  lineSubtotalExclVat?: number;
+  lineTotalInclVat?: number;
+  lineVatAmount?: number;
+  vatRateSnapshot?: number;
 }
 
 // ── Addresses ──
@@ -212,6 +261,8 @@ export interface LandingSectionDto {
   config?: Record<string, unknown>;
   displayOrder: number;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LandingPageDto {
@@ -220,8 +271,15 @@ export interface LandingPageDto {
   title: string;
   subtitle?: string;
   description?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  heroBannerId?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   isActive: boolean;
   sections: LandingSectionDto[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface HomePageDto {
@@ -229,23 +287,7 @@ export interface HomePageDto {
 }
 
 // ── Admin ──
-export interface DashboardStatsDto {
-  ordersToday: number;
-  ordersThisWeek: number;
-  ordersThisMonth: number;
-  totalOrders?: number;
-  revenueToday: number;
-  revenueThisWeek: number;
-  revenueThisMonth: number;
-  totalRevenue?: number;
-  totalCustomers: number;
-  newCustomersToday: number;
-  totalProducts?: number;
-  topProducts: Array<{ id: string; name: string; count: number }>;
-  lowStockProducts: Array<{ id: string; name: string; stock: number }>;
-  recentOrders: OrderDto[];
-  ordersByStatus: Array<{ status: string; count: number }>;
-}
+// (DashboardStatsDto re-exported from ./admin below)
 
 // ── Account ──
 export interface LoyaltyDto {

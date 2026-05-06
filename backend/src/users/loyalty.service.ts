@@ -4,7 +4,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class LoyaltyService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Get or create loyalty wallet for a user
@@ -14,11 +14,9 @@ export class LoyaltyService {
       where: { userId },
     });
 
-    if (!wallet) {
-      wallet = await this.prisma.loyaltyWallet.create({
-        data: { userId },
-      });
-    }
+    wallet ??= await this.prisma.loyaltyWallet.create({
+      data: { userId },
+    });
 
     return wallet;
   }

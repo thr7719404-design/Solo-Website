@@ -12,7 +12,7 @@ interface Slide {
   ctaTargetValue?: string;
 }
 
-export default function HeroSection({ section }: { section: LandingSectionDto }) {
+export default function HeroSection({ section }: Readonly<{ section: LandingSectionDto }>) {
   const d = section.data;
   const staticSlides = (d.slides as Slide[]) ?? [];
   const autoPlay = d.autoPlay !== false;
@@ -89,7 +89,7 @@ export default function HeroSection({ section }: { section: LandingSectionDto })
         style={{ width: `${count * 100}%`, transform: `translateX(-${(current * 100) / count}%)` }}
       >
         {slides.map((slide, i) => (
-          <div key={i} className="relative h-full flex-shrink-0" style={{ width: `${100 / count}%` }}>
+          <div key={slide.imageUrl ?? `slide-${i}`} className="relative h-full flex-shrink-0" style={{ width: `${100 / count}%` }}>
             <picture>
               <img
                 src={slide.imageUrl || '/placeholder-banner.png'}
@@ -153,9 +153,9 @@ export default function HeroSection({ section }: { section: LandingSectionDto })
       {/* Dots */}
       {showDots && count > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-          {slides.map((_, i) => (
+          {slides.map((s, i) => (
             <button
-              key={i}
+              key={s.imageUrl ?? `dot-${i}`}
               onClick={() => setCurrent(i)}
               className={`h-2 rounded-full transition-all ${
                 i === current ? 'w-6 bg-white' : 'w-2 bg-white/50'

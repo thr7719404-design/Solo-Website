@@ -1,5 +1,5 @@
 import api from './client';
-import type { ProductDto, PaginatedResponse } from '../types';
+import type { ProductDto } from '../types';
 
 export interface ProductFilters {
   page?: number;
@@ -15,7 +15,7 @@ export interface ProductFilters {
   isFeatured?: boolean;
   isNew?: boolean;
   isBestSeller?: boolean;
-  inStock?: boolean;
+  inStock?: boolean | string;
   status?: string;
 }
 

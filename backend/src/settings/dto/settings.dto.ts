@@ -31,3 +31,44 @@ export class SaveLoyaltyConfigDto {
   @IsOptional()
   isEnabled?: boolean;
 }
+
+export class SaveShippingConfigDto {
+  @IsNumber()
+  @Min(0)
+  @Max(10000)
+  fee: number;
+
+  @IsString()
+  @IsOptional()
+  label?: string;
+
+  /** Free shipping kicks in when order subtotal >= this AED amount. 0 disables. */
+  @IsNumber()
+  @Min(0)
+  @Max(1_000_000)
+  @IsOptional()
+  freeShippingThreshold?: number;
+}
+
+export class SavePaymentsConfigDto {
+  // Cash on Delivery
+  @IsBoolean() @IsOptional() codEnabled?: boolean;
+
+  // Stripe (Credit/Debit Card)
+  @IsBoolean() @IsOptional() stripeEnabled?: boolean;
+  /** Empty string means "leave existing key untouched". */
+  @IsString() @IsOptional() stripePublishableKey?: string;
+  @IsString() @IsOptional() stripeSecretKey?: string;
+  @IsString() @IsOptional() stripeWebhookSecret?: string;
+
+  // Tabby
+  @IsBoolean() @IsOptional() tabbyEnabled?: boolean;
+  /** Empty string means "leave existing key untouched". */
+  @IsString() @IsOptional() tabbyPublicKey?: string;
+  @IsString() @IsOptional() tabbySecretKey?: string;
+
+  // Tamara
+  @IsBoolean() @IsOptional() tamaraEnabled?: boolean;
+  @IsBoolean() @IsOptional() tamaraSandbox?: boolean;
+  @IsString() @IsOptional() tamaraApiToken?: string;
+}

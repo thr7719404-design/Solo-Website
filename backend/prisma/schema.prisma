@@ -29,8 +29,8 @@ model User {
   orders                  Order[]
   passwordResetTokens     PasswordResetToken[]
   refreshTokens           RefreshToken[]
-  savedPaymentMethods     SavedPaymentMethod[]
   returns                 Return[]
+  savedPaymentMethods     SavedPaymentMethod[]
 
   @@index([email])
   @@index([role])
@@ -108,6 +108,7 @@ model LoyaltyTransaction {
   @@index([walletId])
   @@index([orderId])
   @@index([createdAt])
+  @@index([walletId, createdAt])
   @@map("loyalty_transactions")
 }
 
@@ -166,70 +167,33 @@ model Favorite {
 }
 
 model ProductOverride {
-  id                      String   @id(map: "v2_product_overrides_pkey") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  product_id              Int      @unique(map: "v2_product_overrides_product_id_key")
+  id                      String    @id(map: "v2_product_overrides_pkey") @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  product_id              Int       @unique(map: "v2_product_overrides_product_id_key")
   is_featured_override    Boolean?
   is_new_override         Boolean?
   is_best_seller_override Boolean?
   homepage_rank           Int?
-  custom_price_aed        Decimal? @db.Decimal(10, 2)
-  custom_sale_price_aed   Decimal? @db.Decimal(10, 2)
-  is_on_sale              Boolean  @default(false)
-  product_sale_percent    Decimal? @db.Decimal(5, 2)
-  product_sale_name       String?  @db.VarChar(50)
+  custom_price_aed        Decimal?  @db.Decimal(10, 2)
+  custom_sale_price_aed   Decimal?  @db.Decimal(10, 2)
+  is_on_sale              Boolean   @default(false)
+  product_sale_percent    Decimal?  @db.Decimal(5, 2)
+  product_sale_name       String?   @db.VarChar(50)
   product_sale_starts_at  DateTime? @db.Timestamp(6)
   product_sale_ends_at    DateTime? @db.Timestamp(6)
   custom_description      String?
   custom_long_description String?
-  meta_title              String?  @db.VarChar(200)
-  meta_description        String?  @db.VarChar(500)
-  meta_keywords           String?  @db.VarChar(500)
+  meta_title              String?   @db.VarChar(200)
+  meta_description        String?   @db.VarChar(500)
+  meta_keywords           String?   @db.VarChar(500)
   notes                   String?
-  created_at              DateTime @default(now()) @db.Timestamp(6)
-  updated_at              DateTime @default(now()) @db.Timestamp(6)
-  created_by              String?  @db.Uuid
-  updated_by              String?  @db.Uuid
-  products                Product  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "v2_product_overrides_product_id_fkey")
+  created_at              DateTime  @default(now()) @db.Timestamp(6)
+  updated_at              DateTime  @default(now()) @db.Timestamp(6)
+  created_by              String?   @db.Uuid
+  updated_by              String?   @db.Uuid
+  products                Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "v2_product_overrides_product_id_fkey")
 
   @@index([product_id], map: "idx_product_overrides_product_id")
   @@map("product_overrides")
-}
-
-model Package {
-  id              String        @id @default(uuid())
-  name            String
-  slug            String        @unique
-  description     String?
-  longDescription String?
-  image           String?
-  price           Decimal       @db.Decimal(10, 2)
-  isActive        Boolean       @default(true)
-  isFeatured      Boolean       @default(false)
-  metaTitle       String?
-  metaDescription String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  cartItems       CartItem[]
-  orderItems      OrderItem[]
-  items           PackageItem[]
-
-  @@index([slug])
-  @@index([isFeatured])
-  @@index([isActive])
-  @@map("packages")
-}
-
-model PackageItem {
-  id        String  @id @default(uuid())
-  packageId String
-  quantity  Int     @default(1)
-  productId Int
-  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
-
-  @@unique([packageId, productId])
-  @@index([packageId])
-  @@index([productId])
-  @@map("package_items")
 }
 
 model Cart {
@@ -252,17 +216,14 @@ model CartItem {
   id        String       @id @default(uuid())
   cartId    String
   type      CartItemType
-  packageId String?
   quantity  Int          @default(1)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   productId Int?
   cart      Cart         @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  package   Package?     @relation(fields: [packageId], references: [id], onDelete: Cascade)
 
   @@index([cartId])
   @@index([productId])
-  @@index([packageId])
   @@map("cart_items")
 }
 
@@ -272,8 +233,8 @@ model Order {
   userId                  String
   status                  OrderStatus          @default(PENDING)
   paymentStatus           PaymentStatus        @default(PENDING)
-  shippingAddressId       String?
-  billingAddressId        String?
+  shippingAddressId       String
+  billingAddressId        String
   shippingMethod          ShippingMethod
   shippingCost            Decimal              @db.Decimal(10, 2)
   trackingNumber          String?
@@ -313,11 +274,11 @@ model Order {
   invoices                invoices?
   items                   OrderItem[]
   statusHistory           OrderStatusHistory[]
-  returns                 Return[]
-  billingAddress          Address?             @relation("BillingAddress", fields: [billingAddressId], references: [id], onDelete: SetNull)
-  shippingAddress         Address?             @relation("ShippingAddress", fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  billingAddress          Address              @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddress         Address              @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
   order_status_master     order_status_master? @relation(fields: [statusMasterId], references: [id])
   user                    User                 @relation(fields: [userId], references: [id])
+  returns                 Return[]
 
   @@index([orderNumber])
   @@index([userId])
@@ -326,6 +287,7 @@ model Order {
   @@index([createdAt])
   @@index([currencyCode])
   @@index([statusMasterId])
+  @@index([userId, createdAt])
   @@map("orders")
 }
 
@@ -333,7 +295,6 @@ model OrderItem {
   id                  String       @id @default(uuid())
   orderId             String
   type                CartItemType
-  packageId           String?
   name                String
   sku                 String?
   quantity            Int
@@ -352,11 +313,9 @@ model OrderItem {
   unitVatAmount       Decimal?     @db.Decimal(10, 2)
   vatRateSnapshot     Decimal?     @db.Decimal(5, 4)
   order               Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  package             Package?     @relation(fields: [packageId], references: [id])
 
   @@index([orderId])
   @@index([productId])
-  @@index([packageId])
   @@map("order_items")
 }
 
@@ -375,20 +334,21 @@ model OrderStatusHistory {
 }
 
 model PromoCode {
-  id             String    @id @default(uuid())
-  code           String    @unique
+  id             String         @id @default(uuid())
+  code           String         @unique
   description    String?
   type           PromoType
-  value          Decimal   @db.Decimal(10, 2)
-  minOrderAmount Decimal?  @db.Decimal(10, 2)
-  maxDiscount    Decimal?  @db.Decimal(10, 2)
+  value          Decimal        @db.Decimal(10, 2)
+  minOrderAmount Decimal?       @db.Decimal(10, 2)
+  maxDiscount    Decimal?       @db.Decimal(10, 2)
   usageLimit     Int?
-  usageCount     Int       @default(0)
-  isActive       Boolean   @default(true)
+  usageCount     Int            @default(0)
+  isActive       Boolean        @default(true)
   startsAt       DateTime
   expiresAt      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  announcements  Announcement[]
 
   @@index([code])
   @@index([isActive])
@@ -427,7 +387,6 @@ model Banner {
   @@index([mobile_image_id])
   @@map("banners")
 }
-
 
 model LoyaltyPageConfig {
   id                String   @id @default(uuid())
@@ -523,78 +482,6 @@ model NavigationMenuItem {
   @@index([parentId])
   @@index([sortOrder])
   @@map("navigation_menu_items")
-}
-
-model BlogCategory {
-  id          String     @id @default(uuid())
-  name        String     @unique
-  slug        String     @unique
-  description String?
-  image       String?
-  sortOrder   Int        @default(0)
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  posts       BlogPost[]
-
-  @@index([slug])
-  @@index([isActive])
-  @@map("blog_categories")
-}
-
-model BlogTag {
-  id        String        @id @default(uuid())
-  name      String        @unique
-  slug      String        @unique
-  isActive  Boolean       @default(true)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  posts     BlogPostTag[]
-
-  @@index([slug])
-  @@map("blog_tags")
-}
-
-model BlogPost {
-  id              String        @id @default(uuid())
-  categoryId      String
-  title           String
-  slug            String        @unique
-  excerpt         String?
-  content         String
-  featuredImage   String?
-  author          String?
-  readTimeMinutes Int?
-  isFeatured      Boolean       @default(false)
-  isActive        Boolean       @default(true)
-  publishedAt     DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  metaTitle       String?
-  metaDescription String?
-  tags            BlogPostTag[]
-  category        BlogCategory  @relation(fields: [categoryId], references: [id])
-
-  @@index([slug])
-  @@index([categoryId])
-  @@index([isActive])
-  @@index([publishedAt])
-  @@index([isFeatured])
-  @@map("blog_posts")
-}
-
-model BlogPostTag {
-  id        String   @id @default(uuid())
-  postId    String
-  tagId     String
-  createdAt DateTime @default(now())
-  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  tag       BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@unique([postId, tagId])
-  @@index([postId])
-  @@index([tagId])
-  @@map("blog_post_tags")
 }
 
 model ProductCollection {
@@ -714,8 +601,6 @@ model CategoryLandingSection {
   @@map("category_landing_sections")
 }
 
-// ── Inventory / Product models (formerly Inv* prefixed) ──────────────
-
 model Country {
   id          Int       @id(map: "v2_countries_pkey") @default(autoincrement())
   countryCode String    @unique(map: "v2_countries_country_code_key") @map("country_code") @db.VarChar(3)
@@ -735,6 +620,7 @@ model Brand {
   slug        String    @unique(map: "v2_brands_slug_key") @db.VarChar(100)
   description String?
   logo_id     String?   @db.Uuid
+  logoUrl     String?   @map("logo_url") @db.VarChar(500)
   website     String?   @db.VarChar(255)
   sort_order  Int       @default(0)
   isActive    Boolean   @default(true) @map("is_active")
@@ -767,6 +653,7 @@ model Category {
   slug             String        @unique(map: "v2_categories_slug_key") @db.VarChar(100)
   description      String?
   image_id         String?       @db.Uuid
+  imageUrl         String?       @map("image_url") @db.VarChar(500)
   parent_id        Int?
   sort_order       Int           @default(0)
   isActive         Boolean       @default(true) @map("is_active")
@@ -775,6 +662,7 @@ model Category {
   categories       Category?     @relation("categoriesTocategories", fields: [parent_id], references: [id], onUpdate: NoAction, map: "categories_parent_fk")
   other_categories Category[]    @relation("categoriesTocategories")
   products         Product[]
+  productLinks     ProductCategory[]
   subcategories    Subcategory[]
 
   @@index([isActive], map: "idx_categories_is_active")
@@ -790,11 +678,13 @@ model Subcategory {
   name_ar     String?   @db.VarChar(100)
   slug        String    @db.VarChar(100)
   description String?
+  imageUrl    String?   @map("image_url") @db.VarChar(500)
   sort_order  Int       @default(0)
   isActive    Boolean   @default(true) @map("is_active")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   products    Product[]
+  productLinks ProductSubcategory[]
   category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "v2_subcategories_category_id_fkey")
 
   @@unique([categoryId, slug], map: "idx_subcategories_category_slug")
@@ -805,37 +695,47 @@ model Subcategory {
 }
 
 model Product {
-  id                Int                      @id(map: "v2_products_pkey") @default(autoincrement())
-  sku               String                   @unique(map: "v2_products_sku_key") @db.VarChar(50)
-  productName       String                   @map("name") @db.VarChar(255)
-  name_ar           String?                  @db.VarChar(255)
-  slug              String                   @unique(map: "v2_products_slug_key") @db.VarChar(255)
+  id                Int                    @id(map: "v2_products_pkey") @default(autoincrement())
+  sku               String                 @unique(map: "v2_products_sku_key") @db.VarChar(50)
+  productName       String                 @map("name") @db.VarChar(255)
+  name_ar           String?                @db.VarChar(255)
+  slug              String                 @unique(map: "v2_products_slug_key") @db.VarChar(255)
   description       String?
-  shortDescription  String?                  @map("short_description") @db.VarChar(500)
-  fullDescription   String?                  @map("full_description")
-  categoryId        Int?                     @map("category_id")
-  subcategoryId     Int?                     @map("subcategory_id")
-  brandId           Int?                     @map("brand_id")
-  designerId        Int?                     @map("designer_id")
-  countryId         Int?                     @map("country_id")
-  material          String?                  @db.VarChar(255)
-  colour            String?                  @db.VarChar(100)
-  size              String?                  @db.VarChar(50)
+  shortDescription  String?                @map("short_description") @db.VarChar(500)
+  fullDescription   String?                @map("full_description")
+  categoryId        Int?                   @map("category_id")
+  subcategoryId     Int?                   @map("subcategory_id")
+  brandId           Int?                   @map("brand_id")
+  designerId        Int?                   @map("designer_id")
+  countryId         Int?                   @map("country_id")
+  material          String?                @db.VarChar(255)
+  colour            String?                @db.VarChar(100)
+  size              String?                @db.VarChar(50)
   ean               BigInt?
-  barcode           String?                  @db.VarChar(100)
-  highlights        Json?                    @default("[]")
-  specs             Json?                    @default("[]")
-  deliveryNote      String?                  @map("delivery_note") @db.VarChar(500)
-  returnsNote       String?                  @map("returns_note") @db.VarChar(500)
-  isActive          Boolean                  @default(true) @map("is_active")
-  isDiscontinued    Boolean                  @default(false) @map("is_discontinued")
-  isFeatured        Boolean                  @default(false) @map("is_featured")
-  isNew             Boolean                  @default(false) @map("is_new")
-  isBestSeller      Boolean                  @default(false) @map("is_best_seller")
-  metaTitle         String?                  @map("meta_title") @db.VarChar(200)
-  metaDescription   String?                  @map("meta_description") @db.VarChar(500)
-  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  barcode           String?                @db.VarChar(100)
+  highlights        Json?                  @default("[]")
+  specs             Json?                  @default("[]")
+  deliveryNote      String?                @map("delivery_note") @db.VarChar(500)
+  returnsNote       String?                @map("returns_note") @db.VarChar(500)
+  isActive          Boolean                @default(true) @map("is_active")
+  isDiscontinued    Boolean                @default(false) @map("is_discontinued")
+  isFeatured        Boolean                @default(false) @map("is_featured")
+  isNew             Boolean                @default(false) @map("is_new")
+  isBestSeller      Boolean                @default(false) @map("is_best_seller")
+  metaTitle         String?                @map("meta_title") @db.VarChar(200)
+  metaDescription   String?                @map("meta_description") @db.VarChar(500)
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  stockQty          Int                    @default(0) @map("stock_qty")
+  reservedQty       Int                    @default(0) @map("reserved_qty")
+  lowStockAlert     Int                    @default(5) @map("low_stock_alert")
+  productGroupId    String?                @map("product_group_id") @db.Uuid
+  variantAttributes Json?                  @map("variant_attributes")
+  variantSortOrder  Int                    @default(0) @map("variant_sort_order")
+  isDefaultVariant  Boolean                @default(false) @map("is_default_variant")
+  variantAttrs      VariantAttribute[]
+  categories        ProductCategory[]
+  subcategoriesLinks ProductSubcategory[]
   dimensions        ProductDimension?
   images            ProductImage[]
   product_overrides ProductOverride?
@@ -843,14 +743,12 @@ model Product {
   pricing           ProductPricing?
   specifications    ProductSpecification[]
   product_variants  product_variants[]
-  brand             Brand?                   @relation(fields: [brandId], references: [id], onUpdate: NoAction, map: "v2_products_brand_id_fkey")
-  category          Category?                @relation(fields: [categoryId], references: [id], onUpdate: NoAction, map: "v2_products_category_id_fkey")
-  country           Country?                 @relation(fields: [countryId], references: [id], onUpdate: NoAction, map: "v2_products_country_id_fkey")
-  designer          Designer?                @relation(fields: [designerId], references: [id], onUpdate: NoAction, map: "v2_products_designer_id_fkey")
-  subcategory       Subcategory?             @relation(fields: [subcategoryId], references: [id], onUpdate: NoAction, map: "v2_products_subcategory_id_fkey")
-  stockQty          Int                      @default(0) @map("stock_qty")
-  reservedQty       Int                      @default(0) @map("reserved_qty")
-  lowStockAlert     Int                      @default(5) @map("low_stock_alert")
+  productGroup      ProductGroup?          @relation(fields: [productGroupId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "products_product_group_id_fkey")
+  brand             Brand?                 @relation(fields: [brandId], references: [id], onUpdate: NoAction, map: "v2_products_brand_id_fkey")
+  category          Category?              @relation(fields: [categoryId], references: [id], onUpdate: NoAction, map: "v2_products_category_id_fkey")
+  country           Country?               @relation(fields: [countryId], references: [id], onUpdate: NoAction, map: "v2_products_country_id_fkey")
+  designer          Designer?              @relation(fields: [designerId], references: [id], onUpdate: NoAction, map: "v2_products_designer_id_fkey")
+  subcategory       Subcategory?           @relation(fields: [subcategoryId], references: [id], onUpdate: NoAction, map: "v2_products_subcategory_id_fkey")
   stockMovements    StockMovement[]
 
   @@index([brandId], map: "idx_products_brand_id")
@@ -860,7 +758,63 @@ model Product {
   @@index([isFeatured], map: "idx_products_is_featured")
   @@index([sku], map: "idx_products_sku")
   @@index([slug], map: "idx_products_slug")
+  @@index([productGroupId], map: "idx_products_product_group_id")
   @@map("products")
+}
+
+model ProductCategory {
+  productId  Int      @map("product_id")
+  categoryId Int      @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([productId, categoryId])
+  @@index([categoryId], map: "idx_product_categories_category_id")
+  @@index([productId], map: "idx_product_categories_product_id")
+  @@map("product_categories")
+}
+
+model ProductSubcategory {
+  productId     Int         @map("product_id")
+  subcategoryId Int         @map("subcategory_id")
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([productId, subcategoryId])
+  @@index([subcategoryId], map: "idx_product_subcategories_subcategory_id")
+  @@index([productId], map: "idx_product_subcategories_product_id")
+  @@map("product_subcategories")
+}
+
+model ProductGroup {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(255)
+  slug        String    @unique @db.VarChar(255)
+  description String?
+  category    String?   @db.VarChar(100)
+  tags        String[]  @default([])
+  variantAxes Json      @default("[\"color\"]") @map("variant_axes")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  products    Product[]
+
+  @@map("product_groups")
+}
+
+model VariantAttribute {
+  id        String  @id @default(uuid()) @db.Uuid
+  productId Int     @map("product_id")
+  key       String  @db.VarChar(50)
+  value     String  @db.VarChar(255)
+  colorHex  String? @map("color_hex") @db.VarChar(20)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, key], map: "uq_variant_attributes_product_key")
+  @@index([productId], map: "idx_variant_attributes_product_id")
+  @@index([key, value], map: "idx_variant_attributes_key_value")
+  @@map("variant_attributes")
 }
 
 model ProductDimension {
@@ -946,10 +900,8 @@ model ProductSpecification {
   @@map("product_specifications")
 }
 
-// ── Utility / other models ───────────────────────────────────────
-
 model StripeEvent {
-  id           String    @id // Stripe event ID (evt_xxx)
+  id           String    @id
   type         String
   processed    Boolean   @default(false)
   processedAt  DateTime? @map("processed_at")
@@ -963,31 +915,31 @@ model StripeEvent {
 }
 
 model invoices {
-  id              String   @id @default(cuid())
-  orderId         String   @unique
-  invoiceNumber   String   @unique
-  issuedAt        DateTime @default(now())
-  invoiceDate     DateTime @default(now()) @map("invoice_date")
+  id              String    @id @default(cuid())
+  orderId         String    @unique
+  invoiceNumber   String    @unique
+  issuedAt        DateTime  @default(now())
+  invoiceDate     DateTime  @default(now()) @map("invoice_date")
   dueDate         DateTime? @map("due_date")
-  currencyCode    String   @default("AED") @db.VarChar(3)
-  vatRateSnapshot Decimal  @db.Decimal(5, 4)
-  sellerName      String   @db.VarChar(200)
+  currencyCode    String    @default("AED") @db.VarChar(3)
+  vatRateSnapshot Decimal   @db.Decimal(5, 4)
+  sellerName      String    @db.VarChar(200)
   sellerAddress   String
-  sellerVatNumber String?  @map("sellerTaxNumber") @db.VarChar(50)
-  buyerName       String   @db.VarChar(200)
+  sellerVatNumber String?   @map("sellerTaxNumber") @db.VarChar(50)
+  buyerName       String    @db.VarChar(200)
   buyerAddress    String
-  buyerVatNumber  String?  @map("buyerTaxNumber") @db.VarChar(50)
-  subtotalExclVat Decimal  @db.Decimal(12, 2)
-  discountExclVat Decimal  @default(0) @db.Decimal(12, 2)
-  vatAmount       Decimal  @db.Decimal(12, 2)
-  shippingExclVat Decimal  @default(0) @db.Decimal(12, 2)
-  shippingVat     Decimal  @default(0) @db.Decimal(12, 2)
-  totalInclVat    Decimal  @db.Decimal(12, 2)
-  pdfStoragePath  String?  @db.VarChar(500)
-  pdfUrl          String?  @db.VarChar(500) @map("pdf_url")
-  status          String   @default("issued") @db.VarChar(50)
-  createdAt       DateTime @default(now())
-  orders          Order    @relation(fields: [orderId], references: [id])
+  buyerVatNumber  String?   @map("buyerTaxNumber") @db.VarChar(50)
+  subtotalExclVat Decimal   @db.Decimal(12, 2)
+  discountExclVat Decimal   @default(0) @db.Decimal(12, 2)
+  vatAmount       Decimal   @db.Decimal(12, 2)
+  shippingExclVat Decimal   @default(0) @db.Decimal(12, 2)
+  shippingVat     Decimal   @default(0) @db.Decimal(12, 2)
+  totalInclVat    Decimal   @db.Decimal(12, 2)
+  pdfStoragePath  String?   @db.VarChar(500)
+  pdfUrl          String?   @map("pdf_url") @db.VarChar(500)
+  status          String    @default("issued") @db.VarChar(50)
+  createdAt       DateTime  @default(now())
+  orders          Order     @relation(fields: [orderId], references: [id])
 
   @@index([invoiceNumber])
   @@index([issuedAt])
@@ -1054,7 +1006,126 @@ model product_variants {
   @@index([product_id], map: "idx_product_variants_product_id")
 }
 
-// ── Enums ────────────────────────────────────────────────────────────
+model BulkOrderRequest {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String          @db.VarChar(255)
+  email       String          @db.VarChar(255)
+  phone       String          @db.VarChar(50)
+  countryCode String          @default("+971") @map("country_code") @db.VarChar(10)
+  status      BulkOrderStatus @default(NEW)
+  adminNotes  String?         @map("admin_notes")
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  orderNumber Int             @unique @default(autoincrement()) @map("order_number")
+  items       BulkOrderItem[]
+
+  @@index([createdAt], map: "idx_bulk_order_requests_created_at")
+  @@index([email], map: "idx_bulk_order_requests_email")
+  @@index([status], map: "idx_bulk_order_requests_status")
+  @@map("bulk_order_requests")
+}
+
+model BulkOrderItem {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bulkOrderId String           @map("bulk_order_id") @db.Uuid
+  productId   Int              @map("product_id")
+  productName String           @map("product_name") @db.VarChar(255)
+  sku         String?          @db.VarChar(50)
+  quantity    Int
+  bulkOrder   BulkOrderRequest @relation(fields: [bulkOrderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([bulkOrderId], map: "idx_bulk_order_items_bulk_order_id")
+  @@index([productId], map: "idx_bulk_order_items_product_id")
+  @@map("bulk_order_items")
+}
+
+model StockMovement {
+  id        String            @id @default(uuid())
+  productId Int               @map("product_id")
+  quantity  Int
+  type      StockMovementType
+  reference String?
+  notes     String?
+  createdAt DateTime          @default(now()) @map("created_at")
+  createdBy String?           @map("created_by")
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("stock_movements")
+}
+
+model Return {
+  id              String       @id @default(uuid())
+  returnNumber    String       @unique
+  orderId         String
+  userId          String
+  status          ReturnStatus @default(REQUESTED)
+  reason          ReturnReason
+  customerNotes   String?
+  adminNotes      String?
+  refundMethod    RefundMethod @default(ORIGINAL_PAYMENT)
+  refundAmount    Decimal      @default(0) @db.Decimal(10, 2)
+  loyaltyDeducted Decimal      @default(0) @db.Decimal(10, 2)
+  stockRestored   Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  approvedAt      DateTime?
+  receivedAt      DateTime?
+  completedAt     DateTime?
+  items           ReturnItem[]
+  order           Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id])
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([returnNumber])
+  @@index([createdAt])
+  @@map("returns")
+}
+
+model ReturnItem {
+  id          String  @id @default(uuid())
+  returnId    String
+  orderItemId String
+  productId   Int?
+  name        String
+  sku         String?
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  subtotal    Decimal @db.Decimal(10, 2)
+  return      Return  @relation(fields: [returnId], references: [id], onDelete: Cascade)
+
+  @@index([returnId])
+  @@index([orderItemId])
+  @@map("return_items")
+}
+
+model Announcement {
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  text        String
+  linkUrl     String?
+  linkLabel   String?
+  bgColor     String?
+  textColor   String?
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  startsAt    DateTime   @default(now()) @db.Timestamptz(6)
+  expiresAt   DateTime?  @db.Timestamptz(6)
+  createdAt   DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime   @default(now()) @updatedAt @db.Timestamptz(6)
+  promoCodeId String?
+  promoCode   PromoCode? @relation(fields: [promoCodeId], references: [id], onUpdate: NoAction)
+
+  @@index([isActive], map: "idx_announcements_active")
+  @@index([expiresAt], map: "idx_announcements_expires_at")
+  @@index([promoCodeId], map: "idx_announcements_promo")
+  @@index([sortOrder], map: "idx_announcements_sort")
+  @@index([startsAt], map: "idx_announcements_starts_at")
+  @@map("announcements")
+}
 
 enum UserRole {
   CUSTOMER
@@ -1071,7 +1142,6 @@ enum LoyaltyTransactionType {
 
 enum CartItemType {
   PRODUCT
-  PACKAGE
 }
 
 enum OrderStatus {
@@ -1096,6 +1166,8 @@ enum PaymentStatus {
 enum PaymentMethod {
   CREDIT_CARD
   CASH_ON_DELIVERY
+  TABBY
+  TAMARA
 }
 
 enum ShippingMethod {
@@ -1105,28 +1177,17 @@ enum ShippingMethod {
   PICKUP
 }
 
-model StockMovement {
-  id        String            @id @default(uuid())
-  productId Int               @map("product_id")
-  quantity  Int
-  type      StockMovementType
-  reference String?
-  notes     String?
-  createdAt DateTime          @default(now()) @map("created_at")
-  createdBy String?           @map("created_by")
-  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([productId])
-  @@index([type])
-  @@index([createdAt])
-  @@map("stock_movements")
+enum BulkOrderStatus {
+  NEW
+  IN_PROGRESS
+  CLOSED
 }
 
 enum StockMovementType {
   ORDER_RESERVE
   ORDER_CONFIRM
   ORDER_CANCEL
-  ORDER_REFUND 
+  ORDER_REFUND
   MANUAL_ADJUST
   STOCK_RECEIPT
   STOCK_COUNT
@@ -1211,16 +1272,19 @@ enum CategoryLandingSectionType {
   LOYALTY_BANNER
 }
 
-// ── Returns / RMA ──
-
 enum ReturnStatus {
   REQUESTED
   APPROVED
+  PICKUP_SCHEDULED
+  PICKED_UP
   REJECTED
   ITEMS_RECEIVED
+  QUALITY_CHECK
   REFUND_PROCESSING
   COMPLETED
   CANCELLED
+  QC
+  CLOSED
 }
 
 enum ReturnReason {
@@ -1237,51 +1301,4 @@ enum RefundMethod {
   ORIGINAL_PAYMENT
   LOYALTY_CASH
   STORE_CREDIT
-}
-
-model Return {
-  id              String       @id @default(uuid())
-  returnNumber    String       @unique
-  orderId         String
-  userId          String
-  status          ReturnStatus @default(REQUESTED)
-  reason          ReturnReason
-  customerNotes   String?
-  adminNotes      String?
-  refundMethod    RefundMethod @default(ORIGINAL_PAYMENT)
-  refundAmount    Decimal      @default(0) @db.Decimal(10, 2)
-  loyaltyDeducted Decimal      @default(0) @db.Decimal(10, 2)
-  stockRestored   Boolean      @default(false)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  approvedAt      DateTime?
-  receivedAt      DateTime?
-  completedAt     DateTime?
-  items           ReturnItem[]
-  order           Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  user            User         @relation(fields: [userId], references: [id])
-
-  @@index([orderId])
-  @@index([userId])
-  @@index([status])
-  @@index([returnNumber])
-  @@index([createdAt])
-  @@map("returns")
-}
-
-model ReturnItem {
-  id          String @id @default(uuid())
-  returnId    String
-  orderItemId String
-  productId   Int?
-  name        String
-  sku         String?
-  quantity    Int
-  unitPrice   Decimal @db.Decimal(10, 2)
-  subtotal    Decimal @db.Decimal(10, 2)
-  return      Return @relation(fields: [returnId], references: [id], onDelete: Cascade)
-
-  @@index([returnId])
-  @@index([orderItemId])
-  @@map("return_items")
 }

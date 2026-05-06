@@ -47,6 +47,41 @@ const INVENTORY_TABLES = [
   'inventory_transactions',
 ];
 
+async function copyInventoryTables(soloClient: Client): Promise<void> {
+  for (const table of INVENTORY_TABLES) {
+    try {
+      const countResult = await soloClient.query(`SELECT COUNT(*) FROM inventory_fdw.${table};`);
+      const sourceCount = Number.parseInt(countResult.rows[0].count);
+      if (sourceCount > 0) {
+        await soloClient.query(`INSERT INTO inventory.${table} SELECT * FROM inventory_fdw.${table};`);
+        console.log(`   ✅ ${table}: ${sourceCount} rows copied`);
+      } else {
+        console.log(`   ⏭️  ${table}: 0 rows (empty source)`);
+      }
+    } catch (err: any) {
+      console.error(`   ❌ ${table}: Error - ${err.message}`);
+    }
+  }
+}
+
+async function fixInventorySequences(soloClient: Client): Promise<void> {
+  for (const table of INVENTORY_TABLES) {
+    try {
+      const seqName = `inventory.${table}_id_seq`;
+      const maxResult = await soloClient.query(`SELECT COALESCE(MAX(id), 0) as maxid FROM inventory.${table};`);
+      const maxId = Number.parseInt(maxResult.rows[0].maxid) || 0;
+      if (maxId > 0) {
+        await soloClient.query(`SELECT setval('${seqName}', ${maxId}, true);`);
+        console.log(`   ✅ ${table}_id_seq set to ${maxId}`);
+      }
+    } catch (err: any) {
+      if (!err.message.includes('does not exist')) {
+        console.error(`   ⚠️  ${table}: ${err.message}`);
+      }
+    }
+  }
+}
+
 async function main() {
   console.log('🚀 Starting Inventory Schema Migration...\n');
   
@@ -331,45 +366,13 @@ async function main() {
     // Step 4: Copy data from inventory_db via foreign tables
     console.log('📦 Step 4: Copying data from inventory_db...');
     
-    for (const table of INVENTORY_TABLES) {
-      try {
-        // Check if source table has data
-        const countResult = await soloClient.query(`SELECT COUNT(*) FROM inventory_fdw.${table};`);
-        const sourceCount = parseInt(countResult.rows[0].count);
-        
-        if (sourceCount > 0) {
-          // Copy data
-          await soloClient.query(`INSERT INTO inventory.${table} SELECT * FROM inventory_fdw.${table};`);
-          console.log(`   ✅ ${table}: ${sourceCount} rows copied`);
-        } else {
-          console.log(`   ⏭️  ${table}: 0 rows (empty source)`);
-        }
-      } catch (err: any) {
-        console.error(`   ❌ ${table}: Error - ${err.message}`);
-      }
-    }
+    await copyInventoryTables(soloClient);
     console.log();
 
     // Step 5: Fix sequences (setval to max(id))
     console.log('🔢 Step 5: Fixing sequences...');
     
-    for (const table of INVENTORY_TABLES) {
-      try {
-        const seqName = `inventory.${table}_id_seq`;
-        const maxResult = await soloClient.query(`SELECT COALESCE(MAX(id), 0) as maxid FROM inventory.${table};`);
-        const maxId = parseInt(maxResult.rows[0].maxid) || 0;
-        
-        if (maxId > 0) {
-          await soloClient.query(`SELECT setval('${seqName}', ${maxId}, true);`);
-          console.log(`   ✅ ${table}_id_seq set to ${maxId}`);
-        }
-      } catch (err: any) {
-        // Sequence might not exist for some tables
-        if (!err.message.includes('does not exist')) {
-          console.error(`   ⚠️  ${table}: ${err.message}`);
-        }
-      }
-    }
+    await fixInventorySequences(soloClient);
     console.log();
 
     // Step 6: Create views

@@ -8,8 +8,8 @@ import Stripe from 'stripe';
 @Injectable()
 export class StripeWebhookService {
   private readonly logger = new Logger(StripeWebhookService.name);
-  private stripe: Stripe | null = null;
-  private webhookSecret: string;
+  private readonly stripe: Stripe | null = null;
+  private readonly webhookSecret: string;
 
   constructor(
     private readonly configService: ConfigService,

@@ -21,13 +21,13 @@ export class CatalogService {
   // In production, this should be stored in Redis or database
   private static catalogVersion = 1;
   private static lastUpdated = new Date();
-  private static entityVersions = {
+  private static readonly entityVersions = {
     categories: 1,
     brands: 1,
     products: 1,
   };
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Get current catalog version

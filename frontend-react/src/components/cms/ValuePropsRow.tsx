@@ -32,7 +32,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function ValuePropsRow({ section }: { section: LandingSectionDto }) {
+export default function ValuePropsRow({ section }: Readonly<{ section: LandingSectionDto }>) {
   const d = section.data;
   const props = (d.props as Prop[]) ?? (d.items as Prop[]) ?? [];
 
@@ -44,7 +44,7 @@ export default function ValuePropsRow({ section }: { section: LandingSectionDto 
         {props.map((p, i) => {
           const iconKey = (p.icon ?? '').toLowerCase();
           return (
-            <div key={i} className="flex flex-col items-center text-center gap-2">
+            <div key={`${p.title ?? p.icon ?? 'prop'}-${i}`} className="flex flex-col items-center text-center gap-2">
               <div className="text-[#B8860B]">{ICONS[iconKey] ?? ICONS.shipping}</div>
               {p.title && <span className="text-sm font-semibold">{p.title}</span>}
               {p.subtitle && <span className="text-xs text-gray-500">{p.subtitle}</span>}

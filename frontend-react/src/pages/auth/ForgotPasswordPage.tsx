@@ -37,8 +37,8 @@ export default function ForgotPasswordPage() {
             {error && <div className={styles['error-msg']}>{error}</div>}
             <form onSubmit={handleSubmit}>
               <div className={styles['form-group']}>
-                <label>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
+                <label htmlFor="email">Email</label>
+                <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
               </div>
               <button type="submit" className={styles['submit-btn']} disabled={loading}>
                 {loading ? 'Sending...' : 'Send Reset Link'}

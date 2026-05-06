@@ -1,6 +1,6 @@
 import type { LandingSectionDto } from '@/types';
 
-export default function NewsletterBlock({ section }: { section: LandingSectionDto }) {
+export default function NewsletterBlock({ section }: Readonly<{ section: LandingSectionDto }>) {
   const d = section.data;
   const title = (d.title as string) ?? section.title ?? 'Stay in the Loop';
   const subtitle = (d.subtitle as string) ?? section.subtitle ?? 'Subscribe for exclusive offers and new arrivals';

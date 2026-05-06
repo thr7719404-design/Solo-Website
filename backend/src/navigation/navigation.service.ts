@@ -4,7 +4,7 @@ import { CreateNavigationMenuDto, UpdateNavigationMenuDto, CreateNavigationMenuI
 
 @Injectable()
 export class NavigationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   // ============================================================================
   // NAVIGATION MENUS
@@ -175,6 +175,22 @@ export class NavigationService {
     });
   }
 
+  private buildMenuItemUpdateData(dto: UpdateNavigationMenuItemDto): any {
+    return {
+      ...(dto.parentId !== undefined && { parentId: dto.parentId }),
+      ...(dto.label && { label: dto.label }),
+      ...(dto.url !== undefined && { url: dto.url }),
+      ...(dto.icon !== undefined && { icon: dto.icon }),
+      ...(dto.badge !== undefined && { badge: dto.badge }),
+      ...(dto.badgeColor !== undefined && { badgeColor: dto.badgeColor }),
+      ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
+      ...(dto.description !== undefined && { description: dto.description }),
+      ...(dto.openInNewTab !== undefined && { openInNewTab: dto.openInNewTab }),
+      ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+      ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+    };
+  }
+
   async updateMenuItem(id: string, dto: UpdateNavigationMenuItemDto) {
     await this.getMenuItem(id);
 
@@ -192,19 +208,7 @@ export class NavigationService {
 
     return this.prisma.navigationMenuItem.update({
       where: { id },
-      data: {
-        ...(dto.parentId !== undefined && { parentId: dto.parentId }),
-        ...(dto.label && { label: dto.label }),
-        ...(dto.url !== undefined && { url: dto.url }),
-        ...(dto.icon !== undefined && { icon: dto.icon }),
-        ...(dto.badge !== undefined && { badge: dto.badge }),
-        ...(dto.badgeColor !== undefined && { badgeColor: dto.badgeColor }),
-        ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
-        ...(dto.description !== undefined && { description: dto.description }),
-        ...(dto.openInNewTab !== undefined && { openInNewTab: dto.openInNewTab }),
-        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
-        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-      },
+      data: this.buildMenuItemUpdateData(dto),
       include: {
         menu: true,
         parent: true,

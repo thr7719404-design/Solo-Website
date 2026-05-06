@@ -1,10 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly uploadsBaseUrl: string;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.uploadsBaseUrl =
+      this.configService.get<string>('UPLOAD_BASE_URL') ||
+      this.configService.get<string>('APP_URL', 'http://localhost:3000') + '/uploads';
+  }
 
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
@@ -64,11 +74,21 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
       include: {
         items: true,
-        shippingAddress: true,
       },
     });
 
-    return orders.map((order) => ({
+    // Fetch shipping addresses separately so orphan FKs don't break the listing.
+    const shippingIds = Array.from(
+      new Set(orders.map((o) => o.shippingAddressId).filter(Boolean) as string[]),
+    );
+    const shippingAddresses = shippingIds.length
+      ? await this.prisma.address.findMany({ where: { id: { in: shippingIds } } })
+      : [];
+    const addrMap = new Map(shippingAddresses.map((a) => [a.id, a]));
+
+    return orders.map((order) => {
+      const ship = order.shippingAddressId ? addrMap.get(order.shippingAddressId) : null;
+      return {
       id: order.id,
       orderNumber: order.orderNumber,
       status: order.status,
@@ -77,31 +97,90 @@ export class UsersService {
       subtotal: order.subtotal,
       discount: order.discount,
       vat: order.vat,
+      vatAmount: order.vatAmount,
+      subtotalExclVat: order.subtotalExclVat,
+      vatRateSnapshot: order.vatRateSnapshot,
       shippingCost: order.shippingCost,
       total: order.total,
       itemsCount: order.items.length,
       createdAt: order.createdAt,
       shippingAddress: {
-        city: order.shippingAddress.city,
+        city: ship?.city ?? '',
       },
-    }));
+      };
+    });
   }
 
   async getUserOrder(userId: string, orderId: string) {
-    const order = await this.prisma.order.findFirst({
+    const baseOrder = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
       include: {
         items: true,
-        shippingAddress: true,
-        billingAddress: true,
         statusHistory: {
           orderBy: { createdAt: 'desc' },
         },
       },
     });
 
-    if (!order) {
+    if (!baseOrder) {
       throw new NotFoundException('Order not found');
+    }
+
+    const [shippingAddress, billingAddress] = await Promise.all([
+      baseOrder.shippingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
+        : null,
+      baseOrder.billingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
+        : null,
+    ]);
+    const order: any = { ...baseOrder, shippingAddress, billingAddress };
+
+    // Resolve product images for order items
+    const productIds = (order.items as any[])
+      .map((item: any) => item.productId)
+      .filter((id: any): id is number => id !== null);
+
+    if (productIds.length > 0) {
+      const products = await this.prisma.product.findMany({
+        where: { id: { in: productIds } },
+        include: {
+          images: {
+            orderBy: { displayOrder: 'asc' },
+            take: 1,
+          },
+        },
+      });
+
+      // Resolve media asset UUIDs to URLs
+      const mediaIds = products
+        .flatMap((p) => p.images?.map((img) => img.media_asset_id) || [])
+        .filter(Boolean);
+      const uniqueIds = [...new Set(mediaIds)];
+      const assets = uniqueIds.length > 0
+        ? await this.prisma.media_assets.findMany({
+            where: { id: { in: uniqueIds } },
+            select: { id: true, key: true },
+          })
+        : [];
+      const urlMap = new Map(assets.map((a) => [a.id, `${this.uploadsBaseUrl}/${a.key}`]));
+
+      // Build productId → imageUrl map
+      const imageMap = new Map<number, string>();
+      for (const p of products) {
+        const img = p.images?.[0];
+        if (img) {
+          imageMap.set(p.id, urlMap.get(img.media_asset_id) || img.media_asset_id);
+        }
+      }
+
+      // Attach imageUrl to each order item
+      const enrichedItems = (order.items as any[]).map((item: any) => ({
+        ...item,
+        imageUrl: item.productId ? imageMap.get(item.productId) || null : null,
+      }));
+
+      return { ...order, items: enrichedItems };
     }
 
     return order;

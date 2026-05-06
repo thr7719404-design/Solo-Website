@@ -154,3 +154,97 @@
   font-weight: 700;
   color: var(--color-error);
 }
+
+/* Out of stock state — image looks clearly unavailable (grayscale + dim),
+   but the bottom ribbon turns the moment into an opportunity with a modern,
+   sleek dark gradient + soft cyan accent (not the brand gold). */
+.card-oos .image-wrap img {
+  filter: grayscale(1) brightness(0.92) contrast(0.95);
+  opacity: 0.85;
+}
+
+.card-oos:hover .image-wrap img {
+  transform: scale(1.03);
+  filter: grayscale(0.85) brightness(0.96);
+}
+
+.card-oos .price {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+/* Small discreet "Out of Stock" tag in the top-left corner */
+.oos-corner {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  background: rgba(15, 23, 42, 0.88);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 9px;
+  border-radius: 3px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
+
+/* Bottom ribbon — modern dark slate gradient with a cyan accent line.
+   Reads as premium / "concierge" rather than warning. */
+.special-order-ribbon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 12px 11px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+  color: #fff;
+  text-decoration: none;
+  border-top: 2px solid #22d3ee; /* cyan accent — modern, fresh */
+  box-shadow: 0 -4px 14px rgba(15, 23, 42, 0.35);
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.special-order-ribbon:hover {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  transform: translateY(-2px);
+}
+
+.special-order-icon {
+  font-size: 16px;
+  line-height: 1;
+  color: #22d3ee;
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.55));
+}
+
+.special-order-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.special-order-text strong {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.special-order-text small {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #cbd5e1;
+  letter-spacing: 0.2px;
+}

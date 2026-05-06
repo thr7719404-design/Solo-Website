@@ -9,10 +9,11 @@ export class ProductsService {
   private readonly uploadsBaseUrl: string;
 
   constructor(
-    private prisma: PrismaService,
-    private configService: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {
     this.uploadsBaseUrl =
+      this.configService.get<string>('UPLOAD_BASE_URL') ||
       this.configService.get<string>('APP_URL', 'http://localhost:3000') + '/uploads';
   }
 
@@ -82,6 +83,153 @@ export class ProductsService {
     }));
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // findAll helpers — extracted to keep cognitive complexity under control.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  private applyStatusFilter(where: any, status?: string, isActive?: string) {
+    if (status === 'all') return;
+    if (status === 'active') { where.isActive = true; return; }
+    if (status === 'draft') { where.isActive = false; return; }
+    if (status === 'out_of_stock') { where.isActive = true; where.stockQty = 0; return; }
+    if (isActive === 'true') { where.isActive = true; return; }
+    if (isActive === 'false') { where.isActive = false; return; }
+    // Default: show only active products for public endpoints
+    where.isActive = true;
+  }
+
+  private applyStockFilter(where: any, status?: string, inStock?: string) {
+    // Note: OOS products are intentionally included in public listings so the
+    // storefront can show the "Out of Stock" watermark and the WhatsApp
+    // "Contact Seller" CTA. Callers that want only in-stock items must pass
+    // inStock=true explicitly.
+    if (inStock === 'true') { where.stockQty = { gt: 0 }; return; }
+    if (inStock === 'false') { where.stockQty = 0; return; }
+    if (status === 'all' && inStock === 'low') {
+      where.stockQty = { gt: 0, lte: 10 };
+    }
+  }
+
+  private collectCategoryList(product: any): Array<{ id: number; name: string }> {
+    const out = new Map<number, { id: number; name: string }>();
+    if (Array.isArray(product?.categories)) {
+      for (const link of product.categories) {
+        if (link?.category) out.set(link.category.id, { id: link.category.id, name: link.category.name });
+      }
+    }
+    if (product?.category) {
+      out.set(product.category.id, { id: product.category.id, name: product.category.name });
+    }
+    return Array.from(out.values());
+  }
+
+  private collectSubcategoryList(product: any): Array<{ id: number; name: string }> {
+    const out = new Map<number, { id: number; name: string }>();
+    if (Array.isArray(product?.subcategoriesLinks)) {
+      for (const link of product.subcategoriesLinks) {
+        if (link?.subcategory) out.set(link.subcategory.id, { id: link.subcategory.id, name: link.subcategory.name });
+      }
+    }
+    if (product?.subcategory) {
+      out.set(product.subcategory.id, { id: product.subcategory.id, name: product.subcategory.name });
+    }
+    return Array.from(out.values());
+  }
+
+  private resolveCategoryIdsFromDto(dto: any): number[] | null {
+    const arr = dto?.categoryIds;
+    if (!Array.isArray(arr)) return null;
+    const ids = arr
+      .map((x: any) => Number.parseInt(String(x), 10))
+      .filter((n: number) => Number.isFinite(n));
+    return Array.from(new Set(ids));
+  }
+
+  private resolveSubcategoryIdsFromDto(dto: any): number[] | null {
+    const arr = dto?.subcategoryIds;
+    if (!Array.isArray(arr)) return null;
+    const ids = arr
+      .map((x: any) => Number.parseInt(String(x), 10))
+      .filter((n: number) => Number.isFinite(n));
+    return Array.from(new Set(ids));
+  }
+
+  private async syncProductCategories(tx: any, productId: number, categoryIds: number[] | null) {
+    if (categoryIds === null) return;
+    await tx.productCategory.deleteMany({ where: { productId } });
+    if (categoryIds.length === 0) return;
+    await tx.productCategory.createMany({
+      data: categoryIds.map((categoryId) => ({ productId, categoryId })),
+      skipDuplicates: true,
+    });
+  }
+
+  private async syncProductSubcategories(tx: any, productId: number, subcategoryIds: number[] | null) {
+    if (subcategoryIds === null) return;
+    await tx.productSubcategory.deleteMany({ where: { productId } });
+    if (subcategoryIds.length === 0) return;
+    await tx.productSubcategory.createMany({
+      data: subcategoryIds.map((subcategoryId) => ({ productId, subcategoryId })),
+      skipDuplicates: true,
+    });
+  }
+
+  private async applyCategoryFilter(where: any, categoryId?: string) {
+    if (!categoryId) return;
+    let id: number | null = null;
+    const parsed = Number.parseInt(categoryId, 10);
+    if (!Number.isNaN(parsed)) {
+      id = parsed;
+    } else {
+      const cat = await this.prisma.category.findFirst({ where: { slug: categoryId } });
+      if (cat) id = cat.id;
+    }
+    if (id == null) return;
+    // Match either the legacy primary FK or any join-table assignment
+    const orClause = [
+      { categoryId: id },
+      { categories: { some: { categoryId: id } } },
+    ];
+    if (where.OR) {
+      where.AND = [...(where.AND || []), { OR: orClause }];
+    } else {
+      where.OR = orClause;
+    }
+  }
+
+  private applySubcategoryFilter(where: any, subcategoryId?: string) {
+    if (!subcategoryId) return;
+    const id = Number.parseInt(subcategoryId, 10);
+    if (Number.isNaN(id)) return;
+    const orClause = [
+      { subcategoryId: id },
+      { subcategoriesLinks: { some: { subcategoryId: id } } },
+    ];
+    if (where.OR) {
+      where.AND = [...(where.AND || []), { OR: orClause }];
+    } else {
+      where.OR = orClause;
+    }
+  }
+
+  private applyPriceFilter(where: any, minPrice?: number, maxPrice?: number) {
+    if (minPrice === undefined && maxPrice === undefined) return;
+    const priceFilter: any = {};
+    if (minPrice !== undefined) priceFilter.gte = minPrice;
+    if (maxPrice !== undefined) priceFilter.lte = maxPrice;
+    where.pricing = { price_incl_vat_aed: priceFilter };
+  }
+
+  private buildProductOrderBy(sortBy: SortBy): any {
+    switch (sortBy) {
+      case SortBy.PRICE_LOW: return { pricing: { price_incl_vat_aed: 'asc' } };
+      case SortBy.PRICE_HIGH: return { pricing: { price_incl_vat_aed: 'desc' } };
+      case SortBy.NAME_ASC: return { productName: 'asc' };
+      case SortBy.NAME_DESC: return { productName: 'desc' };
+      default: return { createdAt: 'desc' };
+    }
+  }
+
   async findAll(filters: ProductFilterDto) {
     const {
       categoryId,
@@ -105,8 +253,8 @@ export class ProductsService {
     } = filters;
 
     // Ensure numeric values for pagination
-    const page = typeof rawPage === 'string' ? parseInt(rawPage, 10) : rawPage;
-    const limit = typeof rawLimit === 'string' ? parseInt(rawLimit, 10) : rawLimit;
+    const page = typeof rawPage === 'string' ? Number.parseInt(rawPage, 10) : rawPage;
+    const limit = typeof rawLimit === 'string' ? Number.parseInt(rawLimit, 10) : rawLimit;
 
     const searchTerm = search || q;
     const skip = (page - 1) * limit;
@@ -114,50 +262,14 @@ export class ProductsService {
     // Build where clause
     const where: any = {};
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // STATUS FILTER: supports 'status' param or 'isActive' param
-    // ─────────────────────────────────────────────────────────────────────────
-    if (status === 'active') {
-      where.isActive = true;
-    } else if (status === 'draft') {
-      where.isActive = false;
-    } else if (status === 'out_of_stock') {
-      // Out of stock: we'll filter after fetch since stock is in pricing/inventory
-      // For now, keep isActive filter and handle stock client-side or via inStock
-      where.isActive = true; // Only show active products that are out of stock
-    } else if (isActive === 'true') {
-      where.isActive = true;
-    } else if (isActive === 'false') {
-      where.isActive = false;
-    } else {
-      // Default: show only active products for public endpoints
-      // For admin, we want all - but this is a shared endpoint
-      // So we default to active unless status/isActive is specified
-      where.isActive = true;
-    }
-    // ─────────────────────────────────────────────────────────────────────────
+    this.applyStatusFilter(where, status, isActive);
+    this.applyStockFilter(where, status, inStock);
+    await this.applyCategoryFilter(where, categoryId);
 
-    if (categoryId) {
-      const parsed = Number.parseInt(categoryId, 10);
-      if (Number.isNaN(parsed)) {
-        // Treat as slug – resolve to numeric ID
-        const cat = await this.prisma.category.findFirst({ where: { slug: categoryId } });
-        if (cat) where.categoryId = cat.id;
-      } else {
-        where.categoryId = parsed;
-      }
-    }
-
-    if (subcategoryId) {
-      where.subcategoryId = parseInt(subcategoryId);
-    }
-
-    if (brandId) {
-      where.brandId = parseInt(brandId);
-    }
-
+    this.applySubcategoryFilter(where, subcategoryId);
+    if (brandId) where.brandId = Number.parseInt(brandId, 10);
     if (brandIds && brandIds.length > 0) {
-      where.brandId = { in: brandIds.map(id => parseInt(id)) };
+      where.brandId = { in: brandIds.map(id => Number.parseInt(id, 10)) };
     }
 
     if (searchTerm) {
@@ -168,52 +280,14 @@ export class ProductsService {
       ];
     }
 
-    if (isFeatured === 'true') {
-      where.isFeatured = true;
-    }
+    if (isFeatured === 'true') where.isFeatured = true;
+    if (isNew === 'true') where.isNew = true;
+    if (isBestSeller === 'true') where.isBestSeller = true;
+    if (isOnSale === 'true') where.product_overrides = { is_on_sale: true };
 
-    if (isNew === 'true') {
-      where.isNew = true;
-    }
+    this.applyPriceFilter(where, minPrice, maxPrice);
 
-    if (isBestSeller === 'true') {
-      where.isBestSeller = true;
-    }
-
-    if (isOnSale === 'true') {
-      where.product_overrides = {
-        is_on_sale: true,
-      };
-    }
-
-    // Price range filter — pushed into Prisma where clause (not in-memory)
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      const priceFilter: any = {};
-      if (minPrice !== undefined) priceFilter.gte = minPrice;
-      if (maxPrice !== undefined) priceFilter.lte = maxPrice;
-      where.pricing = { price_incl_vat_aed: priceFilter };
-    }
-
-    // Build orderBy clause
-    let orderBy: any = {};
-    switch (sortBy) {
-      case SortBy.PRICE_LOW:
-        orderBy = { pricing: { price_incl_vat_aed: 'asc' } };
-        break;
-      case SortBy.PRICE_HIGH:
-        orderBy = { pricing: { price_incl_vat_aed: 'desc' } };
-        break;
-      case SortBy.NAME_ASC:
-        orderBy = { productName: 'asc' };
-        break;
-      case SortBy.NAME_DESC:
-        orderBy = { productName: 'desc' };
-        break;
-      case SortBy.NEWEST:
-      default:
-        orderBy = { createdAt: 'desc' };
-        break;
-    }
+    const orderBy = this.buildProductOrderBy(sortBy);
 
     // Fetch products with pricing
     const [products, total] = await Promise.all([
@@ -223,6 +297,8 @@ export class ProductsService {
           brand: true,
           category: true,
           subcategory: true,
+          categories: { include: { category: true } },
+          subcategoriesLinks: { include: { subcategory: true } },
           pricing: true,
           images: {
             orderBy: { displayOrder: 'asc' },
@@ -253,12 +329,18 @@ export class ProductsService {
         id: product.subcategory.id,
         name: product.subcategory.name,
       } : null,
+      categories: this.collectCategoryList(product),
+      subcategories: this.collectSubcategoryList(product),
+      categoryIds: this.collectCategoryList(product).map((c: any) => String(c.id)),
+      subcategoryIds: this.collectSubcategoryList(product).map((s: any) => String(s.id)),
       brand: product.brand ? {
         id: product.brand.id,
         name: product.brand.name,
       } : null,
-      price: product.pricing?.price_incl_vat_aed ? parseFloat(product.pricing.price_incl_vat_aed.toString()) : 0,
-      listPrice: product.pricing?.price_excl_vat_aed ? parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      price: product.pricing?.price_incl_vat_aed ? Number.parseFloat(product.pricing.price_incl_vat_aed.toString()) : 0,
+      listPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      compareAtPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      oldPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       currency: 'AED',
       imageUrl: product.images?.[0]?.media_asset_id || null,
       images: product.images?.map((img: any) => ({
@@ -295,6 +377,7 @@ export class ProductsService {
       where: {
         isActive: true,
         isFeatured: true,
+        stockQty: { gt: 0 },
       },
       include: {
         brand: true,
@@ -322,6 +405,7 @@ export class ProductsService {
       where: {
         isActive: true,
         isBestSeller: true,
+        stockQty: { gt: 0 },
       },
       include: {
         brand: true,
@@ -349,6 +433,7 @@ export class ProductsService {
       where: {
         isActive: true,
         isNew: true,
+        stockQty: { gt: 0 },
       },
       include: {
         brand: true,
@@ -371,36 +456,113 @@ export class ProductsService {
     };
   }
 
-  async getRelated(productId: string, limit: number = 6) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: parseInt(productId) },
+  async getRelated(productIdOrSlug: string, limit: number = 6) {
+    const isNumericId = /^\d+$/.test(productIdOrSlug);
+    const syntheticIdMatch = /^product-(\d+)$/.exec(productIdOrSlug);
+    let where: any;
+    if (isNumericId) {
+      where = { id: Number.parseInt(productIdOrSlug, 10) };
+    } else if (syntheticIdMatch) {
+      where = { id: Number.parseInt(syntheticIdMatch[1], 10) };
+    } else {
+      where = { OR: [{ slug: productIdOrSlug }, { sku: productIdOrSlug }] };
+    }
+    const product = await this.prisma.product.findFirst({
+      where,
+      include: {
+        categories: true,
+        subcategoriesLinks: true,
+      },
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    const relatedProducts = await this.prisma.product.findMany({
-      where: {
-        isActive: true,
-        id: { not: parseInt(productId) },
-        OR: [
-          { categoryId: product.categoryId },
-          { brandId: product.brandId },
-        ],
+    const include = {
+      brand: true,
+      category: true,
+      pricing: true,
+      images: {
+        orderBy: { displayOrder: 'asc' as const },
+        take: 1,
       },
-      include: {
-        brand: true,
-        category: true,
-        pricing: true,
-        images: {
-          orderBy: { displayOrder: 'asc' },
-          take: 1,
+    };
+
+    // Collect all subcategory IDs from both legacy FK and join table
+    const subcategoryIds = new Set<number>();
+    if (product.subcategoryId) subcategoryIds.add(product.subcategoryId);
+    if (Array.isArray((product as any).subcategoriesLinks)) {
+      for (const link of (product as any).subcategoriesLinks) subcategoryIds.add(link.subcategoryId);
+    }
+
+    // Collect all category IDs from both legacy FK and join table
+    const categoryIds = new Set<number>();
+    if (product.categoryId) categoryIds.add(product.categoryId);
+    if (Array.isArray((product as any).categories)) {
+      for (const link of (product as any).categories) categoryIds.add(link.categoryId);
+    }
+
+    // Prefer same subcategory first; fall back to same category to fill the slots.
+    let relatedProducts: any[] = [];
+
+    if (subcategoryIds.size > 0) {
+      const subIds = Array.from(subcategoryIds);
+      const sameSubcategory = await this.prisma.product.findMany({
+        where: {
+          isActive: true,
+          stockQty: { gt: 0 },
+          id: { not: product.id },
+          OR: [
+            { subcategoryId: { in: subIds } },
+            { subcategoriesLinks: { some: { subcategoryId: { in: subIds } } } },
+          ],
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    }) as any[];
+        include,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+      relatedProducts = sameSubcategory as any[];
+    }
+
+    if (relatedProducts.length < limit && categoryIds.size > 0) {
+      const remaining = limit - relatedProducts.length;
+      const excludeIds = [product.id, ...relatedProducts.map(p => p.id)];
+      const catIds = Array.from(categoryIds);
+      const sameCategory = await this.prisma.product.findMany({
+        where: {
+          isActive: true,
+          stockQty: { gt: 0 },
+          id: { notIn: excludeIds },
+          OR: [
+            { categoryId: { in: catIds } },
+            { categories: { some: { categoryId: { in: catIds } } } },
+          ],
+        },
+        include,
+        orderBy: { createdAt: 'desc' },
+        take: remaining,
+      });
+      relatedProducts = [...relatedProducts, ...(sameCategory as any[])];
+    }
+
+    // Fallback: same brand
+    if (relatedProducts.length < limit && product.brandId) {
+      const remaining = limit - relatedProducts.length;
+      const excludeIds = [product.id, ...relatedProducts.map(p => p.id)];
+      const sameBrand = await this.prisma.product.findMany({
+        where: {
+          isActive: true,
+          stockQty: { gt: 0 },
+          id: { notIn: excludeIds },
+          brandId: product.brandId,
+        },
+        include,
+        orderBy: { createdAt: 'desc' },
+        take: remaining,
+      });
+      relatedProducts = [...relatedProducts, ...(sameBrand as any[])];
+    }
 
     await this.resolveProductImageUrls(relatedProducts);
 
@@ -411,14 +573,25 @@ export class ProductsService {
   }
 
   async findOne(slugOrId: string) {
-    const id = parseInt(slugOrId);
-    
+    const isNumericId = /^\d+$/.test(slugOrId);
+    const syntheticIdMatch = /^product-(\d+)$/.exec(slugOrId);
+    let where: any;
+    if (isNumericId) {
+      where = { id: Number.parseInt(slugOrId, 10) };
+    } else if (syntheticIdMatch) {
+      where = { id: Number.parseInt(syntheticIdMatch[1], 10) };
+    } else {
+      where = { OR: [{ slug: slugOrId }, { sku: slugOrId }] };
+    }
+
     const product = await this.prisma.product.findFirst({
-      where: isNaN(id) ? { sku: slugOrId } : { id },
+      where,
       include: {
         brand: true,
         category: true,
         subcategory: true,
+        categories: { include: { category: true } },
+        subcategoriesLinks: { include: { subcategory: true } },
         pricing: true,
         images: {
           orderBy: { displayOrder: 'asc' },
@@ -426,6 +599,7 @@ export class ProductsService {
         dimensions: true,
         packaging: true,
         specifications: true,
+        productGroup: true,
       },
     }) as any;
 
@@ -435,7 +609,45 @@ export class ProductsService {
 
     await this.resolveProductImageUrls([product]);
 
-    return this.transformProduct(product, true);
+    let variants: any[] = [];
+    if (product.productGroupId) {
+      const siblings = await this.prisma.product.findMany({
+        where: { productGroupId: product.productGroupId, isActive: true },
+        include: {
+          pricing: true,
+          images: {
+            where: { isPrimary: true },
+            take: 1,
+          },
+        },
+        orderBy: [{ variantSortOrder: 'asc' }, { id: 'asc' }],
+      }) as any[];
+      await this.resolveProductImageUrls(siblings);
+      variants = siblings.map((s: any) => ({
+        id: s.id.toString(),
+        sku: s.sku,
+        slug: s.slug,
+        name: s.productName,
+        attributes: s.variantAttributes || {},
+        price: s.pricing?.price_incl_vat_aed ? Number.parseFloat(s.pricing.price_incl_vat_aed.toString()) : 0,
+        stockQty: s.stockQty ?? 0,
+        inStock: (s.stockQty ?? 0) > 0,
+        primaryImage: s.images?.[0]?.media_asset_id || null,
+        isCurrent: s.id === product.id,
+      }));
+    }
+
+    const transformed = this.transformProduct(product, true);
+    if (product.productGroup) {
+      transformed.productGroup = {
+        id: product.productGroup.id,
+        name: product.productGroup.name,
+        variantAxes: product.productGroup.variantAxes || ['color'],
+      };
+      transformed.variants = variants;
+    }
+    transformed.variantAttributes = product.variantAttributes || null;
+    return transformed;
   }
 
   private transformProduct(product: any, detailed: boolean = false): any {
@@ -453,12 +665,18 @@ export class ProductsService {
         id: product.subcategory.id,
         name: product.subcategory.name,
       } : null,
+      categories: this.collectCategoryList(product),
+      subcategories: this.collectSubcategoryList(product),
+      categoryIds: this.collectCategoryList(product).map((c: any) => String(c.id)),
+      subcategoryIds: this.collectSubcategoryList(product).map((s: any) => String(s.id)),
       brand: product.brand ? {
         id: product.brand.id,
         name: product.brand.name,
       } : null,
-      price: product.pricing?.price_incl_vat_aed ? parseFloat(product.pricing.price_incl_vat_aed.toString()) : 0,
-      listPrice: product.pricing?.price_excl_vat_aed ? parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      price: product.pricing?.price_incl_vat_aed ? Number.parseFloat(product.pricing.price_incl_vat_aed.toString()) : 0,
+      listPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      compareAtPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      oldPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       currency: 'AED',
       imageUrl: product.images?.[0]?.media_asset_id || null,
       images: product.images?.map((img: any) => ({
@@ -467,7 +685,8 @@ export class ProductsService {
         alt: img.altText || product.productName,
         displayOrder: img.displayOrder,
       })) || [],
-      inStock: true,
+      stockQty: product.stockQty ?? 0,
+      inStock: (product.stockQty ?? 0) > 0,
       material: product.material,
       color: product.colour,
       isFeatured: product.isFeatured,
@@ -553,17 +772,29 @@ export class ProductsService {
 
       // Create the product with transaction to ensure atomicity
       const product = await this.prisma.$transaction(async (tx) => {
+        // Resolve many-to-many ids; legacy single FK derived from first if dto omits it
+        const categoryIdsArr = this.resolveCategoryIdsFromDto(createProductDto);
+        const subcategoryIdsArr = this.resolveSubcategoryIdsFromDto(createProductDto);
+        const primaryCategoryId =
+          (createProductDto.categoryId ? Number.parseInt(createProductDto.categoryId) : null) ??
+          (categoryIdsArr && categoryIdsArr[0]) ??
+          null;
+        const primarySubcategoryId =
+          (createProductDto.subcategoryId ? Number.parseInt(createProductDto.subcategoryId) : null) ??
+          (subcategoryIdsArr && subcategoryIdsArr[0]) ??
+          null;
+
         // Create main product record
         const newProduct = await tx.product.create({
           data: {
             sku: createProductDto.sku,
             productName: createProductDto.name,
             description: createProductDto.description,
-            categoryId: createProductDto.categoryId ? parseInt(createProductDto.categoryId) : null,
-            subcategoryId: createProductDto.subcategoryId ? parseInt(createProductDto.subcategoryId) : null,
-            brandId: createProductDto.brandId ? parseInt(createProductDto.brandId) : null,
-            designerId: createProductDto.designerId ? parseInt(createProductDto.designerId) : null,
-            countryId: createProductDto.countryId ? parseInt(createProductDto.countryId) : null,
+            categoryId: primaryCategoryId,
+            subcategoryId: primarySubcategoryId,
+            brandId: createProductDto.brandId ? Number.parseInt(createProductDto.brandId) : null,
+            designerId: createProductDto.designerId ? Number.parseInt(createProductDto.designerId) : null,
+            countryId: createProductDto.countryId ? Number.parseInt(createProductDto.countryId) : null,
             material: createProductDto.material,
             colour: createProductDto.colour,
             size: createProductDto.size,
@@ -599,11 +830,14 @@ export class ProductsService {
         }
 
         // Create product images (multi-image support, up to 5)
-        const imageUrls: string[] = createProductDto.images?.length
-          ? createProductDto.images.slice(0, 5)
-          : createProductDto.imageUrl
-            ? [createProductDto.imageUrl]
-            : [];
+        let imageUrls: string[];
+        if (createProductDto.images?.length) {
+          imageUrls = createProductDto.images.slice(0, 5);
+        } else if (createProductDto.imageUrl) {
+          imageUrls = [createProductDto.imageUrl];
+        } else {
+          imageUrls = [];
+        }
 
         if (imageUrls.length > 0) {
           await tx.productImage.createMany({
@@ -615,6 +849,13 @@ export class ProductsService {
             })),
           });
         }
+
+        // Sync many-to-many category/subcategory join tables. If the DTO omitted
+        // the arrays, mirror the primary FK so reads stay consistent.
+        const catSync = categoryIdsArr ?? (primaryCategoryId != null ? [primaryCategoryId] : []);
+        const subSync = subcategoryIdsArr ?? (primarySubcategoryId != null ? [primarySubcategoryId] : []);
+        await this.syncProductCategories(tx, newProduct.id, catSync);
+        await this.syncProductSubcategories(tx, newProduct.id, subSync);
 
         return newProduct;
       });
@@ -657,9 +898,126 @@ export class ProductsService {
     }
   }
 
+  private static readonly DIRECT_UPDATE_FIELDS = [
+    'sku', 'material', 'colour', 'size', 'isActive', 'isDiscontinued',
+    'isFeatured', 'isNew', 'isBestSeller', 'description',
+    'shortDescription', 'fullDescription', 'highlights', 'specs',
+    'deliveryNote', 'returnsNote', 'metaTitle', 'metaDescription',
+  ];
+
+  private static readonly RENAMED_UPDATE_FIELDS: Record<string, string> = {
+    name: 'productName',
+    specifications: 'specs',
+    urlSlug: 'slug',
+    slug: 'slug',
+    stock: 'stockQty',
+    stockQuantity: 'stockQty',
+  };
+
+  private static readonly FK_UPDATE_FIELDS = [
+    'categoryId', 'subcategoryId', 'brandId', 'designerId', 'countryId',
+  ];
+
+  private static parseFkOrNull(value: any): number | null {
+    if (!value) return null;
+    return Number.parseInt(value);
+  }
+
+  private buildProductUpdateData(dto: any): any {
+    const data: any = {};
+    for (const f of ProductsService.DIRECT_UPDATE_FIELDS) {
+      if (dto[f] !== undefined) data[f] = dto[f];
+    }
+    for (const [src, dest] of Object.entries(ProductsService.RENAMED_UPDATE_FIELDS)) {
+      if (dto[src] !== undefined) data[dest] = dto[src];
+    }
+    if (dto.status !== undefined) data.isActive = dto.status === 'active';
+    for (const f of ProductsService.FK_UPDATE_FIELDS) {
+      if (dto[f] !== undefined) data[f] = ProductsService.parseFkOrNull(dto[f]);
+    }
+    return data;
+  }
+
+  private async upsertProductPricing(tx: any, productId: number, dto: any, hasExisting: boolean): Promise<void> {
+    if (dto.price === undefined && dto.compareAtPrice === undefined) return;
+    const pricingData: any = {};
+    if (dto.price !== undefined) pricingData.price_incl_vat_aed = dto.price;
+    if (dto.compareAtPrice !== undefined) pricingData.price_excl_vat_aed = dto.compareAtPrice;
+    if (hasExisting) {
+      await tx.productPricing.update({ where: { productId }, data: pricingData });
+    } else {
+      await tx.productPricing.create({
+        data: {
+          productId,
+          price_incl_vat_aed: dto.price ?? 0,
+          price_excl_vat_aed: dto.compareAtPrice ?? 0,
+        },
+      });
+    }
+  }
+
+  private parseImagesFromDto(dto: any): Array<{ url: string; displayOrder?: number; altText?: string }> | undefined {
+    if (dto.images?.length) {
+      return dto.images.slice(0, 5).map((img: any, idx: number) => {
+        if (typeof img === 'string') return { url: img, displayOrder: idx };
+        return { url: img.url, displayOrder: img.displayOrder ?? idx, altText: img.altText };
+      });
+    }
+    if (dto.imageUrl !== undefined) {
+      return dto.imageUrl ? [{ url: dto.imageUrl, displayOrder: 0 }] : [];
+    }
+    return undefined;
+  }
+
+  private async replaceProductImages(tx: any, productId: number, parsedImages: Array<{ url: string; displayOrder?: number; altText?: string }>): Promise<void> {
+    await tx.productImage.deleteMany({ where: { productId } });
+    if (parsedImages.length > 0) {
+      await tx.productImage.createMany({
+        data: parsedImages.map((img, idx) => ({
+          productId,
+          media_asset_id: img.url,
+          displayOrder: img.displayOrder ?? idx,
+          isPrimary: idx === 0,
+        })),
+      });
+    }
+  }
+
+  private mapProductUpdateError(error: any, productId: number): never {
+    if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      throw error;
+    }
+    this.logger.error(`Failed to update product ${productId}: ${error.message}`, error.stack);
+    if (error.code === 'P2002') {
+      throw new BadRequestException({
+        message: 'A product with this SKU already exists',
+        code: 'DUPLICATE_SKU',
+        field: 'sku',
+      });
+    }
+    if (error.code === 'P2003') {
+      throw new BadRequestException({
+        message: 'Invalid reference: the specified category, brand, or other relation does not exist',
+        code: 'INVALID_REFERENCE',
+        details: error.meta,
+      });
+    }
+    if (error.code === 'P2025') {
+      throw new NotFoundException({
+        message: `Product with ID ${productId} not found`,
+        code: 'PRODUCT_NOT_FOUND',
+      });
+    }
+    throw new InternalServerErrorException({
+      message: 'Failed to update product. Please try again.',
+      code: 'UPDATE_FAILED',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+
   async update(id: string, updateProductDto: any) {
-    const productId = parseInt(id, 10);
-    
+    const productId = Number.parseInt(id, 10);
+
     if (isNaN(productId)) {
       this.logger.warn(`Invalid product ID format: ${id}`);
       throw new BadRequestException({
@@ -672,14 +1030,9 @@ export class ProductsService {
     this.logger.log(`Updating product ID: ${productId}`, { updateProductDto });
 
     try {
-      // Check if product exists
       const existingProduct = await this.prisma.product.findUnique({
         where: { id: productId },
-        include: {
-          pricing: true,
-          dimensions: true,
-          packaging: true,
-        },
+        include: { pricing: true, dimensions: true, packaging: true },
       });
 
       if (!existingProduct) {
@@ -690,12 +1043,10 @@ export class ProductsService {
         });
       }
 
-      // If SKU is being changed, check for duplicates
       if (updateProductDto.sku && updateProductDto.sku !== existingProduct.sku) {
         const duplicateSku = await this.prisma.product.findUnique({
           where: { sku: updateProductDto.sku },
         });
-
         if (duplicateSku) {
           this.logger.warn(`Duplicate SKU attempt: ${updateProductDto.sku}`);
           throw new BadRequestException({
@@ -706,156 +1057,40 @@ export class ProductsService {
         }
       }
 
-      // Update product with transaction
       const updatedProduct = await this.prisma.$transaction(async (tx) => {
-        // Build update data for main product
-        const productUpdateData: any = {};
-
-        if (updateProductDto.sku !== undefined) productUpdateData.sku = updateProductDto.sku;
-        if (updateProductDto.name !== undefined) productUpdateData.productName = updateProductDto.name;
-        if (updateProductDto.description !== undefined) productUpdateData.description = updateProductDto.description;
-        if (updateProductDto.categoryId !== undefined) {
-          productUpdateData.categoryId = updateProductDto.categoryId ? parseInt(updateProductDto.categoryId) : null;
+        const productUpdateData = this.buildProductUpdateData(updateProductDto);
+        // If client sent categoryIds without categoryId, mirror first as primary FK
+        const categoryIdsArr = this.resolveCategoryIdsFromDto(updateProductDto);
+        const subcategoryIdsArr = this.resolveSubcategoryIdsFromDto(updateProductDto);
+        if (categoryIdsArr !== null && updateProductDto.categoryId === undefined) {
+          productUpdateData.categoryId = categoryIdsArr[0] ?? null;
         }
-        if (updateProductDto.subcategoryId !== undefined) {
-          productUpdateData.subcategoryId = updateProductDto.subcategoryId ? parseInt(updateProductDto.subcategoryId) : null;
+        if (subcategoryIdsArr !== null && updateProductDto.subcategoryId === undefined) {
+          productUpdateData.subcategoryId = subcategoryIdsArr[0] ?? null;
         }
-        if (updateProductDto.brandId !== undefined) {
-          productUpdateData.brandId = updateProductDto.brandId ? parseInt(updateProductDto.brandId) : null;
-        }
-        if (updateProductDto.designerId !== undefined) {
-          productUpdateData.designerId = updateProductDto.designerId ? parseInt(updateProductDto.designerId) : null;
-        }
-        if (updateProductDto.countryId !== undefined) {
-          productUpdateData.countryId = updateProductDto.countryId ? parseInt(updateProductDto.countryId) : null;
-        }
-        if (updateProductDto.material !== undefined) productUpdateData.material = updateProductDto.material;
-        if (updateProductDto.colour !== undefined) productUpdateData.colour = updateProductDto.colour;
-        if (updateProductDto.size !== undefined) productUpdateData.size = updateProductDto.size;
-        if (updateProductDto.isActive !== undefined) productUpdateData.isActive = updateProductDto.isActive;
-        if (updateProductDto.isDiscontinued !== undefined) productUpdateData.isDiscontinued = updateProductDto.isDiscontinued;
-        if (updateProductDto.isFeatured !== undefined) productUpdateData.isFeatured = updateProductDto.isFeatured;
-        if (updateProductDto.isNew !== undefined) productUpdateData.isNew = updateProductDto.isNew;
-        if (updateProductDto.isBestSeller !== undefined) productUpdateData.isBestSeller = updateProductDto.isBestSeller;
-
-        // ==== NEW: Product Page Fields v1 ====
-        if (updateProductDto.shortDescription !== undefined) productUpdateData.shortDescription = updateProductDto.shortDescription;
-        if (updateProductDto.fullDescription !== undefined) productUpdateData.fullDescription = updateProductDto.fullDescription;
-        if (updateProductDto.highlights !== undefined) productUpdateData.highlights = updateProductDto.highlights;
-        if (updateProductDto.specs !== undefined) productUpdateData.specs = updateProductDto.specs;
-        if (updateProductDto.deliveryNote !== undefined) productUpdateData.deliveryNote = updateProductDto.deliveryNote;
-        if (updateProductDto.returnsNote !== undefined) productUpdateData.returnsNote = updateProductDto.returnsNote;
-        if (updateProductDto.urlSlug !== undefined) productUpdateData.slug = updateProductDto.urlSlug;
-        if (updateProductDto.slug !== undefined) productUpdateData.slug = updateProductDto.slug;
-        if (updateProductDto.metaTitle !== undefined) productUpdateData.metaTitle = updateProductDto.metaTitle;
-        if (updateProductDto.metaDescription !== undefined) productUpdateData.metaDescription = updateProductDto.metaDescription;
-        // ==== END: Product Page Fields v1 ====
-
-        // Stock
-        if (updateProductDto.stock !== undefined) productUpdateData.stockQty = updateProductDto.stock;
-
-        // Update main product record
         const updated = await tx.product.update({
           where: { id: productId },
           data: productUpdateData,
         });
-
-        // Update pricing if price is provided
-        if (updateProductDto.price !== undefined || updateProductDto.compareAtPrice !== undefined) {
-          const pricingData: any = {};
-          if (updateProductDto.price !== undefined) pricingData.price_incl_vat_aed = updateProductDto.price;
-          if (updateProductDto.compareAtPrice !== undefined) pricingData.price_excl_vat_aed = updateProductDto.compareAtPrice;
-
-          if (existingProduct.pricing) {
-            // Update existing pricing
-            await tx.productPricing.update({
-              where: { productId },
-              data: pricingData,
-            });
-          } else {
-            // Create new pricing record
-            await tx.productPricing.create({
-              data: {
-                productId,
-                price_incl_vat_aed: updateProductDto.price ?? 0,
-                price_excl_vat_aed: updateProductDto.compareAtPrice ?? 0,
-              },
-            });
-          }
+        await this.upsertProductPricing(tx, productId, updateProductDto, !!existingProduct.pricing);
+        const parsedImages = this.parseImagesFromDto(updateProductDto);
+        if (parsedImages !== undefined) {
+          await this.replaceProductImages(tx, productId, parsedImages);
         }
-
-        // Update images (multi-image support, up to 5)
-        const newImageUrls: string[] | undefined = updateProductDto.images?.length
-          ? updateProductDto.images.slice(0, 5)
-          : updateProductDto.imageUrl !== undefined
-            ? (updateProductDto.imageUrl ? [updateProductDto.imageUrl] : [])
-            : undefined;
-
-        if (newImageUrls !== undefined) {
-          // Delete old images and replace with new set
-          await tx.productImage.deleteMany({ where: { productId } });
-          if (newImageUrls.length > 0) {
-            await tx.productImage.createMany({
-              data: newImageUrls.map((url, idx) => ({
-                productId,
-                media_asset_id: url,
-                displayOrder: idx,
-                isPrimary: idx === 0,
-              })),
-            });
-          }
-        }
-
+        await this.syncProductCategories(tx, productId, categoryIdsArr);
+        await this.syncProductSubcategories(tx, productId, subcategoryIdsArr);
         return updated;
       });
 
       this.logger.log(`Successfully updated product ID: ${productId}`);
-
-      // Return the updated product with full details
       return this.findOne(updatedProduct.id.toString());
     } catch (error) {
-      // Re-throw known exceptions
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;
-      }
-
-      // Log unexpected errors
-      this.logger.error(`Failed to update product ${productId}: ${error.message}`, error.stack);
-
-      // Check for Prisma-specific errors
-      if (error.code === 'P2002') {
-        throw new BadRequestException({
-          message: 'A product with this SKU already exists',
-          code: 'DUPLICATE_SKU',
-          field: 'sku',
-        });
-      }
-
-      if (error.code === 'P2003') {
-        throw new BadRequestException({
-          message: 'Invalid reference: the specified category, brand, or other relation does not exist',
-          code: 'INVALID_REFERENCE',
-          details: error.meta,
-        });
-      }
-
-      if (error.code === 'P2025') {
-        throw new NotFoundException({
-          message: `Product with ID ${productId} not found`,
-          code: 'PRODUCT_NOT_FOUND',
-        });
-      }
-
-      throw new InternalServerErrorException({
-        message: 'Failed to update product. Please try again.',
-        code: 'UPDATE_FAILED',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      });
+      this.mapProductUpdateError(error, productId);
     }
   }
 
   async remove(id: string) {
-    const productId = parseInt(id, 10);
+    const productId = Number.parseInt(id, 10);
 
     if (isNaN(productId)) {
       this.logger.warn(`Invalid product ID format for deletion: ${id}`);
@@ -919,29 +1154,38 @@ export class ProductsService {
   }
 
   /**
-   * Check if a product has sufficient stock for the requested quantity.
-   * Since Product doesn't have a stock field, we always return true for now.
-   * TODO: Implement actual stock checking when inventory tracking is added.
+   * Check if a product has sufficient available stock for the requested quantity.
+   * Available = stockQty - reservedQty. Inactive products return false.
    */
   async checkStock(productId: number | string, quantity: number): Promise<boolean> {
-    const id = typeof productId === 'string' ? parseInt(productId, 10) : productId;
-    
-    // Verify product exists
+    const id = typeof productId === 'string' ? Number.parseInt(productId, 10) : productId;
+
     const product = await this.prisma.product.findUnique({
       where: { id },
+      select: { id: true, isActive: true, stockQty: true, reservedQty: true },
     });
-    
-    if (!product) {
+
+    if (!product?.isActive) {
       return false;
     }
-    
-    // If product is not active, treat as out of stock
-    if (!product.isActive) {
-      return false;
-    }
-    
-    // TODO: Check actual stock when inventory tracking is implemented
-    // For now, all active products are considered in stock
-    return true;
+
+    const available = (product.stockQty ?? 0) - (product.reservedQty ?? 0);
+    return available >= quantity;
+  }
+
+  /**
+   * Returns how many units of a product are currently available
+   * (stockQty minus reservedQty). Returns 0 for missing/inactive products.
+   */
+  async getAvailableStock(productId: number | string): Promise<number> {
+    const id = typeof productId === 'string' ? Number.parseInt(productId, 10) : productId;
+
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      select: { isActive: true, stockQty: true, reservedQty: true },
+    });
+
+    if (!product?.isActive) return 0;
+    return Math.max(0, (product.stockQty ?? 0) - (product.reservedQty ?? 0));
   }
 }

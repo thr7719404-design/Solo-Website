@@ -6,7 +6,7 @@ interface BrandItem {
   targetValue?: string;
 }
 
-export default function BrandStripSection({ section }: { section: LandingSectionDto }) {
+export default function BrandStripSection({ section }: Readonly<{ section: LandingSectionDto }>) {
   const d = section.data;
   const brands = (d.brands as BrandItem[]) ?? (d.items as BrandItem[]) ?? [];
 
@@ -21,7 +21,7 @@ export default function BrandStripSection({ section }: { section: LandingSection
         {brands.map((b, i) =>
           b.logoUrl ? (
             <a
-              key={i}
+              key={b.targetValue ?? b.logoUrl ?? `brand-${i}`}
               href={b.targetValue ? `/brands/${b.targetValue}` : undefined}
               className="flex-shrink-0 grayscale hover:grayscale-0 transition-all opacity-60 hover:opacity-100"
             >

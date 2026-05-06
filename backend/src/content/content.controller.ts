@@ -46,6 +46,19 @@ export class ContentController {
     return this.contentService.getActiveBanners(placement);
   }
 
+  // Alias: GET /content/banners/all (frontend compatibility) — must be above banners/:id
+  @Get('banners/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  getAllBannersAlias() {
+    return this.contentService.getAllBanners();
+  }
+
+  @Get('banners/:id')
+  getPublicBanner(@Param('id') id: string) {
+    return this.contentService.getBanner(id);
+  }
+
   @Get('pages/:slug')
   getLandingPageBySlug(@Param('slug') slug: string) {
     return this.contentService.getLandingPageBySlug(slug);
@@ -64,14 +77,6 @@ export class ContentController {
   // ADMIN BANNER ENDPOINTS
   // Routes support both /content/admin/banners/* and /content/banners/* patterns
   // ============================================================================
-
-  // Alias: GET /content/banners/all (frontend compatibility)
-  @Get('banners/all')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  getAllBannersAlias() {
-    return this.contentService.getAllBanners();
-  }
 
   @Get('admin/banners')
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -1,256 +1,401 @@
-import { useEffect, useState, useCallback } from 'react';
-import toast from 'react-hot-toast';
-import { promoApi, type PromoCode, type CreatePromoCodeBody } from '@/api/promo';
+import { useState, useEffect, useCallback } from 'react';
+import { promoApi } from '@/api/promo';
+import styles from './Admin.module.css';
 
-const TYPE_LABELS: Record<string, string> = {
-  PERCENTAGE: 'Percentage',
-  FIXED_AMOUNT: 'Fixed Amount',
-  FREE_SHIPPING: 'Free Shipping',
-};
-const TYPE_COLORS: Record<string, string> = {
-  PERCENTAGE: 'bg-purple-100 text-purple-700',
-  FIXED_AMOUNT: 'bg-blue-100 text-blue-700',
-  FREE_SHIPPING: 'bg-green-100 text-green-700',
+const TYPE_TAG: Record<string, string> = {
+  PERCENTAGE: 'table-tag-cyan',
+  FIXED_AMOUNT: 'table-tag-green',
+  FREE_SHIPPING: 'table-tag-violet',
 };
 
-const EMPTY_FORM: CreatePromoCodeBody = {
-  code: '', type: 'PERCENTAGE', value: 0, startsAt: new Date().toISOString().slice(0, 16),
+const STATUS_TAG: Record<string, string> = {
+  PENDING: 'table-tag-amber',
+  PROCESSING: 'table-tag-cyan',
+  SHIPPED: 'table-tag-violet',
+  DELIVERED: 'table-tag-green',
+  CANCELLED: 'table-tag-red',
+  REFUNDED: 'table-tag-red',
+};
+
+/** Convert a UTC ISO string to local datetime-local format (YYYY-MM-DDTHH:MM) */
+const toLocalDT = (iso?: string) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 export default function AdminPromoCodesPage() {
-  const [promos, setPromos] = useState<PromoCode[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const limit = 20;
-
-  // dialog
-  const [editing, setEditing] = useState<PromoCode | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<CreatePromoCodeBody>({ ...EMPTY_FORM });
+  const [promos, setPromos] = useState<any[]>([]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [form, setForm] = useState({
+    code: '', description: '', type: 'PERCENTAGE', value: '', minOrderAmount: '', maxDiscount: '',
+    usageLimit: '', startsAt: '', expiresAt: '',
+  });
   const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const [refreshKey, setRefreshKey] = useState(0);
+  // Usage modal state
+  const [usageModal, setUsageModal] = useState<{ open: boolean; promo: any | null; orders: any[]; loading: boolean; totalDiscount: number }>({
+    open: false, promo: null, orders: [], loading: false, totalDiscount: 0,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    promoApi.list(page, limit)
-      .then((res) => { if (!cancelled) { setPromos(res.data); setTotal(res.total); } })
-      .catch(() => { if (!cancelled) toast.error('Failed to load promo codes'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [page, refreshKey]);
+  const load = () => { promoApi.list().then(r => setPromos(r.data ?? [])).catch(() => {}); };
+  useEffect(load, []);
 
-  const reload = useCallback(() => {
-    setLoading(true);
-    setRefreshKey((k) => k + 1);
-  }, []);
-
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-
-  const openCreate = () => {
+  const openNew = () => {
     setEditing(null);
-    setForm({ ...EMPTY_FORM, startsAt: new Date().toISOString().slice(0, 16) });
-    setShowForm(true);
+    setForm({ code: '', description: '', type: 'PERCENTAGE', value: '', minOrderAmount: '', maxDiscount: '', usageLimit: '', startsAt: '', expiresAt: '' });
+    setDrawerOpen(true);
   };
 
-  const openEdit = (p: PromoCode) => {
+  const openEdit = (p: any) => {
     setEditing(p);
     setForm({
-      code: p.code, type: p.type, value: p.value,
-      description: p.description ?? '', minOrderAmount: p.minOrderAmount,
-      maxDiscount: p.maxDiscount, usageLimit: p.usageLimit,
-      isActive: p.isActive, startsAt: p.startsAt?.slice(0, 16) ?? '',
-      expiresAt: p.expiresAt?.slice(0, 16) ?? undefined,
+      code: p.code, description: p.description ?? '', type: p.type,
+      value: String(p.value ?? ''), minOrderAmount: String(p.minOrderAmount ?? ''),
+      maxDiscount: String(p.maxDiscount ?? ''), usageLimit: String(p.usageLimit ?? ''),
+      startsAt: toLocalDT(p.startsAt), expiresAt: toLocalDT(p.expiresAt),
     });
-    setShowForm(true);
+    setDrawerOpen(true);
   };
 
-  const handleSave = async (e: { preventDefault(): void }) => {
-    e.preventDefault();
-    if (!form.code || !form.startsAt) { toast.error('Code and start date are required'); return; }
+  const save = async () => {
     setSaving(true);
+    const payload = {
+      ...form,
+      type: form.type as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING',
+      value: Number(form.value) || 0,
+      minOrderAmount: form.minOrderAmount ? Number(form.minOrderAmount) : undefined,
+      maxDiscount: form.maxDiscount ? Number(form.maxDiscount) : undefined,
+      usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
+      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : new Date().toISOString(),
+      expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
+    };
     try {
-      const body = {
-        ...form,
-        code: form.code.toUpperCase(),
-        startsAt: new Date(form.startsAt).toISOString(),
-        expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
-      };
       if (editing) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { code: _omit, ...rest } = body;
-        await promoApi.update(editing.id, rest);
-        toast.success('Promo updated');
-      } else {
-        await promoApi.create(body);
-        toast.success('Promo created');
-      }
-      setShowForm(false);
-      reload();
-    } catch { toast.error('Failed to save'); }
+        const { code, ...updatePayload } = payload;
+        await promoApi.update(editing.id, updatePayload);
+      } else await promoApi.create(payload);
+      setDrawerOpen(false);
+      load();
+    } catch { /* */ }
     setSaving(false);
   };
 
-  const handleToggle = async (p: PromoCode) => {
+  const remove = async (id: string) => {
+    if (!confirm('Delete this promo code?')) return;
+    await promoApi.remove(id).catch(() => {});
+    load();
+  };
+
+  const toggleActive = async (p: any) => {
+    setTogglingId(p.id);
     try {
-      await promoApi.update(p.id, { isActive: !p.isActive });
-      toast.success(p.isActive ? 'Deactivated' : 'Activated');
-      reload();
-    } catch { toast.error('Failed'); }
+      await promoApi.toggleActive(p.id, !p.isActive);
+      setPromos(prev => prev.map(x => x.id === p.id ? { ...x, isActive: !x.isActive } : x));
+    } catch { /* */ }
+    setTogglingId(null);
   };
 
-  const handleDelete = async (p: PromoCode) => {
-    if (!confirm(`Delete promo "${p.code}"?`)) return;
-    try { await promoApi.remove(p.id); toast.success('Deleted'); reload(); } catch { toast.error('Failed'); }
-  };
+  const openUsage = useCallback(async (p: any) => {
+    setUsageModal({ open: true, promo: p, orders: [], loading: true, totalDiscount: 0 });
+    try {
+      const res = await promoApi.getOrders(p.id);
+      const orders: any[] = res.orders ?? [];
+      const totalDiscount = orders.reduce((s: number, o: any) => s + (o.discount ?? 0), 0);
+      setUsageModal({ open: true, promo: p, orders, loading: false, totalDiscount });
+    } catch {
+      setUsageModal(prev => ({ ...prev, loading: false }));
+    }
+  }, []);
 
-  const fmtDate = (d?: string) => d ? new Date(d).toLocaleDateString() : '—';
-  const fmtValue = (p: PromoCode) => {
-    if (p.type === 'PERCENTAGE') return `${p.value}%`;
-    if (p.type === 'FREE_SHIPPING') return 'Free';
-    return `AED ${p.value.toFixed(2)}`;
-  };
-  const isExpired = (p: PromoCode) => p.expiresAt && new Date(p.expiresAt) < new Date();
-
-  // Stats
-  const activeCount = promos.filter((p) => p.isActive && !isExpired(p)).length;
-  const totalUses = promos.reduce((n, p) => n + p.usageCount, 0);
-
-  const statusPill = (p: PromoCode) => {
-    if (isExpired(p)) return { cls: 'bg-red-100 text-red-600', text: 'Expired' };
-    if (p.isActive) return { cls: 'bg-green-100 text-green-700', text: 'Active' };
-    return { cls: 'bg-gray-200 text-gray-500', text: 'Inactive' };
-  };
-
-  const set = (k: string, v: unknown) => setForm((prev) => ({ ...prev, [k]: v }));
+  const activeCount = promos.filter(p => p.isActive).length;
+  const totalUses = promos.reduce((s, p) => s + (p.usageCount ?? 0), 0);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Promo Codes</h1>
-        <button onClick={openCreate} className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded hover:bg-indigo-700">+ New Promo</button>
+    <>
+      <div className={styles['header-v2']}>
+        <div>
+          <h1>Promo Codes</h1>
+          <span className={styles['header-v2-sub']}>Create and manage discount codes</span>
+        </div>
+        <button className={styles['btn-primary']} onClick={openNew}>+ New Code</button>
       </div>
+      <div className={styles['admin-body']}>
 
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold">{total}</p><p className="text-xs text-gray-500">Total Codes</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{activeCount}</p><p className="text-xs text-gray-500">Active</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-          <p className="text-2xl font-bold text-indigo-600">{totalUses}</p><p className="text-xs text-gray-500">Total Uses</p>
-        </div>
-      </div>
-
-      {loading ? <p className="text-gray-400 py-8 text-center">Loading...</p> : (
-        <div className="space-y-3">
-          {promos.length === 0 && <p className="text-gray-400 py-8 text-center">No promo codes yet.</p>}
-          {promos.map((p) => (
-            <div key={p.id} className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-sm tracking-wider">{p.code}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${TYPE_COLORS[p.type] ?? 'bg-gray-100'}`}>{TYPE_LABELS[p.type]}</span>
-                </div>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusPill(p).cls}`}>
-                  {statusPill(p).text}
-                </span>
-              </div>
-              {p.description && <p className="text-xs text-gray-500 mb-2">{p.description}</p>}
-              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mb-3">
-                <span>Discount: <strong className="text-gray-700">{fmtValue(p)}</strong></span>
-                {p.minOrderAmount != null && <span>Min: AED {p.minOrderAmount}</span>}
-                {p.maxDiscount != null && <span>Max discount: AED {p.maxDiscount}</span>}
-                <span>Uses: {p.usageCount}{p.usageLimit ? `/${p.usageLimit}` : ''}</span>
-                <span>Starts: {fmtDate(p.startsAt)}</span>
-                <span>Expires: {fmtDate(p.expiresAt)}</span>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => openEdit(p)} className="text-xs text-indigo-600 hover:underline">Edit</button>
-                <button onClick={() => handleToggle(p)} className="text-xs text-amber-600 hover:underline">{p.isActive ? 'Deactivate' : 'Activate'}</button>
-                <button onClick={() => handleDelete(p)} className="text-xs text-red-600 hover:underline">Delete</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-gray-500">Page {page} of {totalPages}</span>
-          <div className="flex gap-2">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="px-3 py-1.5 text-sm border rounded disabled:opacity-30">Prev</button>
-            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="px-3 py-1.5 text-sm border rounded disabled:opacity-30">Next</button>
+        {/* Stats */}
+        <div className={styles['stats-grid-3']}>
+          <div className={`${styles['stat-card']} ${styles['stat-card-accent']}`}>
+            <div className={styles['stat-label']}>Total Codes</div>
+            <div className={styles['stat-value']}>{promos.length}</div>
+          </div>
+          <div className={`${styles['stat-card']} ${styles['stat-card-emerald']}`}>
+            <div className={styles['stat-label']}>Active</div>
+            <div className={styles['stat-value']}>{activeCount}</div>
+          </div>
+          <div className={`${styles['stat-card']} ${styles['stat-card-cyan']}`}>
+            <div className={styles['stat-label']}>Total Uses</div>
+            <div className={styles['stat-value']}>{totalUses}</div>
           </div>
         </div>
+
+        {/* Table */}
+        <div className={styles['table-v2-wrap']}>
+          <table className={styles['table-v2']}>
+            <thead>
+              <tr><th>Code</th><th>Type</th><th>Value</th><th>Min Order</th><th>Used</th><th>Expires</th><th>Active</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {promos.length === 0 ? (
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No promo codes yet</td></tr>
+              ) : (
+                promos.map(p => {
+                  const expired = p.expiresAt && new Date(p.expiresAt) < new Date();
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <div className={styles['table-name']}>{p.code}</div>
+                        {p.description && <div className={styles['table-sub']}>{p.description}</div>}
+                      </td>
+                      <td><span className={`${styles['table-tag']} ${styles[TYPE_TAG[p.type] ?? 'table-tag-gray']}`}>{p.type?.replace('_', ' ')}</span></td>
+                      <td style={{ fontWeight: 600 }}>{(() => {
+                        if (p.type === 'PERCENTAGE') return `${p.value}%`;
+                        if (p.type === 'FREE_SHIPPING') return '—';
+                        return `AED ${p.value}`;
+                      })()}</td>
+                      <td>{p.minOrderAmount ? `AED ${p.minOrderAmount}` : '—'}</td>
+                      <td>{p.usageCount ?? 0}{p.usageLimit ? ` / ${p.usageLimit}` : ''}</td>
+                      <td>
+                        {p.expiresAt ? (
+                          <span className={`${styles['table-tag']} ${expired ? styles['table-tag-red'] : styles['table-tag-green']}`}>
+                            {expired ? 'Expired' : new Date(p.expiresAt).toLocaleDateString()}
+                          </span>
+                        ) : <span style={{ color: 'var(--admin-text-muted)' }}>No expiry</span>}
+                      </td>
+                      <td>
+                        {/* Active toggle */}
+                        <button
+                          onClick={() => toggleActive(p)}
+                          disabled={togglingId === p.id}
+                          title={p.isActive ? 'Click to deactivate' : 'Click to activate'}
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                            padding: '4px 10px', borderRadius: 20, border: 'none', fontSize: 12, fontWeight: 600,
+                            background: p.isActive ? 'var(--admin-emerald, #10b981)' : 'var(--admin-surface-2, #374151)',
+                            color: p.isActive ? '#fff' : 'var(--admin-text-muted)',
+                            opacity: togglingId === p.id ? 0.6 : 1,
+                            transition: 'background 0.2s',
+                          }}
+                        >
+                          <span style={{
+                            width: 10, height: 10, borderRadius: '50%',
+                            background: p.isActive ? '#fff' : '#6b7280',
+                            display: 'inline-block',
+                          }} />
+                          {p.isActive ? 'ON' : 'OFF'}
+                        </button>
+                      </td>
+                      <td>
+                        <div className={styles['table-actions']}>
+                          <button
+                            className={styles['table-action-btn']}
+                            onClick={() => openUsage(p)}
+                            title="View orders using this code"
+                          >📊</button>
+                          <button className={styles['table-action-btn']} onClick={() => openEdit(p)}>✏️</button>
+                          <button className={styles['table-action-btn-danger']} onClick={() => remove(p.id)}>🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Drawer */}
+      {drawerOpen && (
+        <>
+          <button type="button" aria-label="Close" className={styles['drawer-backdrop']} onClick={() => setDrawerOpen(false)} />
+          <div className={styles['drawer']} style={{ maxWidth: 520 }}>
+            <div className={styles['drawer-header']}>
+              <h2>{editing ? 'Edit Promo Code' : 'New Promo Code'}</h2>
+              <button className={styles['drawer-close']} onClick={() => setDrawerOpen(false)}>✕</button>
+            </div>
+            <div className={styles['drawer-body']}>
+              <div className={styles['field-row']}>
+                <div className={styles['field']}>
+                  <label htmlFor="code">Code</label>
+                  <input id="code" value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="e.g. SUMMER20" />
+                </div>
+                <div className={styles['field']}>
+                  <label htmlFor="type">Type</label>
+                  <select id="type" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                    <option value="PERCENTAGE">Percentage</option>
+                    <option value="FIXED_AMOUNT">Fixed Amount</option>
+                    <option value="FREE_SHIPPING">Free Shipping</option>
+                  </select>
+                </div>
+              </div>
+              <div className={styles['field']}>
+                <label htmlFor="description">Description</label>
+                <input id="description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div className={styles['field-row-3']}>
+                <div className={styles['field']}>
+                  <label htmlFor="value">Value</label>
+                  <input id="value" type="number" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
+                </div>
+                <div className={styles['field']}>
+                  <label htmlFor="min-order">Min Order</label>
+                  <input id="min-order" type="number" value={form.minOrderAmount} onChange={e => setForm({ ...form, minOrderAmount: e.target.value })} />
+                </div>
+                <div className={styles['field']}>
+                  <label htmlFor="max-discount">Max Discount</label>
+                  <input id="max-discount" type="number" value={form.maxDiscount} onChange={e => setForm({ ...form, maxDiscount: e.target.value })} />
+                </div>
+              </div>
+              <div className={styles['field']}>
+                <label htmlFor="usage-limit">Usage Limit</label>
+                <input id="usage-limit" type="number" value={form.usageLimit} onChange={e => setForm({ ...form, usageLimit: e.target.value })} placeholder="Leave empty for unlimited" />
+              </div>
+              <div className={styles['field-row']}>
+                <div className={styles['field']}>
+                  <label htmlFor="starts-at">Starts At</label>
+                  <input id="starts-at" type="datetime-local" value={form.startsAt} onChange={e => setForm({ ...form, startsAt: e.target.value })} />
+                </div>
+                <div className={styles['field']}>
+                  <label htmlFor="expires-at">Expires At</label>
+                  <input id="expires-at" type="datetime-local" value={form.expiresAt} onChange={e => setForm({ ...form, expiresAt: e.target.value })} />
+                </div>
+              </div>
+            </div>
+            <div className={styles['drawer-footer']}>
+              <button className={styles['btn-secondary']} onClick={() => setDrawerOpen(false)}>Cancel</button>
+              <button className={styles['btn-primary']} disabled={saving || !form.code} onClick={save}>
+                {(() => {
+                  if (saving) return 'Saving...';
+                  return editing ? 'Update' : 'Create';
+                })()}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* Create / Edit dialog */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <form onSubmit={handleSave} className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-4">{editing ? 'Edit Promo Code' : 'Create Promo Code'}</h2>
-            <div className="space-y-3">
+      {/* Usage / Orders Modal */}
+      {usageModal.open && (
+        <>
+          <button
+            type="button"
+            aria-label="Close"
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 900, border: 'none' }}
+            onClick={() => setUsageModal(s => ({ ...s, open: false }))}
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+            background: 'var(--admin-surface, #1f2937)', borderRadius: 12, zIndex: 901,
+            width: 'min(96vw, 860px)', maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+          }}>
+            {/* Modal header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--admin-border, #374151)' }}>
               <div>
-                <label htmlFor="pc-code" className="block text-xs font-medium text-gray-500 mb-1">Code</label>
-                <input id="pc-code" value={form.code} onChange={(e) => set('code', e.target.value.toUpperCase())} disabled={!!editing} required className="w-full border border-gray-300 rounded px-3 py-2 text-sm disabled:bg-gray-100 font-mono uppercase" />
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
+                  Orders using <span style={{ color: 'var(--admin-accent, #6366f1)' }}>{usageModal.promo?.code}</span>
+                </h2>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--admin-text-muted)' }}>
+                  {usageModal.promo?.description}
+                </p>
               </div>
-              <div>
-                <label htmlFor="pc-desc" className="block text-xs font-medium text-gray-500 mb-1">Description</label>
-                <input id="pc-desc" value={form.description ?? ''} onChange={(e) => set('description', e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-              </div>
-              <div>
-                <span className="block text-xs font-medium text-gray-500 mb-1">Type</span>
-                <div className="flex gap-2">
-                  {(['PERCENTAGE', 'FIXED_AMOUNT', 'FREE_SHIPPING'] as const).map((t) => (
-                    <button key={t} type="button" onClick={() => set('type', t)} className={`px-3 py-1.5 text-xs rounded border ${form.type === t ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 text-gray-600 hover:bg-gray-50'}`}>
-                      {TYPE_LABELS[t]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {form.type !== 'FREE_SHIPPING' && (
-                <div>
-                  <label htmlFor="pc-val" className="block text-xs font-medium text-gray-500 mb-1">Value {form.type === 'PERCENTAGE' ? '(%)' : '(AED)'}</label>
-                  <input id="pc-val" type="number" min={0} step={form.type === 'PERCENTAGE' ? 1 : 0.01} value={form.value} onChange={(e) => set('value', Number(e.target.value))} required className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="pc-min" className="block text-xs font-medium text-gray-500 mb-1">Min Order (AED)</label>
-                  <input id="pc-min" type="number" min={0} step={0.01} value={form.minOrderAmount ?? ''} onChange={(e) => set('minOrderAmount', e.target.value ? Number(e.target.value) : undefined)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label htmlFor="pc-max" className="block text-xs font-medium text-gray-500 mb-1">Max Discount (AED)</label>
-                  <input id="pc-max" type="number" min={0} step={0.01} value={form.maxDiscount ?? ''} onChange={(e) => set('maxDiscount', e.target.value ? Number(e.target.value) : undefined)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="pc-limit" className="block text-xs font-medium text-gray-500 mb-1">Usage Limit (blank = unlimited)</label>
-                <input id="pc-limit" type="number" min={1} value={form.usageLimit ?? ''} onChange={(e) => set('usageLimit', e.target.value ? Number(e.target.value) : undefined)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="pc-start" className="block text-xs font-medium text-gray-500 mb-1">Starts At</label>
-                  <input id="pc-start" type="datetime-local" value={form.startsAt?.slice(0, 16) ?? ''} onChange={(e) => set('startsAt', e.target.value)} required className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label htmlFor="pc-exp" className="block text-xs font-medium text-gray-500 mb-1">Expires At</label>
-                  <input id="pc-exp" type="datetime-local" value={form.expiresAt?.slice(0, 16) ?? ''} onChange={(e) => set('expiresAt', e.target.value || undefined)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
-                </div>
-              </div>
+              <button
+                onClick={() => setUsageModal(s => ({ ...s, open: false }))}
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--admin-text-muted)', lineHeight: 1 }}
+              >✕</button>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={saving} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
+
+            {/* Summary bar */}
+            {!usageModal.loading && (
+              <div style={{ display: 'flex', gap: 24, padding: '14px 24px', borderBottom: '1px solid var(--admin-border, #374151)', flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Orders</div>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>{usageModal.orders.length}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Total Discount Given</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-emerald, #10b981)' }}>AED {usageModal.totalDiscount.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Discount Type</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{usageModal.promo?.type?.replace('_', ' ')}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Value</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>
+                    {usageModal.promo?.type === 'PERCENTAGE' ? `${usageModal.promo?.value}%` : `AED ${usageModal.promo?.value}`}
+                    {usageModal.promo?.maxDiscount ? ` (max AED ${usageModal.promo.maxDiscount})` : ''}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Body */}
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {(() => {
+                if (usageModal.loading) {
+                  return <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-muted)' }}>Loading orders...</div>;
+                }
+                if (usageModal.orders.length === 0) {
+                  return <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-muted)' }}>No orders have used this promo code yet.</div>;
+                }
+                return (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--admin-border, #374151)' }}>
+                      {['Order #', 'Customer', 'Date', 'Order Total', 'Discount', 'Status'].map(h => (
+                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: 'var(--admin-text-muted)', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usageModal.orders.map((o: any) => (
+                      <tr key={o.id} style={{ borderBottom: '1px solid var(--admin-border, #374151)' }}>
+                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>#{o.orderNumber}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {o.customer ? (
+                            <div>
+                              <div style={{ fontWeight: 500 }}>{[o.customer.firstName, o.customer.lastName].filter(Boolean).join(' ') || '—'}</div>
+                              <div style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{o.customer.email}</div>
+                            </div>
+                          ) : '—'}
+                        </td>
+                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
+                          {new Date(o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          <div style={{ fontSize: 11 }}>{new Date(o.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
+                        </td>
+                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>AED {Number(o.total).toFixed(2)}</td>
+                        <td style={{ padding: '12px 16px', color: 'var(--admin-emerald, #10b981)', fontWeight: 700 }}>
+                          − AED {Number(o.discount ?? 0).toFixed(2)}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span className={`${styles['table-tag']} ${styles[STATUS_TAG[o.status] ?? 'table-tag-gray']}`} style={{ fontSize: 11 }}>
+                            {o.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                );
+              })()}
             </div>
-          </form>
-        </div>
+          </div>
+        </>
       )}
-    </div>
+    </>
   );
 }

@@ -1,0 +1,71 @@
+.button {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--menu-text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hover {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--menu-accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 200ms ease, transform 200ms ease;
+  pointer-events: none;
+}
+
+.button:hover .hover,
+.button:focus-visible .hover {
+  opacity: 0.1;
+  transform: scale(1);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--menu-accent);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.lines {
+  position: relative;
+  width: 22px;
+  height: 16px;
+  display: block;
+}
+
+.line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transform-origin: 50% 50%;
+  transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.line:nth-child(1) { top: 0; }
+.line:nth-child(2) { top: 50%; transform: translateY(-50%); }
+.line:nth-child(3) { bottom: 0; }
+
+.isOpen .line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.isOpen .line:nth-child(2) {
+  opacity: 0;
+  transform: translateY(-50%) scaleX(0);
+}
+.isOpen .line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}

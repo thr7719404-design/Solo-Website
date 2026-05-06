@@ -97,6 +97,8 @@ export class CustomersController {
 }
 
 @Controller('admin/customer-addresses')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
 export class CustomerAddressesController {
   constructor(private readonly customersService: CustomersService) {}
 

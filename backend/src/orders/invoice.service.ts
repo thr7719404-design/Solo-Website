@@ -2,13 +2,27 @@ import { Injectable, Inject, Optional, NotFoundException, ForbiddenException, Lo
 import { PrismaService } from '../prisma/prisma.service';
 import { IStorageProvider } from '../media/interfaces/storage-provider.interface';
 import * as PDFDocument from 'pdfkit';
+import { SOLO_LOGO_PNG_BUFFER } from '../assets/solo-logo-png';
+
+// Brand / business constants for the invoice
+const BRAND = {
+  name: 'SOLO',
+  trn: '104764432100001',
+  phone: '0557133051',
+  addressLines: [
+    'VUET0399 Compass Building - Al Hulaila',
+    'Al Hulaila Industrial Zone-FZ',
+    'Ras Al Khaimah, United Arab Emirates',
+  ],
+  vatRate: 0.05,
+};
 
 @Injectable()
 export class InvoiceService {
   private readonly logger = new Logger(InvoiceService.name);
 
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     @Optional() @Inject('STORAGE_PROVIDER') private readonly storageProvider?: IStorageProvider,
   ) {}
 
@@ -21,7 +35,7 @@ export class InvoiceService {
     isAdmin = false,
   ): Promise<{ buffer: Buffer; filename: string }> {
     // Fetch order with all related data
-    const order = await this.prisma.order.findUnique({
+    const baseOrder = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
         user: {
@@ -33,25 +47,34 @@ export class InvoiceService {
             phone: true,
           },
         },
-        shippingAddress: true,
-        billingAddress: true,
         items: true,
       },
     });
 
-    if (!order) {
+    if (!baseOrder) {
       throw new NotFoundException('Order not found');
     }
 
     // Check authorization (non-admin must own the order)
-    if (!isAdmin && order.userId !== userId) {
+    if (!isAdmin && baseOrder.userId !== userId) {
       throw new ForbiddenException('You do not have access to this order');
     }
 
+    // Fetch addresses separately so orphan FKs don't break PDF generation.
+    const [shippingAddress, billingAddress] = await Promise.all([
+      baseOrder.shippingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
+        : null,
+      baseOrder.billingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
+        : null,
+    ]);
+    const order: any = { ...baseOrder, shippingAddress, billingAddress };
+
     // Fetch product names from inventory schema
-    const productIds = order.items
-      .map((item) => item.productId)
-      .filter((id): id is number => id !== null);
+    const productIds = (order.items as any[])
+      .map((item: any) => item.productId)
+      .filter((id: any): id is number => id !== null);
 
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } },
@@ -73,19 +96,27 @@ export class InvoiceService {
    * Create or update an invoice record in the database and optionally upload PDF to cloud storage.
    */
   async persistInvoice(orderId: string): Promise<{ invoiceId: string; pdfUrl?: string }> {
-    const order = await this.prisma.order.findUnique({
+    const baseOrder = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
         user: { select: { id: true, email: true, firstName: true, lastName: true } },
-        shippingAddress: true,
-        billingAddress: true,
         items: true,
       },
     });
 
-    if (!order) {
+    if (!baseOrder) {
       throw new NotFoundException('Order not found');
     }
+
+    const [shippingAddress, billingAddress] = await Promise.all([
+      baseOrder.shippingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
+        : null,
+      baseOrder.billingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
+        : null,
+    ]);
+    const order: any = { ...baseOrder, shippingAddress, billingAddress };
 
     // Check if invoice already exists for this order
     const existing = await this.prisma.invoices.findUnique({
@@ -97,9 +128,9 @@ export class InvoiceService {
     }
 
     // Generate the PDF buffer
-    const productIds = order.items
-      .map((item) => item.productId)
-      .filter((id): id is number => id !== null);
+    const productIds = (order.items as any[])
+      .map((item: any) => item.productId)
+      .filter((id: any): id is number => id !== null);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } },
       select: { id: true, productName: true, sku: true },
@@ -144,7 +175,7 @@ export class InvoiceService {
         currencyCode: 'AED',
         vatRateSnapshot: 0.05,
         sellerName: 'Solo Ecommerce',
-        sellerAddress: 'Dubai, UAE',
+        sellerAddress: 'VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, UAE',
         buyerName,
         buyerAddress,
         buyerVatNumber: order.billingInvoiceVatNumber || null,
@@ -188,28 +219,14 @@ export class InvoiceService {
       throw new ForbiddenException('You do not have access to this order');
     }
 
-    // Check for stored invoice with pdfUrl
-    const invoice = await this.prisma.invoices.findUnique({
-      where: { orderId },
-      select: { pdfUrl: true, pdfStoragePath: true },
-    });
-
-    if (invoice?.pdfStoragePath && this.storageProvider) {
-      try {
-        const url = await this.storageProvider.getUrl(invoice.pdfStoragePath, { expiresIn: 300 });
-        return { redirectUrl: url };
-      } catch {
-        // Fall through to regeneration
-      }
-    }
-
-    // Fall back to on-the-fly generation
+    // Always regenerate on-the-fly so design/layout changes take effect immediately.
+    // (Cached blobs in storage may be from older designs.)
     return this.generateInvoicePdf(orderId, userId, isAdmin);
   }
 
   private createPdfBuffer(order: any, productMap: Map<number, any>): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ margin: 50 });
+      const doc = new PDFDocument({ margin: 50, size: 'LETTER', bufferPages: true });
       const chunks: Buffer[] = [];
 
       doc.on('data', (chunk) => chunks.push(chunk));
@@ -236,202 +253,218 @@ export class InvoiceService {
   }
 
   private generateHeader(doc: PDFKit.PDFDocument, order: any) {
-    // Store Name/Logo
-    doc
-      .fontSize(24)
-      .font('Helvetica-Bold')
-      .text('SOLO ECOMMERCE', 50, 50)
-      .fontSize(10)
-      .font('Helvetica')
-      .text('Premium Shopping Experience', 50, 80);
-
-    // Invoice Title
-    doc
-      .fontSize(20)
-      .font('Helvetica-Bold')
-      .text('INVOICE', 400, 50, { align: 'right' });
-
-    // Invoice Details
-    doc
-      .fontSize(10)
-      .font('Helvetica')
-      .text(`Invoice No: ${order.orderNumber}`, 400, 80, { align: 'right' })
-      .text(`Date: ${this.formatDate(order.createdAt)}`, 400, 95, { align: 'right' });
-
-    if (order.paidAt) {
-      doc.text(`Paid: ${this.formatDate(order.paidAt)}`, 400, 110, { align: 'right' });
+    // Left-side: SOLO logo (PNG)
+    try {
+      doc.image(SOLO_LOGO_PNG_BUFFER, 50, 40, { width: 160 });
+    } catch {
+      // Logo render failed; continue without it
     }
 
-    // Horizontal line
+    // Right-side: INVOICE title + meta
     doc
-      .strokeColor('#cccccc')
-      .lineWidth(1)
-      .moveTo(50, 130)
-      .lineTo(550, 130)
-      .stroke();
+      .fillColor('#1a1a1a')
+      .fontSize(22)
+      .font('Helvetica-Bold')
+      .text('INVOICE', 400, 40, { width: 150, align: 'right' });
+
+    doc
+      .fontSize(9)
+      .font('Helvetica')
+      .fillColor('#1a1a1a')
+      .text(`Invoice No: ${order.orderNumber}`, 400, 70, { width: 150, align: 'right' })
+      .text(`Date: ${this.formatDate(order.createdAt)}`, 400, 84, { width: 150, align: 'right' });
+
+    if (order.paidAt) {
+      doc.text(`Paid: ${this.formatDate(order.paidAt)}`, 400, 98, { width: 150, align: 'right' });
+    }
+
+    // Left-side: business address block (below logo)
+    doc
+      .fontSize(9)
+      .font('Helvetica')
+      .fillColor('#444444')
+      .text(BRAND.addressLines[0], 50, 145)
+      .text(BRAND.addressLines[1], 50, 158)
+      .text(BRAND.addressLines[2], 50, 171)
+      .text(`Tel: ${BRAND.phone}`, 50, 184)
+      .font('Helvetica-Bold')
+      .fillColor('#1a1a1a')
+      .text(`TRN: ${BRAND.trn}`, 50, 197);
+
+    // Horizontal divider
+    doc
+      .strokeColor('#e0e0e0')
+      .lineWidth(0.75)
+      .moveTo(50, 210)
+      .lineTo(550, 210)
+      .stroke()
+      .fillColor('#1a1a1a');
+  }
+
+  private renderAddressBlock(
+    doc: PDFKit.PDFDocument,
+    addr: any,
+    x: number,
+    startY: number,
+  ): number {
+    let y = startY;
+    const fullName = `${addr.firstName || ''} ${addr.lastName || ''}`.trim();
+    const lines: string[] = [];
+    if (fullName) lines.push(fullName);
+    if (addr.addressLine1) lines.push(addr.addressLine1);
+    if (addr.addressLine2) lines.push(addr.addressLine2);
+    if (addr.city) lines.push(`${addr.city}${addr.postalCode ? ', ' + addr.postalCode : ''}`);
+    if (addr.phone) lines.push(`Tel: ${addr.phone}`);
+    for (const line of lines) {
+      doc.text(line, x, y);
+      y += 12;
+    }
+    return y;
+  }
+
+  private renderBillingAddress(doc: PDFKit.PDFDocument, order: any, startY: number) {
+    if (!order.billingAddress) return;
+    let billingY = startY;
+    doc.fillColor('#1a1a1a').fontSize(11).font('Helvetica-Bold').text('Billing Address:', 420, billingY);
+    billingY += 16;
+    doc.fontSize(10).font('Helvetica');
+    billingY = this.renderAddressBlock(doc, order.billingAddress, 420, billingY);
+    if (order.billingInvoiceCompany) {
+      doc.text(`Company: ${order.billingInvoiceCompany}`, 420, billingY);
+      billingY += 12;
+    }
+    if (order.billingInvoiceVatNumber) {
+      doc.text(`VAT/TRN: ${order.billingInvoiceVatNumber}`, 420, billingY);
+    }
+  }
+
+  private addressesEqual(a: any, b: any): boolean {
+    if (!a || !b) return false;
+    return (
+      (a.firstName || '') === (b.firstName || '') &&
+      (a.lastName || '') === (b.lastName || '') &&
+      (a.addressLine1 || '') === (b.addressLine1 || '') &&
+      (a.addressLine2 || '') === (b.addressLine2 || '') &&
+      (a.city || '') === (b.city || '') &&
+      (a.postalCode || '') === (b.postalCode || '')
+    );
+  }
+
+  private renderShippingAddress(doc: PDFKit.PDFDocument, order: any, startY: number) {
+    if (!order.shippingAddress) return;
+    // Skip Ship To if it's the same as Billing (avoid overlap & duplication)
+    if (this.addressesEqual(order.shippingAddress, order.billingAddress)) return;
+    let shipY = startY;
+    doc.fillColor('#1a1a1a').fontSize(11).font('Helvetica-Bold').text('Ship To:', 235, shipY);
+    shipY += 16;
+    doc.fontSize(10).font('Helvetica');
+    this.renderAddressBlock(doc, order.shippingAddress, 235, shipY);
   }
 
   private generateCustomerInfo(doc: PDFKit.PDFDocument, order: any) {
-    const startY = 150;
-    const colWidth = 240;
+    const startY = 230;
 
-    // Customer Details
-    doc
-      .fontSize(12)
-      .font('Helvetica-Bold')
-      .text('Bill To:', 50, startY);
-
+    doc.fillColor('#1a1a1a').fontSize(11).font('Helvetica-Bold').text('Bill To:', 50, startY);
     doc
       .fontSize(10)
       .font('Helvetica')
-      .text(`${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || 'Customer', 50, startY + 18)
-      .text(order.user.email, 50, startY + 33);
+      .text(`${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || 'Customer', 50, startY + 16)
+      .text(order.user.email, 50, startY + 30);
 
     if (order.user.phone) {
-      doc.text(`Phone: ${order.user.phone}`, 50, startY + 48);
+      doc.text(`Phone: ${order.user.phone}`, 50, startY + 44);
     }
 
-    // Billing Address
-    if (order.billingAddress) {
-      let billingY = startY + 70;
-      doc
-        .fontSize(11)
-        .font('Helvetica-Bold')
-        .text('Billing Address:', 50, billingY);
-
-      billingY += 15;
-      doc.fontSize(10).font('Helvetica');
-      
-      const ba = order.billingAddress;
-      const billingName = `${ba.firstName || ''} ${ba.lastName || ''}`.trim();
-      if (billingName) {
-        doc.text(billingName, 50, billingY);
-        billingY += 12;
-      }
-      if (ba.addressLine1) {
-        doc.text(ba.addressLine1, 50, billingY);
-        billingY += 12;
-      }
-      if (ba.addressLine2) {
-        doc.text(ba.addressLine2, 50, billingY);
-        billingY += 12;
-      }
-      if (ba.city) {
-        doc.text(`${ba.city}${ba.postalCode ? ', ' + ba.postalCode : ''}`, 50, billingY);
-        billingY += 12;
-      }
-      if (ba.phone) {
-        doc.text(`Tel: ${ba.phone}`, 50, billingY);
-        billingY += 12;
-      }
-
-      // Billing Invoice Fields
-      if (order.billingInvoiceCompany) {
-        doc.text(`Company: ${order.billingInvoiceCompany}`, 50, billingY);
-        billingY += 12;
-      }
-      if (order.billingInvoiceVatNumber) {
-        doc.text(`VAT/TRN: ${order.billingInvoiceVatNumber}`, 50, billingY);
-      }
-    }
-
-    // Shipping Address
-    if (order.shippingAddress) {
-      let shipY = startY;
-      doc
-        .fontSize(12)
-        .font('Helvetica-Bold')
-        .text('Ship To:', 300, shipY);
-
-      shipY += 18;
-      doc.fontSize(10).font('Helvetica');
-
-      const sa = order.shippingAddress;
-      const shipName = `${sa.firstName || ''} ${sa.lastName || ''}`.trim();
-      if (shipName) {
-        doc.text(shipName, 300, shipY);
-        shipY += 12;
-      }
-      if (sa.addressLine1) {
-        doc.text(sa.addressLine1, 300, shipY);
-        shipY += 12;
-      }
-      if (sa.addressLine2) {
-        doc.text(sa.addressLine2, 300, shipY);
-        shipY += 12;
-      }
-      if (sa.city) {
-        doc.text(`${sa.city}${sa.postalCode ? ', ' + sa.postalCode : ''}`, 300, shipY);
-        shipY += 12;
-      }
-      if (sa.phone) {
-        doc.text(`Tel: ${sa.phone}`, 300, shipY);
-      }
-    }
+    this.renderBillingAddress(doc, order, startY);
+    this.renderShippingAddress(doc, order, startY);
   }
 
   private generateItemsTable(doc: PDFKit.PDFDocument, order: any, productMap: Map<number, any>) {
-    const tableTop = 320;
-    const itemCodeX = 50;
-    const descriptionX = 100;
-    const qtyX = 350;
-    const priceX = 400;
-    const totalX = 480;
+    const tableTop = 360;
+    // Column X positions (page width 612, margins 50/50 → usable 50..562 = 512)
+    const cols = {
+      code: 50,        // Item Code (70w)
+      desc: 125,       // Description (160w)
+      qty: 290,        // Order Qty (35w)
+      rrp: 325,        // Amount (AED) (65w)
+      vatTotal: 395,   // Total VAT Amount (75w)
+      total: 475,      // Total Value (87w)
+    };
+    const headerH = 28;
+    const vatRate = BRAND.vatRate;
 
-    // Table Header
+    // Header band (light gray, dark text)
     doc
-      .fontSize(10)
-      .font('Helvetica-Bold')
-      .text('#', itemCodeX, tableTop)
-      .text('Description', descriptionX, tableTop)
-      .text('Qty', qtyX, tableTop)
-      .text('Price', priceX, tableTop)
-      .text('Total', totalX, tableTop);
+      .save()
+      .rect(50, tableTop, 512, headerH)
+      .fill('#f3f3f3')
+      .restore();
 
-    // Header line
     doc
-      .strokeColor('#cccccc')
-      .lineWidth(1)
-      .moveTo(50, tableTop + 15)
-      .lineTo(550, tableTop + 15)
-      .stroke();
+      .fillColor('#1a1a1a')
+      .fontSize(8)
+      .font('Helvetica-Bold');
+    const headerY = tableTop + 6;
+      doc.text('Item Code', cols.code, headerY, { width: 70, lineBreak: false });
+      doc.text('Description', cols.desc, headerY, { width: 160, lineBreak: false });
+      doc.text('Order\nQty', cols.qty, headerY, { width: 35, align: 'center' });
+      doc.text('Amount\n(AED)', cols.rrp, headerY, { width: 65, align: 'right' });
+      doc.text('Total VAT\nAmount', cols.vatTotal, headerY, { width: 75, align: 'right' });
+      doc.text('Total\nValue', cols.total, headerY, { width: 87, align: 'right' });
 
-    // Table Rows
-    let y = tableTop + 25;
-    doc.font('Helvetica').fontSize(9);
+    // Reset for rows
+    let y = tableTop + headerH + 8;
+    doc.fillColor('#1a1a1a').font('Helvetica').fontSize(8.5);
 
-    order.items.forEach((item: any, index: number) => {
+    let rowIndex = 0;
+    for (const item of order.items) {
       const product = item.productId ? productMap.get(item.productId) : null;
       const productName = product?.productName || item.name || 'Product';
-      const unitPrice = Number(item.unitPrice || item.price || 0);
-      const subtotal = Number(item.subtotal || 0);
+      const itemCode = product?.sku || (item.productId ? String(item.productId) : '—');
+      const qty = Number(item.quantity || 0);
+      // unitPrice on Order is treated as VAT-inclusive (selling price). Derive ex-VAT.
+      const unitInclVat = Number(item.unitPrice || item.price || 0);
+      const unitExclVat = unitInclVat / (1 + vatRate);
+      const lineExcl = unitExclVat * qty;
+      const lineVat = unitInclVat * qty - lineExcl;
+      const lineTotal = unitInclVat * qty;
 
-      // Check if we need a new page
-      if (y > 700) {
+      // New page if needed
+      if (y > 720) {
         doc.addPage();
         y = 50;
       }
 
-      doc
-        .text((index + 1).toString(), itemCodeX, y)
-        .text(productName.substring(0, 40), descriptionX, y, { width: 240 })
-        .text(item.quantity.toString(), qtyX, y)
-        .text(`AED ${unitPrice.toFixed(2)}`, priceX, y)
-        .text(`AED ${subtotal.toFixed(2)}`, totalX, y);
+      // Subtle zebra striping (very light gray)
+      if (rowIndex % 2 === 0) {
+        doc
+          .save()
+          .rect(50, y - 4, 512, 22)
+          .fill('#fafafa')
+          .restore()
+          .fillColor('#1a1a1a');
+      }
 
-      y += 20;
-    });
+      doc.text(String(itemCode).substring(0, 14), cols.code, y, { width: 70, lineBreak: false });
+      doc.text(productName.substring(0, 50), cols.desc, y, { width: 160, lineBreak: false, ellipsis: true });
+      doc.text(qty.toString(), cols.qty, y, { width: 35, align: 'center', lineBreak: false });
+      doc.text(unitExclVat.toFixed(2), cols.rrp, y, { width: 65, align: 'right', lineBreak: false });
+      doc.text(lineVat.toFixed(2), cols.vatTotal, y, { width: 75, align: 'right', lineBreak: false });
+      doc.text(lineTotal.toFixed(2), cols.total, y, { width: 87, align: 'right', lineBreak: false });
 
-    // Bottom line
+      y += 22;
+      rowIndex += 1;
+    }
+
+    // Bottom border
     doc
       .strokeColor('#cccccc')
-      .lineWidth(1)
-      .moveTo(50, y + 5)
-      .lineTo(550, y + 5)
+      .lineWidth(0.5)
+      .moveTo(50, y)
+      .lineTo(562, y)
       .stroke();
 
-    // Store the Y position for totals
-    (doc as any).__lastItemY = y + 15;
+    (doc as any).__lastItemY = y + 18;
   }
 
   private generateTotals(doc: PDFKit.PDFDocument, order: any) {
@@ -445,7 +478,6 @@ export class InvoiceService {
     const vat = Number(order.vat || 0);
     const discount = Number(order.discount || 0);
     const loyaltyRedeemAed = Number(order.loyaltyRedeemAed || 0);
-    const loyaltyEarnAed = Number(order.loyaltyEarnAed || 0);
     const total = Number(order.total || 0);
 
     doc.fontSize(10).font('Helvetica');
@@ -481,45 +513,44 @@ export class InvoiceService {
       y += 18;
     }
 
-    // Loyalty Earned
-    if (loyaltyEarnAed > 0) {
-      doc.text('Loyalty Earned:', labelX, y);
-      doc.text(`+AED ${loyaltyEarnAed.toFixed(2)}`, valueX, y);
-      y += 18;
-    }
-
-    // Total
+    // GRAND TOTAL — clean style: thin top rule + bold black
+    const bandY = y + 8;
     doc
+      .strokeColor('#1a1a1a')
+      .lineWidth(0.75)
+      .moveTo(380, bandY - 4)
+      .lineTo(562, bandY - 4)
+      .stroke();
+    doc
+      .fillColor('#1a1a1a')
       .font('Helvetica-Bold')
-      .fontSize(12)
-      .text('TOTAL:', labelX, y + 5)
-      .text(`AED ${total.toFixed(2)}`, valueX, y + 5);
+      .fontSize(13)
+      .text('GRAND TOTAL', 380, bandY + 4, { width: 100 });
+    doc
+      .fillColor('#1a1a1a')
+      .font('Helvetica-Bold')
+      .fontSize(13)
+      .text(`AED ${total.toFixed(2)}`, 480, bandY + 4, { width: 82, align: 'right' });
 
     // Payment Status
-    y += 30;
+    y = bandY + 38;
     doc
       .fontSize(10)
       .font('Helvetica')
-      .text(`Payment Method: ${order.paymentMethod || 'N/A'}`, labelX - 100, y)
-      .text(`Payment Status: ${order.paymentStatus || 'PENDING'}`, labelX - 100, y + 15);
+      .text(`Payment Method: ${order.paymentMethod || 'N/A'}`, 50, y)
+      .text(`Payment Status: ${order.paymentStatus || 'PENDING'}`, 50, y + 15);
   }
 
   private generateFooter(doc: PDFKit.PDFDocument) {
     doc
-      .fontSize(9)
+      .fontSize(8)
       .font('Helvetica')
-      .fillColor('#666666')
+      .fillColor('#888888')
       .text(
-        'Thank you for shopping with Solo Ecommerce!',
-        50,
-        750,
-        { align: 'center', width: 500 },
-      )
-      .text(
-        'For any queries, please contact support@solo-ecommerce.com',
-        50,
-        765,
-        { align: 'center', width: 500 },
+        'Thank you for shopping with SOLO  ·  VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, UAE  ·  Tel: ' + BRAND.phone,
+        40,
+        720,
+        { align: 'center', width: 532, lineBreak: false },
       );
   }
 

@@ -8,9 +8,12 @@ import { StripeModule } from '../stripe/stripe.module';
 import { SettingsModule } from '../settings/settings.module';
 import { StockModule } from '../stock/stock.module';
 import { MediaModule } from '../media/media.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule, forwardRef(() => StripeModule), SettingsModule, StockModule, MediaModule],
+  // StripeModule no longer depends on OrdersModule (webhook is in StripeWebhookModule),
+  // so we can import it directly without forwardRef.
+  imports: [PrismaModule, UsersModule, StripeModule, forwardRef(() => SettingsModule), StockModule, MediaModule, EmailModule],
   controllers: [OrdersController],
   providers: [OrdersService, InvoiceService],
   exports: [OrdersService, InvoiceService],

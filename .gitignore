@@ -184,3 +184,37 @@ public/uploads/
 *.swp
 *.swo
 .DS_Store
+
+# ============================================================================
+# Hygiene: secrets, dumps, sonar reports, junk payloads (do NOT commit)
+# ============================================================================
+
+# Local credential / config dumps
+app_config.json
+env_existing.json
+secrets_existing.json
+token.txt
+update_secret.py
+update_secret_retry.py
+update_smtp.py
+backups/new-pg-pw.txt
+
+# Database dumps / backups
+*.dump
+backups/
+scripts/backups/
+
+# SonarQube local outputs / reports
+.sonarqube/
+sonar-conservative-sweep.csv
+sonarqube-issues-report.md
+solo-website-*.md
+solo-website-*.csv
+solo-website-*.json
+solo-website-*.html
+
+# One-off payloads / zips
+*.zip
+bulk-order-live.json
+bulk_order_payload.json
+patch_payload.json

@@ -2,10 +2,10 @@ import { IsString, IsOptional, IsEnum, IsNumber, Min } from 'class-validator';
 
 export enum UpdateReturnStatusDto {
   APPROVED = 'APPROVED',
+  PICKED_UP = 'PICKED_UP',
+  QC = 'QC',
+  CLOSED = 'CLOSED',
   REJECTED = 'REJECTED',
-  ITEMS_RECEIVED = 'ITEMS_RECEIVED',
-  REFUND_PROCESSING = 'REFUND_PROCESSING',
-  COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
 }
 

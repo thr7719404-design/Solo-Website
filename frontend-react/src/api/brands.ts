@@ -5,9 +5,6 @@ export const brandsApi = {
   getAll: () =>
     api.get<BrandDto[]>('/brands').then(r => r.data),
 
-  getById: (id: string) =>
-    api.get<BrandDto>(`/brands/${id}`).then(r => r.data),
-
   create: (data: Partial<BrandDto>) =>
     api.post<BrandDto>('/brands', data).then(r => r.data),
 

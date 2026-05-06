@@ -304,7 +304,7 @@ describe('Auth Module (e2e)', () => {
     const newPassword = 'NewPassword456!';
 
     beforeAll(async () => {
-      const { user, password } = await createTestUser(prisma, {
+      const { user } = await createTestUser(prisma, {
         email: `change-pw-${Date.now()}@test.com`,
         password: currentPassword,
       });

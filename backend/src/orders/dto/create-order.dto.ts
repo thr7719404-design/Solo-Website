@@ -4,6 +4,8 @@ import { Type } from 'class-transformer';
 export enum PaymentMethodDto {
   CREDIT_CARD = 'CREDIT_CARD',
   CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
+  TABBY = 'TABBY',
+  TAMARA = 'TAMARA',
 }
 
 export enum ShippingMethodDto {

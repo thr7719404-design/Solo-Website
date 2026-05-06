@@ -109,8 +109,8 @@ export class CustomersService {
     const { page: rawPage = 1, limit: rawLimit = 20, search, includeInactive = false } = query;
     
     // Ensure numeric values
-    const page = typeof rawPage === 'string' ? parseInt(rawPage, 10) : rawPage;
-    const limit = typeof rawLimit === 'string' ? parseInt(rawLimit, 10) : rawLimit;
+    const page = typeof rawPage === 'string' ? Number.parseInt(rawPage, 10) : rawPage;
+    const limit = typeof rawLimit === 'string' ? Number.parseInt(rawLimit, 10) : rawLimit;
     const skip = (page - 1) * limit;
 
     // Build where clause - filter out admins, only show CUSTOMER role
@@ -124,7 +124,7 @@ export class CustomersService {
     }
 
     // Add search filter if provided
-    if (search && search.trim()) {
+    if (search?.trim()) {
       const searchTerm = search.trim();
       where.OR = [
         { email: { contains: searchTerm, mode: 'insensitive' } },
@@ -285,7 +285,7 @@ export class CustomersService {
       where: { id },
     });
 
-    if (!existingUser || existingUser.role !== 'CUSTOMER') {
+    if (existingUser?.role !== 'CUSTOMER') {
       throw new NotFoundException('Customer not found');
     }
 
@@ -355,7 +355,7 @@ export class CustomersService {
       where: { id },
     });
 
-    if (!existingUser || existingUser.role !== 'CUSTOMER') {
+    if (existingUser?.role !== 'CUSTOMER') {
       throw new NotFoundException('Customer not found');
     }
 
@@ -434,28 +434,7 @@ export class CustomersService {
     return this.mapAddressToResponse(address, dto);
   }
 
-  /**
-   * Update an existing address
-   */
-  async updateAddress(addressId: string, dto: UpdateAddressDto): Promise<AddressResponseDto> {
-    // Check if address exists
-    const existingAddress = await this.prisma.address.findUnique({
-      where: { id: addressId },
-    });
-
-    if (!existingAddress) {
-      throw new NotFoundException('Address not found');
-    }
-
-    // If setting as default, unset other defaults first
-    if (dto.isDefault === true) {
-      await this.prisma.address.updateMany({
-        where: { userId: existingAddress.userId, isDefault: true, id: { not: addressId } },
-        data: { isDefault: false },
-      });
-    }
-
-    // Build update data
+  private buildAddressUpdateData(dto: UpdateAddressDto): any {
     const updateData: any = {};
 
     if (dto.label !== undefined) {
@@ -483,7 +462,6 @@ export class CustomersService {
     if (dto.addressLine2 !== undefined) {
       updateData.addressLine2 = dto.addressLine2 || null;
     } else if (dto.area !== undefined || dto.street !== undefined || dto.building !== undefined || dto.apartment !== undefined) {
-      // Build addressLine2 from additional fields
       const additionalParts = [
         dto.area,
         dto.street,
@@ -498,6 +476,32 @@ export class CustomersService {
     if (dto.isDefault !== undefined) {
       updateData.isDefault = dto.isDefault;
     }
+
+    return updateData;
+  }
+
+  /**
+   * Update an existing address
+   */
+  async updateAddress(addressId: string, dto: UpdateAddressDto): Promise<AddressResponseDto> {
+    // Check if address exists
+    const existingAddress = await this.prisma.address.findUnique({
+      where: { id: addressId },
+    });
+
+    if (!existingAddress) {
+      throw new NotFoundException('Address not found');
+    }
+
+    // If setting as default, unset other defaults first
+    if (dto.isDefault === true) {
+      await this.prisma.address.updateMany({
+        where: { userId: existingAddress.userId, isDefault: true, id: { not: addressId } },
+        data: { isDefault: false },
+      });
+    }
+
+    const updateData = this.buildAddressUpdateData(dto);
 
     const address = await this.prisma.address.update({
       where: { id: addressId },

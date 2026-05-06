@@ -1,55 +1,72 @@
 import { Link } from 'react-router-dom';
-import type { BannerDto, CategoryDto, BrandDto } from '../../types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { BannerDto, BrandDto } from '../../types';
 import styles from './PortoSections.module.css';
 
-export function HeroSection({ banner }: { banner?: BannerDto }) {
+export function HeroSection({ banners = [] }: Readonly<{ banners?: BannerDto[] }>) {
+  const [current, setCurrent] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval>>(null);
+  const count = banners.length;
+
+  const goTo = useCallback((idx: number) => {
+    setCurrent(((idx % count) + count) % count);
+  }, [count]);
+
+  useEffect(() => {
+    if (count <= 1) return;
+    timerRef.current = setInterval(() => goTo(current + 1), 5000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [count, current, goTo]);
+
+  const slide = banners[current];
+
   return (
     <section className={styles.hero}>
-      {banner?.imageDesktopUrl && (
+      {slide?.imageDesktopUrl && (
         <div className={styles['hero-image']}>
-          <img src={banner.imageDesktopUrl} alt={banner.title || 'Hero'} />
+          <img
+            src={slide.imageDesktopUrl}
+            alt={slide.title || 'Hero'}
+            loading="eager"
+            fetchPriority="high"
+            width={1920}
+            height={600}
+          />
         </div>
       )}
       <div className={styles['hero-overlay']} />
       <div className={styles['hero-content']}>
-        <h1>{banner?.title || 'Welcome to Solo Ecommerce'}</h1>
-        <p>{banner?.subtitle || 'Discover premium products for your lifestyle'}</p>
-        {banner?.ctaUrl ? (
-          <Link to={banner.ctaUrl} className={styles['hero-cta']}>
-            {banner.ctaText || 'SHOP NOW'}
+        <h1>{slide?.title || 'Welcome to Solo Ecommerce'}</h1>
+        <p>{slide?.subtitle || 'Discover premium products for your lifestyle'}</p>
+        {slide?.ctaUrl ? (
+          <Link to={slide.ctaUrl} className={styles['hero-cta']}>
+            {slide.ctaText || 'SHOP NOW'}
           </Link>
         ) : (
-          <Link to="/shop" className={styles['hero-cta']}>SHOP NOW</Link>
+          <Link to="/products" className={styles['hero-cta']}>SHOP NOW</Link>
         )}
       </div>
-      <div className={styles['hero-dots']}>
-        <span className={styles['hero-dot-active']} />
-        <span className={styles['hero-dot']} />
-        <span className={styles['hero-dot']} />
-      </div>
-    </section>
-  );
-}
 
-export function CategoryTiles({ categories, title }: { categories: CategoryDto[]; title?: string }) {
-  if (!categories.length) return null;
-  return (
-    <section className={styles['tiles-section']}>
-      <h2>{title || 'Shop by Collection'}</h2>
-      <div className={styles['tiles-grid']}>
-        {categories.slice(0, 4).map(cat => (
-          <Link key={cat.id} to={`/category/${cat.slug || cat.id}`} className={styles.tile}>
-            {cat.image ? (
-              <img src={cat.image} alt={cat.name} />
-            ) : (
-              <div style={{ background: '#e8e0d4', width: '100%', height: '100%' }} />
-            )}
-            <div className={styles['tile-overlay']}>
-              <span>{cat.name}</span>
-            </div>
-          </Link>
-        ))}
-      </div>
+      {count > 1 && (
+        <>
+          <button className={styles['hero-arrow'] + ' ' + styles['hero-arrow-left']} onClick={() => goTo(current - 1)} aria-label="Previous slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button className={styles['hero-arrow'] + ' ' + styles['hero-arrow-right']} onClick={() => goTo(current + 1)} aria-label="Next slide">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 5l7 7-7 7" /></svg>
+          </button>
+          <div className={styles['hero-dots']}>
+            {banners.map((b, i) => (
+              <button
+                key={b.id ?? `dot-${i}`}
+                className={i === current ? styles['hero-dot-active'] : styles['hero-dot']}
+                onClick={() => setCurrent(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }
@@ -61,7 +78,7 @@ export function ValuePropsStrip() {
         <span className={styles['value-prop-icon']}>🚚</span>
         <div className={styles['value-prop-text']}>
           <h4>Free Shipping</h4>
-          <p>On orders over $75</p>
+          <p>On orders over AED 75</p>
         </div>
       </div>
       <div className={styles['value-prop']}>
@@ -95,13 +112,13 @@ export function FreeShippingBanner() {
       <div className={styles['shipping-banner-content']}>
         <h2>Free Shipping</h2>
         <p>On orders over AED 500</p>
-        <Link to="/shop" className={styles['shipping-banner-cta']}>Shop Now</Link>
+        <Link to="/products" className={styles['shipping-banner-cta']}>Shop Now</Link>
       </div>
     </section>
   );
 }
 
-export function BrandStrip({ brands }: { brands: BrandDto[] }) {
+export function BrandStrip({ brands }: Readonly<{ brands: BrandDto[] }>) {
   if (!brands.length) return null;
   return (
     <section className={styles['brand-strip']}>
@@ -110,7 +127,7 @@ export function BrandStrip({ brands }: { brands: BrandDto[] }) {
         {brands.map(brand => (
           <Link key={brand.id} to={`/brand/${brand.id}`}>
             {brand.logo ? (
-              <img src={brand.logo} alt={brand.name} style={{ height: 40 }} />
+              <img src={brand.logo} alt={brand.name} style={{ height: 40 }} loading="lazy" width={120} height={40} />
             ) : (
               brand.name
             )}
@@ -118,5 +135,30 @@ export function BrandStrip({ brands }: { brands: BrandDto[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+export function PromoBannerStrip({ banners }: Readonly<{ banners: BannerDto[] }>) {
+  if (!banners.length) return null;
+  return (
+    <>
+      {banners.map(banner => (
+        <section key={banner.id} className={styles['promo-strip']}>
+          {banner.imageDesktopUrl && (
+            <img src={banner.imageDesktopUrl} alt={banner.title || ''} className={styles['promo-strip-img']} loading="lazy" width={1920} height={400} />
+          )}
+          <div className={styles['promo-strip-overlay']} />
+          <div className={styles['promo-strip-content']}>
+            <h3>{banner.title}</h3>
+            {banner.subtitle && <p>{banner.subtitle}</p>}
+            {banner.ctaUrl && (
+              <Link to={banner.ctaUrl} className={styles['promo-strip-cta']}>
+                {banner.ctaText || 'Shop Now'}
+              </Link>
+            )}
+          </div>
+        </section>
+      ))}
+    </>
   );
 }

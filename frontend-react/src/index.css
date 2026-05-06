@@ -1,5 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Raleway', sans-serif;
+}
 
 :root {
   --color-gold: #B8860B;
@@ -12,15 +16,23 @@
   --color-border: #E0E0E0;
   --color-error: #D32F2F;
   --color-success: #388E3C;
-  --font-family: 'Work Sans', system-ui, -apple-system, sans-serif;
+  --font-family: 'Raleway', sans-serif;
 }
 
-body {
-  font-family: var(--font-family);
+html, body, #root {
+  font-family: 'Raleway', sans-serif;
   color: var(--color-text);
   background-color: var(--color-bg);
   margin: 0;
+  font-variant-numeric: lining-nums;
+  font-feature-settings: 'lnum' 1;
 }
+
+h1 { font-weight: 700; }
+h2, h3 { font-weight: 600; }
+h4, h5, h6 { font-weight: 500; }
+p, li, span, div, td, th, label, input, select, textarea { font-family: inherit; }
+button, a.button, .btn, nav a { font-weight: 500; }
 
 .btn-primary {
   background-color: var(--color-gold);

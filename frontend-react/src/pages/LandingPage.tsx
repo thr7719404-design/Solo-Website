@@ -29,6 +29,14 @@ export default function LandingPage() {
       .getLandingPage(slug)
       .then(async (data) => {
         if (cancelled) return;
+        // Parse data/config from JSON strings to objects if needed
+        if (data.sections) {
+          data.sections = data.sections.map(s => ({
+            ...s,
+            data: typeof s.data === 'string' ? JSON.parse(s.data) : (s.data ?? {}),
+            config: typeof s.config === 'string' ? JSON.parse(s.config) : s.config,
+          }));
+        }
         setPage(data);
 
         // Determine which product sources are needed

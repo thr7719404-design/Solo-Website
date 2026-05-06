@@ -1,7 +1,9 @@
 const pg = require('pg');
-const pool = new pg.Pool({
-  connectionString: 'postgresql://soloadmin:GhrTRtfwYjvL60M5y17W@pg-qlyb5greec2io.postgres.database.azure.com:5432/solo_ecommerce?sslmode=require'
-});
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL env var is required.');
+  process.exit(1);
+}
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
 (async () => {
   const c = await pool.connect();

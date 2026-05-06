@@ -1,19 +1,20 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { CircuitBreakerService } from '../common/resilience/circuit-breaker.service';
 import Stripe from 'stripe';
 
 @Injectable()
 export class StripeService {
   private stripe: Stripe | null = null;
+  private stripeInitialized = false;
   private readonly logger = new Logger(StripeService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
-  ) {
-    this.initStripe();
-  }
+    private readonly breaker: CircuitBreakerService,
+  ) {}
 
   private async initStripe() {
     const secretKey = await this.getSecretKey();
@@ -23,6 +24,7 @@ export class StripeService {
     } else {
       this.logger.warn('Stripe not configured - payment features disabled');
     }
+    this.stripeInitialized = true;
   }
 
   private async getSecretKey(): Promise<string | null> {
@@ -50,7 +52,10 @@ export class StripeService {
     return this.configService.get<string>('STRIPE_PUBLISHABLE_KEY') || null;
   }
 
-  private getStripeInstance(): Stripe {
+  private async getStripeInstance(): Promise<Stripe> {
+    if (!this.stripeInitialized) {
+      await this.initStripe();
+    }
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured. Please set up Stripe keys in Admin > Stripe Configuration.');
     }
@@ -71,14 +76,16 @@ export class StripeService {
 
   /** Create a payment intent for checkout */
   async createPaymentIntent(amountInCents: number, currency: string = 'aed', metadata?: Record<string, string>): Promise<Stripe.PaymentIntent> {
-    const stripe = this.getStripeInstance();
+    const stripe = await this.getStripeInstance();
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: currency.toLowerCase(),
-      automatic_payment_methods: { enabled: true },
-      metadata: metadata || {},
-    });
+    const paymentIntent = await this.breaker.execute('stripe', () =>
+      stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: currency.toLowerCase(),
+        automatic_payment_methods: { enabled: true },
+        metadata: metadata || {},
+      }),
+    );
 
     this.logger.log(`PaymentIntent created: ${paymentIntent.id} for ${amountInCents} ${currency}`);
     return paymentIntent;
@@ -87,38 +94,42 @@ export class StripeService {
   /** Create a payment intent and confirm it with card details server-side (test-mode safe) */
   async createAndConfirmPayment(
     amountInCents: number,
-    currency: string = 'aed',
+    currency: string,
     cardNumber: string,
     expMonth: number,
     expYear: number,
     cvc: string,
     metadata?: Record<string, string>,
   ): Promise<Stripe.PaymentIntent> {
-    const stripe = this.getStripeInstance();
+    const stripe = await this.getStripeInstance();
 
     // Create a PaymentMethod with the card details
-    const paymentMethod = await stripe.paymentMethods.create({
-      type: 'card',
-      card: {
-        number: cardNumber.replace(/\s+/g, ''),
-        exp_month: expMonth,
-        exp_year: expYear,
-        cvc: cvc,
-      },
-    });
+    const paymentMethod = await this.breaker.execute('stripe', () =>
+      stripe.paymentMethods.create({
+        type: 'card',
+        card: {
+          number: cardNumber.replaceAll(/\s+/g, ''),
+          exp_month: expMonth,
+          exp_year: expYear,
+          cvc: cvc,
+        },
+      }),
+    );
 
     // Create and confirm the PaymentIntent in one step
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: currency.toLowerCase(),
-      payment_method: paymentMethod.id,
-      confirm: true,
-      automatic_payment_methods: {
-        enabled: true,
-        allow_redirects: 'never',
-      },
-      metadata: metadata || {},
-    });
+    const paymentIntent = await this.breaker.execute('stripe', () =>
+      stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: currency.toLowerCase(),
+        payment_method: paymentMethod.id,
+        confirm: true,
+        automatic_payment_methods: {
+          enabled: true,
+          allow_redirects: 'never',
+        },
+        metadata: metadata || {},
+      }),
+    );
 
     this.logger.log(`PaymentIntent created and confirmed: ${paymentIntent.id} for ${amountInCents} ${currency} - status: ${paymentIntent.status}`);
     return paymentIntent;
@@ -126,14 +137,16 @@ export class StripeService {
 
   /** Confirm that a payment intent has succeeded */
   async verifyPaymentIntent(paymentIntentId: string): Promise<Stripe.PaymentIntent> {
-    const stripe = this.getStripeInstance();
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    return paymentIntent;
+    const stripe = await this.getStripeInstance();
+    return this.breaker.execute('stripe', () => stripe.paymentIntents.retrieve(paymentIntentId));
   }
 
   /** Get Stripe config (publishable key, enabled status) - safe for client */
   async getPublicConfig(): Promise<{ publishableKey: string | null; isEnabled: boolean }> {
     const publishableKey = await this.getPublishableKey();
+    if (!this.stripeInitialized) {
+      await this.initStripe();
+    }
     return {
       publishableKey,
       isEnabled: this.stripe !== null,

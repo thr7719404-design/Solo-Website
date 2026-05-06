@@ -13,7 +13,6 @@ import {
   loginAsAdmin,
   loginAsCustomer,
   cleanupTestUsers,
-  authGet,
   authPost,
   authPatch,
   authDelete,

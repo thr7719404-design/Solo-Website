@@ -28,6 +28,8 @@ jobs:
           cache-dependency-path: frontend-react/package-lock.json
 
       - name: Install and Build
+        env:
+          VITE_API_BASE_URL: https://backend-qlyb5greec2io.whiteriver-ae956411.eastus2.azurecontainerapps.io/api
         run: |
           cd frontend-react
           npm ci

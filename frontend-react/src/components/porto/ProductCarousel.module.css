@@ -1,5 +1,6 @@
 .carousel-section {
-  padding: 40px 0;
+  padding: 20px 0 24px;
+  background: #fff;
 }
 
 .carousel-header {
@@ -7,31 +8,30 @@
   align-items: center;
   justify-content: space-between;
   max-width: var(--max-width);
-  margin: 0 auto 28px;
+  margin: 0 auto 16px;
   padding: 0 24px;
 }
 
 .carousel-header h2 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.5px;
 }
 
 .carousel-header a {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--color-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
+  font-weight: 500;
+  color: #007185;
+  letter-spacing: 0;
+  padding: 6px 0;
+  border-radius: 0;
   transition: all var(--transition-fast);
 }
 
 .carousel-header a:hover {
-  background: var(--color-accent);
-  color: #fff;
+  color: #c7511f;
+  text-decoration: underline;
+  background: transparent;
 }
 
 /* Scrollable carousel wrapper */
@@ -101,7 +101,7 @@
 /* Scroll indicator / progress bar */
 .scroll-indicator {
   max-width: var(--max-width);
-  margin: 16px auto 0;
+  margin: 12px auto 0;
   padding: 0 24px;
 }
 

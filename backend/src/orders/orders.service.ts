@@ -1,9 +1,11 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoyaltyService } from '../users/loyalty.service';
 import { StripeService } from '../stripe/stripe.service';
 import { SettingsService } from '../settings/settings.service';
 import { StockService } from '../stock/stock.service';
+import { EmailService } from '../email/email.service';
+import { InvoiceService } from './invoice.service';
 import { CreateOrderDto, PaymentMethodDto } from './dto/create-order.dto';
 import { OrderStatus, PaymentStatus, ShippingMethod, PaymentMethod, CartItemType } from '@prisma/client';
 
@@ -15,24 +17,57 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly loyaltyService: LoyaltyService,
     private readonly stripeService: StripeService,
+    @Inject(forwardRef(() => SettingsService))
     private readonly settingsService: SettingsService,
     private readonly stockService: StockService,
+    private readonly emailService: EmailService,
+    private readonly invoiceService: InvoiceService,
   ) {}
 
-  async createOrder(userId: string, createOrderDto: CreateOrderDto) {
-    const { shippingAddressId, shippingAddress, billingAddressId, billingAddress, shippingMethod, paymentMethod, items, promoCode, notes } = createOrderDto;
+  /**
+   * Generate an invoice and email the PDF to the customer (fire-and-forget).
+   * Failures are logged but do not block the order creation flow.
+   */
+  private async issueInvoiceAndEmail(orderId: string): Promise<void> {
+    try {
+      // Persist invoice record (and upload PDF to storage if configured)
+      await this.invoiceService.persistInvoice(orderId);
 
-    // Validate: either shippingAddressId or shippingAddress must be provided
-    if (!shippingAddressId && !shippingAddress) {
-      throw new BadRequestException('Either shippingAddressId or shippingAddress must be provided');
+      // Generate PDF buffer for email attachment
+      const { buffer } = await this.invoiceService.generateInvoicePdf(orderId, undefined, true);
+
+      const order = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        include: { user: { select: { email: true, firstName: true, lastName: true } } },
+      });
+      if (!order?.user?.email) return;
+
+      const invoice = await this.prisma.invoices.findUnique({
+        where: { orderId },
+        select: { invoiceNumber: true },
+      });
+      const invoiceNumber = invoice?.invoiceNumber || `INV-${order.orderNumber}`;
+      const customerName = `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || 'Customer';
+
+      await this.emailService.sendOrderInvoiceEmail({
+        to: order.user.email,
+        customerName,
+        orderNumber: order.orderNumber,
+        invoiceNumber,
+        total: Number(order.total || 0),
+        currency: 'AED',
+        pdfBuffer: buffer,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to issue/email invoice for order ${orderId}: ${(err as Error).message}`);
     }
+  }
 
-    // Validate items
-    if (!items || items.length === 0) {
-      throw new BadRequestException('Order must contain at least one item');
-    }
-
-    // If shippingAddressId is provided, validate it belongs to the user
+  private async resolveSavedAddresses(
+    userId: string,
+    shippingAddressId?: string,
+    billingAddressId?: string,
+  ): Promise<{ existingAddress: any; existingBillingAddress: any }> {
     let existingAddress = null;
     if (shippingAddressId) {
       existingAddress = await this.prisma.address.findFirst({
@@ -42,8 +77,6 @@ export class OrdersService {
         throw new BadRequestException('Shipping address not found or does not belong to user');
       }
     }
-
-    // If billingAddressId is provided, validate it belongs to the user
     let existingBillingAddress = null;
     if (billingAddressId) {
       existingBillingAddress = await this.prisma.address.findFirst({
@@ -53,21 +86,22 @@ export class OrdersService {
         throw new BadRequestException('Billing address not found or does not belong to user');
       }
     }
+    return { existingAddress, existingBillingAddress };
+  }
 
-    // Fetch products with pricing to get current prices
+  private async loadOrderProducts(items: Array<{ productId: number; quantity: number }>) {
     const productIds = items.map(item => item.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } },
-      include: {
-        pricing: true,
-      },
+      include: { pricing: true },
     });
-
     if (products.length !== productIds.length) {
       throw new BadRequestException('One or more products not found');
     }
+    return products;
+  }
 
-    // Check stock availability for all items
+  private async checkOrderStock(items: Array<{ productId: number; quantity: number }>): Promise<void> {
     const stockCheck = await this.stockService.checkBulkAvailability(
       items.map(item => ({ productId: item.productId, quantity: item.quantity })),
     );
@@ -77,339 +111,358 @@ export class OrdersService {
         .join('; ');
       throw new BadRequestException(`Insufficient stock: ${errorMsg}`);
     }
+  }
 
-    // Calculate order totals
-    let subtotal = 0;
+  private buildOrderItemsAndTotals(
+    items: Array<{ productId: number; quantity: number }>,
+    products: any[],
+    vatRate: number,
+  ): { orderItems: any[]; subtotalExclVat: number; totalVatAmount: number } {
+    let subtotalExclVat = 0;
+    let totalVatAmount = 0;
     const orderItems = items.map(item => {
       const product = products.find(p => p.id === item.productId);
       if (!product) {
         throw new BadRequestException(`Product ${item.productId} not found`);
       }
-      
-      // Get price from pricing relation
-      const price = product.pricing?.price_incl_vat_aed 
-        ? Number(product.pricing.price_incl_vat_aed) 
-        : (product.pricing?.price_excl_vat_aed ? Number(product.pricing.price_excl_vat_aed) : 0);
-      const itemSubtotal = price * item.quantity;
-      subtotal += itemSubtotal;
-
+      const unitPriceExclVat = product.pricing?.price_excl_vat_aed
+        ? Number(product.pricing.price_excl_vat_aed)
+        : 0;
+      const unitVatAmount = Math.round(unitPriceExclVat * vatRate * 100) / 100;
+      const unitPriceInclVat = unitPriceExclVat + unitVatAmount;
+      const lineSubtotalExclVat = Math.round(unitPriceExclVat * item.quantity * 100) / 100;
+      const lineVatAmount = Math.round(unitVatAmount * item.quantity * 100) / 100;
+      const lineTotalInclVat = Math.round(unitPriceInclVat * item.quantity * 100) / 100;
+      subtotalExclVat += lineSubtotalExclVat;
+      totalVatAmount += lineVatAmount;
       return {
         type: CartItemType.PRODUCT,
         productId: product.id,
         name: product.productName,
         sku: product.sku,
         quantity: item.quantity,
-        price: price,
-        subtotal: itemSubtotal,
+        price: unitPriceExclVat,
+        subtotal: lineTotalInclVat,
+        unitPriceExclVat,
+        unitPriceInclVat,
+        unitVatAmount,
+        lineSubtotalExclVat,
+        lineTotalInclVat,
+        lineVatAmount,
+        vatRateSnapshot: vatRate,
       };
     });
+    return {
+      orderItems,
+      subtotalExclVat: Math.round(subtotalExclVat * 100) / 100,
+      totalVatAmount: Math.round(totalVatAmount * 100) / 100,
+    };
+  }
 
-    // Calculate shipping cost (free if promo code is FREE_SHIPPING)
-    let shippingCost = this.calculateShippingCost(shippingMethod as unknown as ShippingMethod);
-    
-    // Calculate VAT from settings
-    const vatRate = await this.settingsService.getVatRate();
-    const vat = subtotal * vatRate;
-    
-    // Calculate discount if promo code
-    let discount = 0;
-    let promoDiscountType: string | null = null;
-    let promoDiscountValue: number | null = null;
-    let promoCodeId: string | null = null;
-    
-    if (promoCode) {
-      const promo = await this.prisma.promoCode.findUnique({
-        where: { code: promoCode },
-      });
-
-      if (!promo) {
-        throw new BadRequestException('Invalid promo code');
-      }
-      if (!promo.isActive) {
-        throw new BadRequestException('This promo code is no longer active');
-      }
-      if (promo.startsAt && new Date() < promo.startsAt) {
-        throw new BadRequestException('This promo code is not yet valid');
-      }
-      if (promo.expiresAt && new Date() > promo.expiresAt) {
-        throw new BadRequestException('This promo code has expired');
-      }
-      if (promo.usageLimit && promo.usageCount >= promo.usageLimit) {
-        throw new BadRequestException('This promo code has reached its usage limit');
-      }
-      if (promo.minOrderAmount && subtotal < Number(promo.minOrderAmount)) {
-        throw new BadRequestException(`Minimum order amount of AED ${Number(promo.minOrderAmount).toFixed(2)} required for this promo code`);
-      }
-
-      promoCodeId = promo.id;
-
-      switch (promo.type) {
-        case 'PERCENTAGE':
-          discount = subtotal * (Number(promo.value) / 100);
-          if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
-            discount = Number(promo.maxDiscount);
-          }
-          promoDiscountType = 'PERCENTAGE';
-          promoDiscountValue = Number(promo.value);
-          break;
-        case 'FIXED_AMOUNT':
-          discount = Math.min(Number(promo.value), subtotal);
-          promoDiscountType = 'FIXED_AMOUNT';
-          promoDiscountValue = Number(promo.value);
-          break;
-        case 'FREE_SHIPPING':
-          discount = shippingCost; // Discount equals shipping cost
-          shippingCost = 0;
-          promoDiscountType = 'FREE_SHIPPING';
-          promoDiscountValue = 0;
-          break;
-      }
+  private validatePromoEligibility(promo: any, subtotal: number): void {
+    if (!promo.isActive) {
+      throw new BadRequestException('This promo code is no longer active');
     }
-    
-    // Validate and process loyalty cash redemption
-    let loyaltyRedeemAed = 0;
-    if (createOrderDto.loyaltyRedeemAed && createOrderDto.loyaltyRedeemAed > 0) {
-      // Get user's current loyalty balance
-      const loyaltyData = await this.loyaltyService.getLoyalty(userId);
-      const balanceAed = Number(loyaltyData.balanceAed);
-      
-      // Validate redemption amount doesn't exceed balance
-      if (createOrderDto.loyaltyRedeemAed > balanceAed) {
-        throw new BadRequestException(`Insufficient loyalty balance. Available: AED ${balanceAed.toFixed(2)}`);
-      }
-      
-      // Enforce 30% cap rule: can only redeem up to 30% of subtotal
-      const maxRedeemable = subtotal * 0.30;
-      if (createOrderDto.loyaltyRedeemAed > maxRedeemable) {
-        throw new BadRequestException(`Loyalty redemption cannot exceed 30% of subtotal (max: AED ${maxRedeemable.toFixed(2)})`);
-      }
-      
-      loyaltyRedeemAed = createOrderDto.loyaltyRedeemAed;
+    if (promo.startsAt && new Date() < promo.startsAt) {
+      throw new BadRequestException('This promo code is not yet valid');
     }
-    
-    // Calculate total (apply loyalty redemption as discount)
-    const total = subtotal + shippingCost + vat - discount - loyaltyRedeemAed;
+    if (promo.expiresAt && new Date() > promo.expiresAt) {
+      throw new BadRequestException('This promo code has expired');
+    }
+    if (promo.usageLimit && promo.usageCount >= promo.usageLimit) {
+      throw new BadRequestException('This promo code has reached its usage limit');
+    }
+    if (promo.minOrderAmount && subtotal < Number(promo.minOrderAmount)) {
+      throw new BadRequestException(
+        `Minimum order amount of AED ${Number(promo.minOrderAmount).toFixed(2)} required for this promo code`,
+      );
+    }
+  }
 
-    // Generate order number
-    const orderNumber = await this.generateOrderNumber();
+  private computePromoDiscount(promo: any, subtotal: number, shippingCost: number): {
+    discount: number;
+    promoDiscountType: string | null;
+    promoDiscountValue: number | null;
+    newShippingCost: number;
+  } {
+    if (promo.type === 'PERCENTAGE') {
+      let discount = subtotal * (Number(promo.value) / 100);
+      if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
+        discount = Number(promo.maxDiscount);
+      }
+      return { discount, promoDiscountType: 'PERCENTAGE', promoDiscountValue: Number(promo.value), newShippingCost: shippingCost };
+    }
+    if (promo.type === 'FIXED_AMOUNT') {
+      return {
+        discount: Math.min(Number(promo.value), subtotal),
+        promoDiscountType: 'FIXED_AMOUNT',
+        promoDiscountValue: Number(promo.value),
+        newShippingCost: shippingCost,
+      };
+    }
+    if (promo.type === 'FREE_SHIPPING') {
+      return { discount: shippingCost, promoDiscountType: 'FREE_SHIPPING', promoDiscountValue: 0, newShippingCost: 0 };
+    }
+    return { discount: 0, promoDiscountType: null, promoDiscountValue: null, newShippingCost: shippingCost };
+  }
 
-    // Determine initial payment status based on payment method
-    let initialPaymentStatus: PaymentStatus = PaymentStatus.PENDING;
-    let initialOrderStatus: OrderStatus = OrderStatus.PAYMENT_PENDING;
-    let paymentIntentId: string | null = null;
-    
+  private async resolvePromoCode(promoCode: string | undefined, subtotal: number, shippingCost: number): Promise<{
+    discount: number;
+    promoDiscountType: string | null;
+    promoDiscountValue: number | null;
+    promoCodeId: string | null;
+    shippingCost: number;
+  }> {
+    if (!promoCode) {
+      return { discount: 0, promoDiscountType: null, promoDiscountValue: null, promoCodeId: null, shippingCost };
+    }
+    const promo = await this.prisma.promoCode.findUnique({ where: { code: promoCode } });
+    if (!promo) {
+      throw new BadRequestException('Invalid promo code');
+    }
+    this.validatePromoEligibility(promo, subtotal);
+    const computed = this.computePromoDiscount(promo, subtotal, shippingCost);
+    return {
+      discount: computed.discount,
+      promoDiscountType: computed.promoDiscountType,
+      promoDiscountValue: computed.promoDiscountValue,
+      promoCodeId: promo.id,
+      shippingCost: computed.newShippingCost,
+    };
+  }
+
+  private async resolveLoyaltyRedeem(userId: string, requested: number | undefined, subtotal: number): Promise<number> {
+    if (!requested || requested <= 0) return 0;
+    const loyaltyData = await this.loyaltyService.getLoyalty(userId);
+    const balanceAed = Number(loyaltyData.balanceAed);
+    if (requested > balanceAed) {
+      throw new BadRequestException(`Insufficient loyalty balance. Available: AED ${balanceAed.toFixed(2)}`);
+    }
+    const maxRedeemable = subtotal * 0.30;
+    if (requested > maxRedeemable) {
+      throw new BadRequestException(
+        `Loyalty redemption cannot exceed 30% of subtotal (max: AED ${maxRedeemable.toFixed(2)})`,
+      );
+    }
+    return requested;
+  }
+
+  private async resolvePaymentStatus(
+    paymentMethod: PaymentMethodDto,
+    paymentIntentDtoId: string | undefined,
+  ): Promise<{ initialPaymentStatus: PaymentStatus; initialOrderStatus: OrderStatus; paymentIntentId: string | null }> {
     if (paymentMethod === PaymentMethodDto.CASH_ON_DELIVERY) {
-      initialPaymentStatus = PaymentStatus.PENDING;
-      initialOrderStatus = OrderStatus.PROCESSING;
-    } else if (paymentMethod === PaymentMethodDto.CREDIT_CARD) {
-      // Verify Stripe payment
-      if (!createOrderDto.paymentIntentId) {
-        throw new BadRequestException('Payment intent ID is required for credit card payments');
+      return {
+        initialPaymentStatus: PaymentStatus.PENDING,
+        initialOrderStatus: OrderStatus.PROCESSING,
+        paymentIntentId: null,
+      };
+    }
+    if (paymentMethod !== PaymentMethodDto.CREDIT_CARD) {
+      return {
+        initialPaymentStatus: PaymentStatus.PENDING,
+        initialOrderStatus: OrderStatus.PAYMENT_PENDING,
+        paymentIntentId: null,
+      };
+    }
+    if (!paymentIntentDtoId) {
+      throw new BadRequestException('Payment intent ID is required for credit card payments');
+    }
+    try {
+      const pi = await this.stripeService.verifyPaymentIntent(paymentIntentDtoId);
+      if (pi.status === 'succeeded') {
+        return { initialPaymentStatus: PaymentStatus.PAID, initialOrderStatus: OrderStatus.PROCESSING, paymentIntentId: pi.id };
       }
-      
-      try {
-        const pi = await this.stripeService.verifyPaymentIntent(createOrderDto.paymentIntentId);
-        if (pi.status === 'succeeded') {
-          initialPaymentStatus = PaymentStatus.PAID;
-          initialOrderStatus = OrderStatus.PROCESSING;
-          paymentIntentId = pi.id;
-        } else if (pi.status === 'requires_capture') {
-          initialPaymentStatus = PaymentStatus.PENDING;
-          initialOrderStatus = OrderStatus.PAYMENT_PENDING;
-          paymentIntentId = pi.id;
-        } else {
-          throw new BadRequestException(`Payment not completed. Status: ${pi.status}`);
-        }
-      } catch (e) {
-        if (e instanceof BadRequestException) throw e;
-        throw new BadRequestException('Failed to verify payment. Please try again.');
+      if (pi.status === 'requires_capture') {
+        return { initialPaymentStatus: PaymentStatus.PENDING, initialOrderStatus: OrderStatus.PAYMENT_PENDING, paymentIntentId: pi.id };
       }
+      throw new BadRequestException(`Payment not completed. Status: ${pi.status}`);
+    } catch (e) {
+      if (e instanceof BadRequestException) throw e;
+      throw new BadRequestException('Failed to verify payment. Please try again.');
+    }
+  }
+
+  private createAddressFromExisting(_tx: any, _userId: string, source: any): Promise<string> {
+    // Use the existing saved address directly — no copy needed.
+    return Promise.resolve(source.id);
+  }
+
+  private async createAddressFromInline(tx: any, userId: string, source: any): Promise<string> {
+    const created = await tx.address.create({
+      data: {
+        userId,
+        firstName: source.firstName,
+        lastName: source.lastName,
+        addressLine1: source.street,
+        addressLine2: source.apartment,
+        city: source.city,
+        postalCode: source.postalCode,
+        phone: source.phone || '',
+      },
+    });
+    return created.id;
+  }
+
+  private async resolveBillingAddressId(
+    tx: any,
+    userId: string,
+    shippingAddressId: string,
+    existingBillingAddress: any,
+    inlineBillingAddress: any,
+    fallbackInlineShipping: any,
+  ): Promise<string> {
+    if (existingBillingAddress) {
+      return this.createAddressFromExisting(tx, userId, existingBillingAddress);
+    }
+    if (inlineBillingAddress) {
+      return this.createAddressFromInline(tx, userId, inlineBillingAddress);
+    }
+    if (fallbackInlineShipping) {
+      return this.createAddressFromInline(tx, userId, fallbackInlineShipping);
+    }
+    return shippingAddressId;
+  }
+
+  private async createOrderAddresses(
+    tx: any,
+    userId: string,
+    ctx: {
+      existingAddress: any;
+      existingBillingAddress: any;
+      shippingAddress: any;
+      billingAddress: any;
+    },
+  ): Promise<{ orderShippingAddressId: string; orderBillingAddressId: string }> {
+    let orderShippingAddressId: string;
+    if (ctx.existingAddress) {
+      orderShippingAddressId = await this.createAddressFromExisting(tx, userId, ctx.existingAddress);
+    } else {
+      if (!ctx.shippingAddress) {
+        throw new BadRequestException('Shipping address data is required');
+      }
+      orderShippingAddressId = await this.createAddressFromInline(tx, userId, ctx.shippingAddress);
+    }
+    const orderBillingAddressId = await this.resolveBillingAddressId(
+      tx,
+      userId,
+      orderShippingAddressId,
+      ctx.existingBillingAddress,
+      ctx.billingAddress,
+      ctx.existingAddress ? null : ctx.shippingAddress,
+    );
+    return { orderShippingAddressId, orderBillingAddressId };
+  }
+
+  private async finalizeLoyaltyEarn(orderId: string, subtotal: number, loyaltyRedeemAed: number, order: any): Promise<any> {
+    const earnPercent = await this.getLoyaltyEarnPercent();
+    const eligibleForEarn = Math.max(0, subtotal - loyaltyRedeemAed);
+    const loyaltyEarnAed = Math.round(eligibleForEarn * earnPercent * 100) / 100;
+    if (loyaltyEarnAed <= 0) return order;
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { loyaltyEarnAed },
+      include: { items: true, shippingAddress: true, billingAddress: true },
+    });
+  }
+
+  async createOrder(userId: string, createOrderDto: CreateOrderDto) {
+    const {
+      shippingAddressId, shippingAddress, billingAddressId, billingAddress,
+      shippingMethod, paymentMethod, items, promoCode, notes,
+    } = createOrderDto;
+
+    if (!shippingAddressId && !shippingAddress) {
+      throw new BadRequestException('Either shippingAddressId or shippingAddress must be provided');
+    }
+    if (!items || items.length === 0) {
+      throw new BadRequestException('Order must contain at least one item');
     }
 
-    // Create the order in a transaction
+    const { existingAddress, existingBillingAddress } = await this.resolveSavedAddresses(
+      userId, shippingAddressId, billingAddressId,
+    );
+
+    const products = await this.loadOrderProducts(items);
+    await this.checkOrderStock(items);
+
+    const vatRate = await this.settingsService.getVatRate();
+    const { orderItems, subtotalExclVat, totalVatAmount } = this.buildOrderItemsAndTotals(items, products, vatRate);
+    const subtotal = subtotalExclVat + totalVatAmount;
+
+    const initialShippingCost = await this.calculateShippingCost(
+      shippingMethod as unknown as ShippingMethod,
+      subtotal,
+    );
+    const promoResult = await this.resolvePromoCode(promoCode, subtotal, initialShippingCost);
+    const { discount, promoDiscountType, promoDiscountValue, promoCodeId } = promoResult;
+    const shippingCost = promoResult.shippingCost;
+    const shippingExclVat = shippingCost;
+    const shippingVatAmount = 0;
+
+    const loyaltyRedeemAed = await this.resolveLoyaltyRedeem(userId, createOrderDto.loyaltyRedeemAed, subtotal);
+    const total = Math.round((subtotal + shippingCost - discount - loyaltyRedeemAed) * 100) / 100;
+
+    const orderNumber = await this.generateOrderNumber();
+    const { initialPaymentStatus, initialOrderStatus, paymentIntentId } = await this.resolvePaymentStatus(
+      paymentMethod, createOrderDto.paymentIntentId,
+    );
+
     const order = await this.prisma.$transaction(async (tx) => {
-      let orderShippingAddressId: string;
-      let orderBillingAddressId: string;
-
-      if (existingAddress) {
-        // Use existing saved address - create a copy for the order to preserve address at time of order
-        const shippingAddrCopy = await tx.address.create({
-          data: {
-            userId,
-            firstName: existingAddress.firstName,
-            lastName: existingAddress.lastName,
-            addressLine1: existingAddress.addressLine1,
-            addressLine2: existingAddress.addressLine2,
-            city: existingAddress.city,
-            postalCode: existingAddress.postalCode,
-            phone: existingAddress.phone || '',
-            label: existingAddress.label,
-          },
-        });
-        orderShippingAddressId = shippingAddrCopy.id;
-        // Default billing to shipping
-        orderBillingAddressId = shippingAddrCopy.id;
-
-        // If billingAddressId provided, lookup and create copy
-        if (existingBillingAddress) {
-          const billingAddrCopy = await tx.address.create({
-            data: {
-              userId,
-              firstName: existingBillingAddress.firstName,
-              lastName: existingBillingAddress.lastName,
-              addressLine1: existingBillingAddress.addressLine1,
-              addressLine2: existingBillingAddress.addressLine2,
-              city: existingBillingAddress.city,
-              postalCode: existingBillingAddress.postalCode,
-              phone: existingBillingAddress.phone || '',
-              label: existingBillingAddress.label,
-            },
-          });
-          orderBillingAddressId = billingAddrCopy.id;
-        } else if (billingAddress) {
-          // If billingAddress provided inline, create it
-          const billingAddr = await tx.address.create({
-            data: {
-              userId,
-              firstName: billingAddress.firstName,
-              lastName: billingAddress.lastName,
-              addressLine1: billingAddress.street,
-              addressLine2: billingAddress.apartment,
-              city: billingAddress.city,
-              postalCode: billingAddress.postalCode,
-              phone: billingAddress.phone || '',
-            },
-          });
-          orderBillingAddressId = billingAddr.id;
-        }
-      } else {
-        // Create new shipping address from provided data
-        // shippingAddress must exist here since we validated earlier
-        if (!shippingAddress) {
-          throw new BadRequestException('Shipping address data is required');
-        }
-        const shippingAddr = await tx.address.create({
-          data: {
-            userId,
-            firstName: shippingAddress.firstName,
-            lastName: shippingAddress.lastName,
-            addressLine1: shippingAddress.street,
-            addressLine2: shippingAddress.apartment,
-            city: shippingAddress.city,
-            postalCode: shippingAddress.postalCode,
-            phone: shippingAddress.phone || '',
-          },
-        });
-        orderShippingAddressId = shippingAddr.id;
-
-        // Create billing address
-        // Priority: billingAddressId > billingAddress inline > same as shipping
-        if (existingBillingAddress) {
-          const billingAddrCopy = await tx.address.create({
-            data: {
-              userId,
-              firstName: existingBillingAddress.firstName,
-              lastName: existingBillingAddress.lastName,
-              addressLine1: existingBillingAddress.addressLine1,
-              addressLine2: existingBillingAddress.addressLine2,
-              city: existingBillingAddress.city,
-              postalCode: existingBillingAddress.postalCode,
-              phone: existingBillingAddress.phone || '',
-              label: existingBillingAddress.label,
-            },
-          });
-          orderBillingAddressId = billingAddrCopy.id;
-        } else {
-          const billingData = billingAddress || shippingAddress;
-          if (!billingData) {
-            throw new BadRequestException('Billing address data is required');
-          }
-          const billingAddr = await tx.address.create({
-            data: {
-              userId,
-              firstName: billingData.firstName,
-              lastName: billingData.lastName,
-              addressLine1: billingData.street,
-              addressLine2: billingData.apartment,
-              city: billingData.city,
-              postalCode: billingData.postalCode,
-              phone: billingData.phone || '',
-            },
-          });
-          orderBillingAddressId = billingAddr.id;
-        }
-      }
-
-      // Prepare billing invoice fields (trim to 60 chars max)
+      const { orderShippingAddressId, orderBillingAddressId } = await this.createOrderAddresses(tx, userId, {
+        existingAddress, existingBillingAddress, shippingAddress, billingAddress,
+      });
       const billingInvoiceCompany = createOrderDto.billingInvoiceCompany?.trim().substring(0, 60) || null;
       const billingInvoiceVatNumber = createOrderDto.billingInvoiceVatNumber?.trim().substring(0, 60) || null;
 
-      // Create the order
       const newOrder = await tx.order.create({
         data: {
-          orderNumber,
-          userId,
+          orderNumber, userId,
           status: initialOrderStatus,
           paymentStatus: initialPaymentStatus,
           shippingAddressId: orderShippingAddressId,
           billingAddressId: orderBillingAddressId,
           shippingMethod: shippingMethod as unknown as ShippingMethod,
-          shippingCost,
-          subtotal,
-          discount,
-          vat,
-          total,
-          promoCode,
-          promoDiscountType,
-          promoDiscountValue,
-          paymentIntentId,
+          shippingCost, subtotal, discount,
+          vat: totalVatAmount, total,
+          subtotalExclVat,
+          vatAmount: totalVatAmount,
+          totalInclVat: total,
+          vatRateSnapshot: vatRate,
+          shippingExclVat, shippingVatAmount,
+          promoCode, promoDiscountType, promoDiscountValue, paymentIntentId,
           loyaltyRedeemAed: loyaltyRedeemAed > 0 ? loyaltyRedeemAed : null,
           paymentMethod: paymentMethod as unknown as PaymentMethod,
-          notes,
-          billingInvoiceCompany,
-          billingInvoiceVatNumber,
-          items: {
-            create: orderItems,
-          },
+          notes, billingInvoiceCompany, billingInvoiceVatNumber,
+          items: { create: orderItems },
           statusHistory: {
             create: {
               status: initialOrderStatus,
-              notes: paymentMethod === PaymentMethodDto.CASH_ON_DELIVERY 
-                ? 'Order placed with Cash on Delivery' 
+              notes: paymentMethod === PaymentMethodDto.CASH_ON_DELIVERY
+                ? 'Order placed with Cash on Delivery'
                 : 'Order placed, awaiting payment',
             },
           },
         },
-        include: {
-          items: true,
-          shippingAddress: true,
-          billingAddress: true,
-        },
+        include: { items: true, shippingAddress: true, billingAddress: true },
       });
 
-      // Reserve stock for all order items
       await this.stockService.reserveStockBatch(
         orderItems
           .filter(item => item.productId != null)
           .map(item => ({ productId: item.productId, quantity: item.quantity })),
         newOrder.id,
         userId,
+        tx, // enroll in the outer transaction to avoid nested-tx split-brain
       );
-
       return newOrder;
     });
 
-    // Process loyalty cash redemption outside transaction (after order created successfully)
     if (loyaltyRedeemAed > 0) {
       await this.loyaltyService.redeemLoyaltyCash(
-        userId,
-        loyaltyRedeemAed,
-        order.id,
-        `Redeemed on order ${order.orderNumber}`,
+        userId, loyaltyRedeemAed, order.id, `Redeemed on order ${order.orderNumber}`,
       );
     }
-
-    // Increment promo code usage count
     if (promoCodeId) {
       await this.prisma.promoCode.update({
         where: { id: promoCodeId },
@@ -417,36 +470,77 @@ export class OrdersService {
       });
     }
 
-    // Compute and award loyalty cash earned from this order
-    const earnPercent = await this.getLoyaltyEarnPercent();
-    // Eligible amount = subtotal minus any loyalty redeemed
-    const eligibleForEarn = Math.max(0, subtotal - loyaltyRedeemAed);
-    const loyaltyEarnAed = Math.round(eligibleForEarn * earnPercent * 100) / 100;
+    const finalOrder = await this.finalizeLoyaltyEarn(order.id, subtotal, loyaltyRedeemAed, order);
 
-    if (loyaltyEarnAed > 0) {
-      // Update the order with earned amount
-      const updatedOrder = await this.prisma.order.update({
-        where: { id: order.id },
-        data: { loyaltyEarnAed },
-        include: {
-          items: true,
-          shippingAddress: true,
-          billingAddress: true,
-        },
-      });
+    // Fire-and-forget invoice generation + email (do not block order response on failure)
+    this.issueInvoiceAndEmail(order.id).catch((err) =>
+      this.logger.error(`Invoice issuance threw for order ${order.id}: ${err?.message}`),
+    );
 
-      // Create EARNED transaction and update wallet
-      await this.loyaltyService.addLoyaltyCash(
-        userId,
-        loyaltyEarnAed,
-        order.id,
-        `Earned from Order #${order.orderNumber}`,
-      );
+    return this.formatOrderResponse(finalOrder);
+  }
 
-      return this.formatOrderResponse(updatedOrder);
+  private async handleStockTransition(
+    newStatus: OrderStatus,
+    oldStatus: OrderStatus,
+    stockItems: Array<{ productId: number; quantity: number }>,
+    orderId: string,
+    userId?: string,
+  ): Promise<void> {
+    if (stockItems.length === 0) return;
+
+    if (newStatus === OrderStatus.PROCESSING && oldStatus === OrderStatus.PAYMENT_PENDING) {
+      await this.stockService.confirmReservationBatch(stockItems, orderId, userId);
+      this.logger.log(`Confirmed stock reservation for order ${orderId}`);
+      return;
     }
 
-    return this.formatOrderResponse(order);
+    if (newStatus === OrderStatus.REFUNDED) {
+      await this.stockService.restoreStockBatch(stockItems, orderId, userId);
+      this.logger.log(`Restored stock for refunded order ${orderId}`);
+      return;
+    }
+
+    if (newStatus !== OrderStatus.CANCELLED) return;
+
+    const isPreConfirm = oldStatus === OrderStatus.PENDING || oldStatus === OrderStatus.PAYMENT_PENDING;
+    const isPostConfirm =
+      oldStatus === OrderStatus.PROCESSING ||
+      oldStatus === OrderStatus.PAID ||
+      oldStatus === OrderStatus.SHIPPED;
+
+    if (isPreConfirm) {
+      await this.stockService.releaseReservationBatch(stockItems, orderId, userId);
+      this.logger.log(`Released stock reservation for cancelled order ${orderId}`);
+    } else if (isPostConfirm) {
+      await this.stockService.restoreStockBatch(stockItems, orderId, userId);
+      this.logger.log(`Restored stock for cancelled order ${orderId}`);
+    }
+  }
+
+  private buildOrderStatusUpdateData(
+    newStatus: OrderStatus,
+    oldStatus: OrderStatus,
+    paymentStatus: PaymentStatus,
+    notes?: string,
+  ): any {
+    const updateData: any = {
+      status: newStatus,
+      statusHistory: {
+        create: {
+          status: newStatus,
+          notes: notes || `Status changed from ${oldStatus} to ${newStatus}`,
+        },
+      },
+    };
+    if (newStatus === OrderStatus.PROCESSING && paymentStatus === PaymentStatus.PENDING) {
+      updateData.paymentStatus = PaymentStatus.PAID;
+      updateData.paidAt = new Date();
+    }
+    if (newStatus === OrderStatus.REFUNDED) {
+      updateData.paymentStatus = PaymentStatus.REFUNDED;
+    }
+    return updateData;
   }
 
   /**
@@ -473,60 +567,9 @@ export class OrdersService {
       .filter((item): item is typeof item & { productId: number } => item.productId != null)
       .map(item => ({ productId: item.productId, quantity: item.quantity }));
 
-    // Handle stock lifecycle based on status transition
-    if (newStatus === OrderStatus.PROCESSING && oldStatus === OrderStatus.PAYMENT_PENDING) {
-      // Payment confirmed → confirm reservation (deduct from stockQty and reservedQty)
-      if (stockItems.length > 0) {
-        await this.stockService.confirmReservationBatch(stockItems, orderId, userId);
-        this.logger.log(`Confirmed stock reservation for order ${orderId}`);
-      }
-    } else if (newStatus === OrderStatus.CANCELLED) {
-      if (
-        oldStatus === OrderStatus.PENDING ||
-        oldStatus === OrderStatus.PAYMENT_PENDING
-      ) {
-        // Cancelled before payment confirmed → release reservation
-        if (stockItems.length > 0) {
-          await this.stockService.releaseReservationBatch(stockItems, orderId, userId);
-          this.logger.log(`Released stock reservation for cancelled order ${orderId}`);
-        }
-      } else if (
-        oldStatus === OrderStatus.PROCESSING ||
-        oldStatus === OrderStatus.PAID ||
-        oldStatus === OrderStatus.SHIPPED
-      ) {
-        // Cancelled after payment confirmed → restore stock
-        if (stockItems.length > 0) {
-          await this.stockService.restoreStockBatch(stockItems, orderId, userId);
-          this.logger.log(`Restored stock for cancelled order ${orderId}`);
-        }
-      }
-    } else if (newStatus === OrderStatus.REFUNDED) {
-      // Refund → restore stock
-      if (stockItems.length > 0) {
-        await this.stockService.restoreStockBatch(stockItems, orderId, userId);
-        this.logger.log(`Restored stock for refunded order ${orderId}`);
-      }
-    }
+    await this.handleStockTransition(newStatus, oldStatus, stockItems, orderId, userId);
 
-    // Update order status and optional payment fields
-    const updateData: any = {
-      status: newStatus,
-      statusHistory: {
-        create: {
-          status: newStatus,
-          notes: notes || `Status changed from ${oldStatus} to ${newStatus}`,
-        },
-      },
-    };
-
-    if (newStatus === OrderStatus.PROCESSING && order.paymentStatus === PaymentStatus.PENDING) {
-      updateData.paymentStatus = PaymentStatus.PAID;
-      updateData.paidAt = new Date();
-    }
-    if (newStatus === OrderStatus.REFUNDED) {
-      updateData.paymentStatus = PaymentStatus.REFUNDED;
-    }
+    const updateData = this.buildOrderStatusUpdateData(newStatus, oldStatus, order.paymentStatus, notes);
 
     const updatedOrder = await this.prisma.order.update({
       where: { id: orderId },
@@ -552,18 +595,16 @@ export class OrdersService {
       where: { key },
     });
 
-    if (!setting) {
-      // Auto-create with default value
-      setting = await this.prisma.siteSetting.create({
-        data: {
-          key,
-          value: '0.05',
-          type: 'number',
-          group: 'loyalty',
-          label: 'Loyalty Earn Percent (e.g., 0.05 = 5%)',
-        },
-      });
-    }
+    // Auto-create with default value
+    setting ??= await this.prisma.siteSetting.create({
+      data: {
+        key,
+        value: '0.05',
+        type: 'number',
+        group: 'loyalty',
+        label: 'Loyalty Earn Percent (e.g., 0.05 = 5%)',
+      },
+    });
 
     const parsed = Number.parseFloat(setting.value);
     return Number.isNaN(parsed) ? 0.05 : parsed;
@@ -574,32 +615,51 @@ export class OrdersService {
       where: { userId },
       include: {
         items: true,
-        shippingAddress: true,
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return orders.map(order => this.formatOrderResponse(order));
+    const shippingIds = Array.from(
+      new Set(orders.map((o) => o.shippingAddressId).filter(Boolean) as string[]),
+    );
+    const shippingAddresses = shippingIds.length
+      ? await this.prisma.address.findMany({ where: { id: { in: shippingIds } } })
+      : [];
+    const addrMap = new Map(shippingAddresses.map((a) => [a.id, a]));
+
+    return orders.map(order =>
+      this.formatOrderResponse({
+        ...order,
+        shippingAddress: order.shippingAddressId ? addrMap.get(order.shippingAddressId) ?? null : null,
+      }),
+    );
   }
 
   async getOrderById(userId: string, orderId: string) {
-    const order = await this.prisma.order.findFirst({
+    const baseOrder = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
       include: {
         items: true,
-        shippingAddress: true,
-        billingAddress: true,
         statusHistory: {
           orderBy: { createdAt: 'desc' },
         },
       },
     });
 
-    if (!order) {
+    if (!baseOrder) {
       throw new NotFoundException('Order not found');
     }
 
-    return this.formatOrderResponse(order);
+    const [shippingAddress, billingAddress] = await Promise.all([
+      baseOrder.shippingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
+        : null,
+      baseOrder.billingAddressId
+        ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
+        : null,
+    ]);
+
+    return this.formatOrderResponse({ ...baseOrder, shippingAddress, billingAddress });
   }
 
   async getAllOrders(page = 1, limit = 20) {
@@ -611,7 +671,6 @@ export class OrdersService {
         take: limit,
         include: {
           items: true,
-          shippingAddress: true,
           user: {
             select: { id: true, email: true, firstName: true, lastName: true },
           },
@@ -621,8 +680,21 @@ export class OrdersService {
       this.prisma.order.count(),
     ]);
 
+    const shippingIds = Array.from(
+      new Set(orders.map((o) => o.shippingAddressId).filter(Boolean) as string[]),
+    );
+    const shippingAddresses = shippingIds.length
+      ? await this.prisma.address.findMany({ where: { id: { in: shippingIds } } })
+      : [];
+    const addrMap = new Map(shippingAddresses.map((a) => [a.id, a]));
+
     return {
-      data: orders.map(order => this.formatOrderResponse(order)),
+      data: orders.map(order =>
+        this.formatOrderResponse({
+          ...order,
+          shippingAddress: order.shippingAddressId ? addrMap.get(order.shippingAddressId) ?? null : null,
+        }),
+      ),
       meta: {
         total,
         page,
@@ -632,18 +704,15 @@ export class OrdersService {
     };
   }
 
-  private calculateShippingCost(method: ShippingMethod): number {
-    switch (method) {
-      case ShippingMethod.EXPRESS:
-        return 25;
-      case ShippingMethod.OVERNIGHT:
-        return 50;
-      case ShippingMethod.PICKUP:
-        return 0;
-      case ShippingMethod.STANDARD:
-      default:
-        return 10;
-    }
+  private async calculateShippingCost(method: ShippingMethod, subtotal: number = 0): Promise<number> {
+    // PICKUP is always free; every other method uses the admin-configured shipping fee.
+    // The fee is mandatory and centrally managed via SiteSetting `shipping_fee`
+    // (default AED 10, auto-seeded on first read).
+    // If `shipping_free_threshold` > 0 and order subtotal meets it, shipping is waived.
+    if (method === ShippingMethod.PICKUP) return 0;
+    const threshold = await this.settingsService.getFreeShippingThreshold();
+    if (threshold > 0 && subtotal >= threshold) return 0;
+    return this.settingsService.getShippingFee();
   }
 
   private async generateOrderNumber(): Promise<string> {

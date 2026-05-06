@@ -4,7 +4,7 @@ import { CreateCollectionDto, UpdateCollectionDto } from './dto';
 
 @Injectable()
 export class CollectionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   // ============================================================================
   // PRODUCT COLLECTIONS
@@ -108,7 +108,7 @@ export class CollectionsService {
       case 'CATEGORY_FILTER':
         if (rules.categoryId) {
           products = await this.prisma.product.findMany({
-            where: { isActive: true, categoryId: parseInt(rules.categoryId) },
+            where: { isActive: true, categoryId: Number.parseInt(rules.categoryId) },
             take: limit,
             include: {
               pricing: true,
@@ -123,7 +123,7 @@ export class CollectionsService {
       case 'BRAND_FILTER':
         if (rules.brandId) {
           products = await this.prisma.product.findMany({
-            where: { isActive: true, brandId: parseInt(rules.brandId) },
+            where: { isActive: true, brandId: Number.parseInt(rules.brandId) },
             take: limit,
             include: {
               pricing: true,
@@ -158,7 +158,7 @@ export class CollectionsService {
         break;
 
       case 'MANUAL':
-      default:
+      default: {
         // Get products from manual collection items
         const items = await this.prisma.productCollectionItem.findMany({
           where: { collectionId: collection.id },
@@ -182,6 +182,7 @@ export class CollectionsService {
           products.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
         }
         break;
+      }
     }
 
     // Transform products to API format
@@ -205,8 +206,8 @@ export class CollectionsService {
       sku: product.sku,
       name: product.productName || product.name,
       description: product.description,
-      price: pricing?.priceInclVat ? parseFloat(pricing.priceInclVat.toString()) : 0,
-      salePrice: pricing?.listedPriceVat ? parseFloat(pricing.listedPriceVat.toString()) : null,
+      price: pricing?.priceInclVat ? Number.parseFloat(pricing.priceInclVat.toString()) : 0,
+      salePrice: pricing?.listedPriceVat ? Number.parseFloat(pricing.listedPriceVat.toString()) : null,
       currency: pricing?.currency || 'AED',
       imageUrl: primaryImage?.imageUrl || '/placeholder.jpg',
       images: product.images?.map((i: any) => ({
@@ -274,8 +275,8 @@ export class CollectionsService {
 
   // Collection Items (for MANUAL strategy)
   async addCollectionItem(collectionId: string, productId: number, sortOrder?: number) {
-    const collection = await this.getCollection(collectionId);
-    
+    await this.getCollection(collectionId);
+
     const existing = await this.prisma.productCollectionItem.findUnique({
       where: { collectionId_productId: { collectionId, productId } },
     });

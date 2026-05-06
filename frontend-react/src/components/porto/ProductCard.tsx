@@ -8,7 +8,7 @@ interface Props {
   product: ProductDto;
 }
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product }: Readonly<Props>) {
   const { isAuthenticated } = useAuth();
   const { isFavorite, toggle } = useFavorites();
 
@@ -21,13 +21,30 @@ export default function ProductCard({ product }: Props) {
   const discountPct = hasDiscount
     ? Math.round((1 - product.price / product.oldPrice!) * 100)
     : 0;
+  const isOutOfStock = product.inStock === false;
 
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${isOutOfStock ? styles['card-oos'] : ''}`}>
       <div className={styles['image-wrap']}>
         <Link to={`/product/${product.id}`}>
           <img src={imageUrl} alt={product.name} loading="lazy" />
         </Link>
+        {isOutOfStock && (
+          <>
+            <span className={styles['oos-corner']} aria-hidden="true">Out of Stock</span>
+            <Link
+              to={`/product/${product.id}`}
+              className={styles['special-order-ribbon']}
+              aria-label={`${product.name} is out of stock — tap to request a special order`}
+            >
+              <span className={styles['special-order-icon']}>◆</span>
+              <span className={styles['special-order-text']}>
+                <strong>Available on Request</strong>
+                <small>Tap to order via WhatsApp</small>
+              </span>
+            </Link>
+          </>
+        )}
         <div className={styles.badges}>
           {product.isBestSeller && <span className={`${styles.badge} ${styles['badge-best']}`}>BESTSELLER</span>}
           {product.isNew && <span className={`${styles.badge} ${styles['badge-new']}`}>NEW</span>}

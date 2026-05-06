@@ -16,6 +16,9 @@
     },
     "jwtRefreshSecret": {
       "value": "${JWT_REFRESH_SECRET}"
+    },
+    "adminPassword": {
+      "value": "${ADMIN_PASSWORD}"
     }
   }
 }

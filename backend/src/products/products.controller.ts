@@ -8,8 +8,11 @@ import {
   Delete,
   Query,
   UseGuards,
+  UseInterceptors,
+  Header,
 } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
+import { CacheInterceptor, CacheTTL, CacheKey } from '@nestjs/cache-manager';
 import { ProductsService } from './products.service';
 import { ProductFilterDto, CreateProductDto, UpdateProductDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -41,30 +44,48 @@ export class ProductsController {
   }
 
   @Get('featured')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('products:featured')
+  @CacheTTL(120_000)
+  @Header('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
   getFeatured(@Query('limit') limit?: string) {
-    const parsedLimit = limit ? parseInt(limit, 10) : 8;
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : 8;
     return this.productsService.getFeatured(parsedLimit);
   }
 
   @Get('best-sellers')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('products:best-sellers')
+  @CacheTTL(120_000)
+  @Header('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
   getBestSellers(@Query('limit') limit?: string) {
-    const parsedLimit = limit ? parseInt(limit, 10) : 8;
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : 8;
     return this.productsService.getBestSellers(parsedLimit);
   }
 
   @Get('new-arrivals')
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey('products:new-arrivals')
+  @CacheTTL(120_000)
+  @Header('Cache-Control', 'public, max-age=120, stale-while-revalidate=600')
   getNewArrivals(@Query('limit') limit?: string) {
-    const parsedLimit = limit ? parseInt(limit, 10) : 8;
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : 8;
     return this.productsService.getNewArrivals(parsedLimit);
   }
 
   @Get(':id/related')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60_000)
+  @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
   getRelated(@Param('id') id: string, @Query('limit') limit?: string) {
-    const parsedLimit = limit ? parseInt(limit, 10) : 6;
+    const parsedLimit = limit ? Number.parseInt(limit, 10) : 6;
     return this.productsService.getRelated(id, parsedLimit);
   }
 
   @Get(':slugOrId')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60_000)
+  @Header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
   findOne(@Param('slugOrId') slugOrId: string) {
     return this.productsService.findOne(slugOrId);
   }

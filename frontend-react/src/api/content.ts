@@ -13,12 +13,18 @@ export const contentApi = {
   getPage: (slug: string) =>
     api.get<LandingPageDto>(`/content/pages/${slug}`).then(r => r.data),
 
+  getLandingPage: (slug: string) =>
+    api.get<LandingPageDto>(`/content/pages/${slug}`).then(r => r.data),
+
   // Admin
   getAllBanners: () =>
     api.get<BannerDto[]>('/content/banners/all').then(r => r.data),
 
   getAllPages: () =>
     api.get<LandingPageDto[]>('/content/pages').then(r => r.data),
+
+  getPageById: (id: string) =>
+    api.get<LandingPageDto>(`/content/admin/pages/${id}`).then(r => r.data),
 
   createBanner: (data: Partial<BannerDto>) =>
     api.post<BannerDto>('/content/banners', data).then(r => r.data),
@@ -46,12 +52,7 @@ export const contentApi = {
 
   deleteSection: (sectionId: string) =>
     api.delete(`/content/sections/${sectionId}`),
-};
 
-export const cmsApi = {
-  getHomePage: () =>
-    api.get('/cms/home-page').then(r => r.data),
-
-  getCategoryLanding: (categoryId: string) =>
-    api.get(`/cms/category/${categoryId}`).then(r => r.data),
+  reorderSections: (pageId: string, orders: Array<{ id: string; displayOrder: number }>) =>
+    api.post(`/content/pages/${pageId}/sections/reorder`, { orders }).then(r => r.data),
 };

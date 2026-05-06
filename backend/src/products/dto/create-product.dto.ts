@@ -10,6 +10,20 @@ class SpecItemDto {
   value: string;
 }
 
+// Image item for product images with metadata
+class ImageItemDto {
+  @IsString()
+  url: string;
+
+  @IsOptional()
+  @IsNumber()
+  displayOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  altText?: string;
+}
+
 export class CreateProductDto {
   @IsString()
   @IsNotEmpty()
@@ -90,8 +104,18 @@ export class CreateProductDto {
   categoryId: string;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  categoryIds?: string[];
+
+  @IsOptional()
   @IsString()
   subcategoryId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  subcategoryIds?: string[];
 
   @IsString()
   @IsNotEmpty()
@@ -108,10 +132,23 @@ export class CreateProductDto {
   @Min(0)
   compareAtPrice?: number;
 
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  stock: number;
+  costPrice?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  stock?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  stockQuantity?: number;  // Alias for stock (frontend compatibility)
 
   @IsOptional()
   @Type(() => Number)
@@ -120,13 +157,15 @@ export class CreateProductDto {
   lowStockThreshold?: number;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  images?: string[];
+  @IsString()
+  status?: string;  // 'active', 'draft', 'archived'
 
   @IsOptional()
-  @IsString()
-  attributes?: string; // JSON string
+  @IsArray()
+  images?: any[];  // Array of strings or ImageItemDto objects
+
+  @IsOptional()
+  specifications?: any;  // Can be string, object, or SpecItemDto array
 
   @IsOptional()
   @IsBoolean()

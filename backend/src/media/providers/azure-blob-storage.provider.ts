@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import {
   BlobServiceClient,
   ContainerClient,
-  StorageSharedKeyCredential,
 } from '@azure/storage-blob';
 import {
   IStorageProvider,
@@ -14,7 +13,7 @@ import {
 @Injectable()
 export class AzureBlobStorageProvider implements IStorageProvider {
   private readonly logger = new Logger(AzureBlobStorageProvider.name);
-  private containerClient: ContainerClient;
+  private readonly containerClient: ContainerClient;
   private readonly containerName: string;
   private readonly accountUrl: string;
 

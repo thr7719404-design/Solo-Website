@@ -44,6 +44,63 @@ interface VerificationResult {
   error?: string;
 }
 
+async function compareRowCounts(
+  invClient: Client,
+  soloClient: Client,
+  results: VerificationResult[],
+): Promise<boolean> {
+  let allPassed = true;
+  for (const table of TABLES) {
+    try {
+      const sourceResult = await invClient.query(`SELECT COUNT(*) FROM public.${table};`);
+      const sourceCount = Number.parseInt(sourceResult.rows[0].count);
+      const targetResult = await soloClient.query(`SELECT COUNT(*) FROM inventory.${table};`);
+      const targetCount = Number.parseInt(targetResult.rows[0].count);
+      const match = sourceCount === targetCount;
+      if (!match) allPassed = false;
+      results.push({ table, sourceCount, targetCount, match });
+      const status = match ? '✅ MATCH' : '❌ MISMATCH';
+      console.log(formatRow(table, sourceCount.toString(), targetCount.toString(), status));
+    } catch (err: any) {
+      results.push({ table, sourceCount: -1, targetCount: -1, match: false, error: err.message });
+      console.log(formatRow(table, 'ERROR', 'ERROR', '❌ ' + err.message.substring(0, 20)));
+      allPassed = false;
+    }
+  }
+  return allPassed;
+}
+
+function printVerificationSummary(
+  results: VerificationResult[],
+  allPassed: boolean,
+  viewCheck1: boolean,
+  viewCheck2: boolean,
+  schemaExists: boolean,
+): void {
+  console.log('═════════════════════════════════════════════════════════');
+  const mismatched = results.filter(r => !r.match);
+  if (mismatched.length > 0) {
+    console.log(`Tables with mismatches: ${mismatched.map(r => r.table).join(', ')}`);
+  }
+  if (allPassed && viewCheck1 && viewCheck2 && schemaExists) {
+    console.log('✅ VERIFICATION PASSED - All data migrated successfully!');
+    console.log('═════════════════════════════════════════════════════════');
+    console.log('\nYou can now:');
+    console.log('1. Update Prisma schema to use inventory schema');
+    console.log('2. Remove InventoryPrismaService');
+    console.log('3. Update services to use single PrismaService');
+    console.log('4. Remove INVENTORY_DATABASE_URL from .env');
+  } else {
+    console.log('❌ VERIFICATION FAILED - Please check the issues above');
+    console.log('═════════════════════════════════════════════════════════');
+    console.log('\nPossible issues:');
+    console.log('- Migration script may not have completed');
+    console.log('- Source data may have changed since migration');
+    console.log('- Database connection issues');
+    process.exit(1);
+  }
+}
+
 async function main() {
   console.log('🔍 Starting Inventory Migration Verification...\n');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
@@ -52,7 +109,6 @@ async function main() {
   const invClient = new Client({ connectionString: INVENTORY_DB_URL });
   
   const results: VerificationResult[] = [];
-  let allPassed = true;
 
   try {
     await soloClient.connect();
@@ -65,35 +121,7 @@ async function main() {
     console.log(formatRow('Table', 'Source', 'Target', 'Status'));
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    for (const table of TABLES) {
-      try {
-        // Count in source (inventory_db.public)
-        const sourceResult = await invClient.query(`SELECT COUNT(*) FROM public.${table};`);
-        const sourceCount = parseInt(sourceResult.rows[0].count);
-
-        // Count in target (solo_ecommerce.inventory)
-        const targetResult = await soloClient.query(`SELECT COUNT(*) FROM inventory.${table};`);
-        const targetCount = parseInt(targetResult.rows[0].count);
-
-        const match = sourceCount === targetCount;
-        if (!match) allPassed = false;
-
-        results.push({ table, sourceCount, targetCount, match });
-        
-        const status = match ? '✅ MATCH' : '❌ MISMATCH';
-        console.log(formatRow(table, sourceCount.toString(), targetCount.toString(), status));
-      } catch (err: any) {
-        results.push({ 
-          table, 
-          sourceCount: -1, 
-          targetCount: -1, 
-          match: false,
-          error: err.message 
-        });
-        console.log(formatRow(table, 'ERROR', 'ERROR', '❌ ' + err.message.substring(0, 20)));
-        allPassed = false;
-      }
-    }
+    const allPassed = await compareRowCounts(invClient, soloClient, results);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // Sample data verification for key tables
@@ -148,13 +176,17 @@ async function main() {
       SELECT COUNT(*) FROM information_schema.tables 
       WHERE table_schema = 'inventory' AND table_type = 'BASE TABLE';
     `);
-    const tableCount = parseInt(tableCountResult.rows[0].count);
+    const tableCount = Number.parseInt(tableCountResult.rows[0].count);
     console.log(`   Tables in schema: ${tableCount === TABLES.length ? '✅' : '⚠️'} ${tableCount}/${TABLES.length}`);
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // Summary
     console.log('═══════════════════════════════════════════════════════════');
+    const mismatched = results.filter(r => !r.match);
+    if (mismatched.length > 0) {
+      console.log(`Tables with mismatches: ${mismatched.map(r => r.table).join(', ')}`);
+    }
     if (allPassed && viewCheck1 && viewCheck2 && schemaExists) {
       console.log('✅ VERIFICATION PASSED - All data migrated successfully!');
       console.log('═══════════════════════════════════════════════════════════');

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsUrl, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsUrl, MinLength, MaxLength, ValidateIf } from 'class-validator';
 
 export class CreateBrandDto {
   @IsString()
@@ -8,24 +8,32 @@ export class CreateBrandDto {
   name: string;
 
   @IsString()
-  @IsNotEmpty()
-  @MinLength(2)
+  @IsOptional()
   @MaxLength(100)
-  slug: string;
+  slug?: string;
 
   @IsString()
   @IsOptional()
   @MaxLength(500)
   description?: string;
 
-  @IsString()
+  // Accept either `logo` or `logoUrl`. Skip URL validation for empty strings.
   @IsOptional()
-  @IsUrl()
+  @ValidateIf((_o, value) => value !== '' && value !== null && value !== undefined)
+  @IsString()
+  @IsUrl({ require_tld: false })
   logo?: string;
 
-  @IsString()
   @IsOptional()
-  @IsUrl()
+  @ValidateIf((_o, value) => value !== '' && value !== null && value !== undefined)
+  @IsString()
+  @IsUrl({ require_tld: false })
+  logoUrl?: string;
+
+  @IsOptional()
+  @ValidateIf((_o, value) => value !== '' && value !== null && value !== undefined)
+  @IsString()
+  @IsUrl({ require_tld: false })
   website?: string;
 
   @IsBoolean()

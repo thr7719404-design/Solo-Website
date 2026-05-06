@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 
 export enum CartItemType {
   PRODUCT = 'PRODUCT',
-  PACKAGE = 'PACKAGE',
 }
 
 export class AddCartItemDto {
@@ -12,7 +11,7 @@ export class AddCartItemDto {
 
   @IsString()
   @IsNotEmpty()
-  itemId: string; // productId or packageId
+  itemId: string; // productId
 
   @Type(() => Number)
   @IsNumber()

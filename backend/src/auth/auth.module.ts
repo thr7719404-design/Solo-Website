@@ -21,7 +21,7 @@ import { EmailModule } from '../email/email.module';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
+          expiresIn: configService.get<string>('JWT_ACCESS_EXPIRATION') || '4h',
         },
       }),
       inject: [ConfigService],

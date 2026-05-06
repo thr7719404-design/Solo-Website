@@ -61,11 +61,11 @@ function slugify(s) {
   return String(s)
     .trim()
     .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[:]/g, '-')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replaceAll(/&/g, 'and')
+    .replaceAll(/:/g, '-')
+    .replaceAll(/[^a-z0-9]+/g, '-')
+    .replaceAll(/-+/g, '-')
+    .replaceAll(/(?:^-|-$)/g, '');
 }
 
 (async () => {

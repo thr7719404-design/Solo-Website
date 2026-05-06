@@ -3,7 +3,6 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
-  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -19,10 +18,10 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-    private configService: ConfigService,
-    private emailService: EmailService,
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -361,7 +360,7 @@ export class AuthService {
     // Generate access token (short-lived: 15 minutes)
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
+      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '4h',
     });
 
     // Generate refresh token (long-lived: 7 days)
@@ -434,6 +433,10 @@ export class AuthService {
       where: { userId },
       data: { isRevoked: true },
     });
+
+    // Send password changed notification email (fire-and-forget)
+    (this.emailService as any).sendPasswordChangedEmail(user.email, user.firstName ?? null)
+      .catch((err: any) => this.logger.warn(`Failed to send password changed email: ${err?.message}`));
 
     return { message: 'Password changed successfully' };
   }

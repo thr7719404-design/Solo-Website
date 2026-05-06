@@ -9,9 +9,6 @@ export const categoriesApi = {
     return api.get<CategoryDto[]>(`/categories?${query}`).then(r => r.data);
   },
 
-  getById: (id: string) =>
-    api.get<CategoryDto>(`/categories/${id}`).then(r => r.data),
-
   create: (data: Partial<CategoryDto>) =>
     api.post<CategoryDto>('/categories', data).then(r => r.data),
 
@@ -20,7 +17,4 @@ export const categoriesApi = {
 
   delete: (id: string) =>
     api.delete(`/categories/${id}`),
-
-  reorder: (orders: Array<{ id: string; displayOrder: number }>) =>
-    api.post('/categories/reorder', { orders }),
 };

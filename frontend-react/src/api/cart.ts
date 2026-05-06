@@ -13,6 +13,9 @@ function mapCartItem(item: any): CartItemDto {
     quantity: item.quantity,
     size: item.size,
     color: item.color,
+    inStock: product?.inStock ?? true,
+    stockQty: product?.stockQty ?? 0,
+    available: typeof product?.available === 'number' ? product.available : (product?.stockQty ?? 0),
     product,
   };
 }
@@ -35,7 +38,7 @@ export const cartApi = {
     api.patch(`/cart/items/${cartItemId}`, { quantity }).then(r => mapCart(r.data)),
 
   removeItem: (cartItemId: string) =>
-    api.delete(`/cart/items/${cartItemId}`).then(r => r.data),
+    api.delete(`/cart/items/${cartItemId}`).then(r => mapCart(r.data)),
 
   clear: () =>
     api.delete('/cart').then(r => r.data),

@@ -1,123 +1,236 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import { customersApi } from '@/api/customers';
-import type { CustomerDto, CreateCustomerRequest } from '@/types';
+import styles from './Admin.module.css';
 
 export default function AdminCustomersPage() {
-  const [customers, setCustomers] = useState<CustomerDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const limit = 20;
-
-  const [creating, setCreating] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
   const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '', phone: '' });
   const [saving, setSaving] = useState(false);
+  const limit = 15;
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const res = await customersApi.getCustomers({ page, limit, search: search || undefined });
-    setCustomers(res.data);
-    setTotal(res.total);
-    setLoading(false);
-  }, [page, search]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const handleCreate = async () => {
-    if (!form.email || !form.password || !form.firstName || !form.lastName) {
-      toast.error('Email, password, first & last name required');
-      return;
-    }
-    setSaving(true);
-    const body: CreateCustomerRequest = { email: form.email, password: form.password, firstName: form.firstName, lastName: form.lastName, phone: form.phone || undefined };
-    try {
-      await customersApi.createCustomer(body);
-      toast.success('Customer created');
-      setCreating(false); load();
-    } catch { toast.error('Failed to create customer'); } finally { setSaving(false); }
+  const load = () => {
+    customersApi.getCustomers({ page, limit, search: search || undefined, includeInactive: statusFilter !== 'active' })
+      .then(r => {
+        let rows = r.data ?? [];
+        if (statusFilter === 'inactive') rows = rows.filter((c: any) => c.isActive === false);
+        setCustomers(rows);
+        setTotal(statusFilter === 'inactive' ? rows.length : (r.total ?? 0));
+      })
+      .catch(() => {});
   };
-
-  const handleDelete = async (c: CustomerDto) => {
-    if (!confirm(`Delete "${c.email}"?`)) return;
-    try { await customersApi.deleteCustomer(c.id); toast.success('Deleted'); load(); } catch { toast.error('Failed'); }
-  };
+  useEffect(load, [page, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
+  const create = async () => {
+    setSaving(true);
+    try {
+      await customersApi.createCustomer(form);
+      setShowModal(false);
+      setForm({ email: '', password: '', firstName: '', lastName: '', phone: '' });
+      load();
+    } catch { /* */ }
+    setSaving(false);
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm('Deactivate this customer? They will no longer be able to log in, but their account and data will be preserved. You can reactivate them later from the "Inactive" filter.')) return;
+    await customersApi.deleteCustomer(id).catch(() => {});
+    load();
+  };
+
+  const reactivate = async (id: string) => {
+    if (!confirm('Reactivate this customer? They will be able to log in again.')) return;
+    try {
+      await customersApi.updateCustomer(id, { isActive: true } as any);
+      load();
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? 'Failed to reactivate');
+    }
+  };
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Customers</h1>
-        <button onClick={() => { setForm({ email: '', password: '', firstName: '', lastName: '', phone: '' }); setCreating(true); }} className="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded hover:bg-indigo-700">+ New Customer</button>
+    <>
+      <div className={styles['header-v2']}>
+        <div>
+          <h1>Customers</h1>
+          <span className={styles['header-v2-sub']}>View and manage customer accounts</span>
+        </div>
+        <button className={styles['btn-primary']} onClick={() => setShowModal(true)}>+ Add Customer</button>
       </div>
+      <div className={styles['admin-body']}>
 
-      <input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search email or name..." className="mb-4 w-full max-w-sm border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-indigo-500" />
-
-      {loading ? <p className="text-gray-400 py-8 text-center">Loading...</p> : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead><tr className="border-b border-gray-200 text-left text-xs text-gray-500 uppercase">
-              <th className="py-2 pr-4">Name</th><th className="py-2 pr-4">Email</th><th className="py-2 pr-4">Orders</th><th className="py-2 pr-4">Spent</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Joined</th><th className="py-2">Actions</th>
-            </tr></thead>
-            <tbody>
-              {customers.map((c) => (
-                <tr key={c.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-2.5 pr-4 font-medium">
-                    <Link to={`/admin/customers/${c.id}`} className="text-indigo-600 hover:underline">{c.firstName} {c.lastName}</Link>
-                  </td>
-                  <td className="py-2.5 pr-4 text-gray-500">{c.email}</td>
-                  <td className="py-2.5 pr-4">{c.orderCount ?? 0}</td>
-                  <td className="py-2.5 pr-4">AED {(c.totalSpent ?? 0).toFixed(2)}</td>
-                  <td className="py-2.5 pr-4">
-                    <span className={`text-xs px-2 py-0.5 rounded ${c.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                      {c.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="py-2.5 pr-4 text-gray-400">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}</td>
-                  <td className="py-2.5">
-                    <button onClick={() => handleDelete(c)} className="text-red-600 hover:underline text-xs">Delete</button>
-                  </td>
-                </tr>
+        {/* Toolbar */}
+        <div className={styles['toolbar-v2']}>
+          <div className={styles['search-box']}>
+            <span className={styles['search-icon']}>🔍</span>
+            <input placeholder="Search customers..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--admin-text-dim)' }}>
+            <span>Status:</span>
+            <div style={{ display: 'inline-flex', border: '1px solid var(--admin-border)', borderRadius: 6, overflow: 'hidden' }}>
+              {(['active', 'inactive', 'all'] as const).map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => { setStatusFilter(opt); setPage(1); }}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textTransform: 'capitalize',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: statusFilter === opt ? 'var(--admin-accent, #2563eb)' : 'transparent',
+                    color: statusFilter === opt ? '#fff' : 'var(--admin-text-dim)',
+                  }}
+                >
+                  {opt}
+                </button>
               ))}
-              {customers.length === 0 && <tr><td colSpan={7} className="py-8 text-center text-gray-400">No customers found</td></tr>}
+            </div>
+          </label>
+          <span className={styles['count-chip']}>{total} customers</span>
+        </div>
+
+        {/* Table */}
+        <div className={styles['table-v2-wrap']}>
+          <table className={styles['table-v2']}>
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              {customers.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No customers found</td></tr>
+              ) : (
+                customers.map(c => (
+                  <tr key={c.id} style={c.isActive === false ? { opacity: 0.6 } : undefined}>
+                    <td>
+                      <div className={styles['table-name']}>
+                        {c.firstName} {c.lastName}
+                        {c.isActive === false && (
+                          <span style={{ marginLeft: 8, fontSize: 11, padding: '2px 6px', borderRadius: 4, background: '#fde2e2', color: '#a02020', fontWeight: 600 }}>INACTIVE</span>
+                        )}
+                      </div>
+                      <div className={styles['table-sub']}>{c.role ?? 'customer'}</div>
+                    </td>
+                    <td style={{ color: 'var(--admin-cyan)' }}>{c.email}</td>
+                    <td>{c.phone ?? '—'}</td>
+                    <td style={{ color: 'var(--admin-text-dim)' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <div className={styles['table-actions']} style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        {c.isActive === false ? (
+                          <button
+                            onClick={() => reactivate(c.id)}
+                            title="Reactivate customer"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                              padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                              borderRadius: 6, border: '1px solid #16a34a',
+                              background: '#dcfce7', color: '#15803d', cursor: 'pointer',
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" />
+                              <path d="M21 3v5h-5" />
+                              <path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" />
+                              <path d="M3 21v-5h5" />
+                            </svg>
+                            Reactivate
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => remove(c.id)}
+                            title="Deactivate customer (soft-delete)"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 6,
+                              padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                              borderRadius: 6, border: '1px solid #dc2626',
+                              background: '#fee2e2', color: '#b91c1c', cursor: 'pointer',
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="9" />
+                              <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
+                            </svg>
+                            Deactivate
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-gray-500">Page {page} of {totalPages}</span>
-          <div className="flex gap-2">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="px-3 py-1.5 text-sm border rounded disabled:opacity-30">Prev</button>
-            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="px-3 py-1.5 text-sm border rounded disabled:opacity-30">Next</button>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className={styles['pagination']}>
+            <button className={styles['page-btn']} onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>← Prev</button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let p: number;
+              if (totalPages <= 7) p = i + 1;
+              else if (page <= 4) p = i + 1;
+              else if (page >= totalPages - 3) p = totalPages - 6 + i;
+              else p = page - 3 + i;
+              return (
+                <button key={p} className={`${styles['page-btn']} ${p === page ? styles['page-btn-active'] : ''}`} onClick={() => setPage(p)}>{p}</button>
+              );
+            })}
+            <button className={styles['page-btn']} onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next →</button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {creating && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setCreating(false)}>
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-4">New Customer</h2>
-            <div className="space-y-3">
-              <div><label className="block text-xs font-medium text-gray-500 mb-1">Email *</label><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" /></div>
-              <div><label className="block text-xs font-medium text-gray-500 mb-1">Password *</label><input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-xs font-medium text-gray-500 mb-1">First Name *</label><input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" /></div>
-                <div><label className="block text-xs font-medium text-gray-500 mb-1">Last Name *</label><input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" /></div>
+      {/* Create Modal */}
+      {showModal && (
+        <>
+          <button type="button" aria-label="Close" className={styles['modal-backdrop']} onClick={() => setShowModal(false)} />
+          <div className={styles['modal']}>
+            <div className={styles['modal-header']}>
+              <h2>Add Customer</h2>
+              <button className={styles['modal-close']} onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            <div style={{ padding: 20 }}>
+              <div className={styles['field-row']}>
+                <div className={styles['field']}>
+                  <label htmlFor="first-name">First Name</label>
+                  <input id="first-name" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} />
+                </div>
+                <div className={styles['field']}>
+                  <label htmlFor="last-name">Last Name</label>
+                  <input id="last-name" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} />
+                </div>
               </div>
-              <div><label className="block text-xs font-medium text-gray-500 mb-1">Phone</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" /></div>
-            </div>
-            <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setCreating(false)} className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
-              <button onClick={handleCreate} disabled={saving} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50">{saving ? 'Creating...' : 'Create'}</button>
+              <div className={styles['field']}>
+                <label htmlFor="email">Email</label>
+                <input id="email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div className={styles['field']}>
+                <label htmlFor="password">Password</label>
+                <input id="password" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+              </div>
+              <div className={styles['field']}>
+                <label htmlFor="phone">Phone</label>
+                <input id="phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
+                <button className={styles['btn-secondary']} onClick={() => setShowModal(false)}>Cancel</button>
+                <button className={styles['btn-primary']} disabled={saving || !form.email} onClick={create}>
+                  {saving ? 'Creating...' : 'Create Customer'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
-    </div>
+    </>
   );
 }

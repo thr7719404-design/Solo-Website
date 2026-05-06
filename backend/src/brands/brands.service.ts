@@ -5,7 +5,7 @@ import { UpdateBrandDto } from './dto/update-brand.dto';
 
 @Injectable()
 export class BrandsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createBrandDto: CreateBrandDto) {
     // Check if brand name already exists
@@ -17,12 +17,15 @@ export class BrandsService {
       throw new ConflictException('Brand with this name already exists');
     }
 
-    const slug = createBrandDto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const slug = (createBrandDto.slug && createBrandDto.slug.trim())
+      || createBrandDto.name.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/(^-|-$)/g, '');
+    const logoUrl = createBrandDto.logoUrl || createBrandDto.logo || null;
     const brand = await this.prisma.brand.create({
       data: {
         name: createBrandDto.name,
         slug,
         description: createBrandDto.description,
+        logoUrl,
         website: createBrandDto.website,
         isActive: createBrandDto.isActive ?? true,
       },
@@ -31,7 +34,10 @@ export class BrandsService {
     return {
       id: brand.id.toString(),
       name: brand.name,
+      slug: brand.slug,
       description: brand.description,
+      logoUrl: brand.logoUrl,
+      logo: brand.logoUrl,
       website: brand.website,
       isActive: brand.isActive,
       createdAt: brand.createdAt,
@@ -53,7 +59,10 @@ export class BrandsService {
     return brands.map(brand => ({
       id: brand.id.toString(),
       name: brand.name,
+      slug: brand.slug,
       description: brand.description,
+      logoUrl: brand.logoUrl,
+      logo: brand.logoUrl,
       website: brand.website,
       isActive: brand.isActive,
       productCount: brand._count?.products || 0,
@@ -63,7 +72,7 @@ export class BrandsService {
   }
 
   async findOne(id: string) {
-    const numId = parseInt(id);
+    const numId = Number.parseInt(id);
     if (isNaN(numId)) {
       throw new NotFoundException('Brand not found');
     }
@@ -84,7 +93,10 @@ export class BrandsService {
     return {
       id: brand.id.toString(),
       name: brand.name,
+      slug: brand.slug,
       description: brand.description,
+      logoUrl: brand.logoUrl,
+      logo: brand.logoUrl,
       website: brand.website,
       isActive: brand.isActive,
       productCount: brand._count?.products || 0,
@@ -94,7 +106,7 @@ export class BrandsService {
   }
 
   async update(id: string, updateBrandDto: UpdateBrandDto) {
-    const numId = parseInt(id);
+    const numId = Number.parseInt(id);
     if (isNaN(numId)) {
       throw new NotFoundException('Brand not found');
     }
@@ -118,11 +130,17 @@ export class BrandsService {
       }
     }
 
+    const incomingLogo = updateBrandDto.logoUrl !== undefined
+      ? updateBrandDto.logoUrl
+      : updateBrandDto.logo;
+
     const updated = await this.prisma.brand.update({
       where: { id: numId },
       data: {
         ...(updateBrandDto.name && { name: updateBrandDto.name }),
+        ...(updateBrandDto.slug && { slug: updateBrandDto.slug }),
         ...(updateBrandDto.description !== undefined && { description: updateBrandDto.description }),
+        ...(incomingLogo !== undefined && { logoUrl: incomingLogo || null }),
         ...(updateBrandDto.website !== undefined && { website: updateBrandDto.website }),
         ...(updateBrandDto.isActive !== undefined && { isActive: updateBrandDto.isActive }),
       },
@@ -136,7 +154,10 @@ export class BrandsService {
     return {
       id: updated.id.toString(),
       name: updated.name,
+      slug: updated.slug,
       description: updated.description,
+      logoUrl: updated.logoUrl,
+      logo: updated.logoUrl,
       website: updated.website,
       isActive: updated.isActive,
       productCount: updated._count?.products || 0,
@@ -146,7 +167,7 @@ export class BrandsService {
   }
 
   async remove(id: string) {
-    const numId = parseInt(id);
+    const numId = Number.parseInt(id);
     if (isNaN(numId)) {
       throw new NotFoundException('Brand not found');
     }

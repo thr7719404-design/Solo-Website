@@ -8,7 +8,7 @@ export const mediaApi = {
     if (folder) formData.append('folder', folder);
 
     const { data } = await api.post('/media/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
     return data;
   },

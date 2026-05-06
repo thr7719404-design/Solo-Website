@@ -40,6 +40,8 @@ export default function ProductCard({ product, onAddToCart }: Readonly<Props>) {
       className="group flex flex-col bg-white rounded overflow-hidden transition-shadow hover:shadow-lg"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
     >
       {/* Image area */}
       <Link to={`/products/${product.id}`} className="relative block aspect-square overflow-hidden bg-gray-100">

@@ -6,7 +6,61 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 function slugify(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return text.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replaceAll(/(?:^-|-$)/g, '');
+}
+
+async function seedSubcategories(subcategories: any[]): Promise<number> {
+  let count = 0;
+  for (const subcat of subcategories) {
+    try {
+      await prisma.subcategory.create({ data: subcat });
+      count++;
+    } catch (_e) {
+      // Already exists
+    }
+  }
+  return count;
+}
+
+async function seedProducts(products: any[]): Promise<number> {
+  let count = 0;
+  for (const product of products) {
+    try {
+      await prisma.product.upsert({
+        where: { sku: product.sku },
+        update: {},
+        create: product,
+      });
+      count++;
+    } catch (e) {
+      console.error(`Error creating product ${product.sku}:`, e);
+    }
+  }
+  return count;
+}
+
+async function seedProductPricing(
+  pricingData: Array<{ sku: string; price_excl_vat_aed: number; price_incl_vat_aed: number }>,
+  allProducts: Array<{ id: number; sku: string }>,
+): Promise<void> {
+  for (const pricing of pricingData) {
+    const prod = allProducts.find(p => p.sku === pricing.sku);
+    if (!prod) continue;
+    try {
+      await prisma.productPricing.upsert({
+        where: { productId: prod.id },
+        update: {},
+        create: {
+          productId: prod.id,
+          price_excl_vat_aed: pricing.price_excl_vat_aed,
+          price_incl_vat_aed: pricing.price_incl_vat_aed,
+          vatRate: 0.05,
+        },
+      });
+    } catch (_e) {
+      // Already exists
+    }
+  }
 }
 
 async function main() {
@@ -130,17 +184,7 @@ async function main() {
     { categoryId: outdoorCat!.id, name: 'Garden Tools', slug: 'garden-tools', sort_order: 2 },
   ];
 
-  let subcatCount = 0;
-  for (const subcat of subcategories) {
-    try {
-      await prisma.subcategory.create({
-        data: subcat,
-      });
-      subcatCount++;
-    } catch (e) {
-      // Already exists
-    }
-  }
+  const subcatCount = await seedSubcategories(subcategories);
   console.log(`✅ ${subcatCount} subcategories created`);
 
   // ============================================================================
@@ -302,19 +346,7 @@ async function main() {
     },
   ];
 
-  let productCount = 0;
-  for (const product of products) {
-    try {
-      await prisma.product.upsert({
-        where: { sku: product.sku },
-        update: {},
-        create: product,
-      });
-      productCount++;
-    } catch (e) {
-      console.error(`Error creating product ${product.sku}:`, e);
-    }
-  }
+  const productCount = await seedProducts(products);
   console.log(`✅ ${productCount} products created`);
 
   // Add pricing for products
@@ -334,25 +366,7 @@ async function main() {
     { sku: 'SOLO-BAG-001', price_excl_vat_aed: 54.99, price_incl_vat_aed: 57.74 },
   ];
 
-  for (const pricing of pricingData) {
-    const prod = allProducts.find(p => p.sku === pricing.sku);
-    if (prod) {
-      try {
-        await prisma.productPricing.upsert({
-          where: { productId: prod.id },
-          update: {},
-          create: {
-            productId: prod.id,
-            price_excl_vat_aed: pricing.price_excl_vat_aed,
-            price_incl_vat_aed: pricing.price_incl_vat_aed,
-            vatRate: 0.05,
-          },
-        });
-      } catch (e) {
-        // Already exists
-      }
-    }
-  }
+  await seedProductPricing(pricingData, allProducts);
   console.log(`✅ Product pricing created`);
 
   console.log('\n🎉 Inventory database seeding completed!');

@@ -3,27 +3,38 @@ import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('🌱 Seeding database...\n');
+// ===========================================================================
+// SAFETY GUARD: Refuse to run against a production database unless explicitly
+// authorised. This prevents `npm run seed` / `prisma db seed` from silently
+// re-writing live admin passwords or trampling existing data.
+//
+// To bypass (e.g. brand-new prod DB), set ALLOW_PROD_SEED=1 in the env.
+// ===========================================================================
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_SEED !== '1') {
+  // eslint-disable-next-line no-console
+  console.error(
+    '\n[seed] Refusing to run: NODE_ENV=production and ALLOW_PROD_SEED is not set to "1".\n' +
+    '       Set ALLOW_PROD_SEED=1 explicitly if you really intend to seed the production DB.\n'
+  );
+  process.exit(1);
+}
 
-  // ============================================================================
-  // 1. Create Admin Users
-  // ============================================================================
-  console.log('Creating admin users...');
-  
-  // Main admin user (Aiman)
-  const aimanPassword = await argon2.hash('Admin123', {
+async function hashPassword(plain: string): Promise<string> {
+  return argon2.hash(plain, {
     type: argon2.argon2id,
     memoryCost: 65536,
     timeCost: 3,
     parallelism: 4,
   });
+}
 
+async function seedAdminUsers() {
+  console.log('Creating admin users...');
+
+  const aimanPassword = await hashPassword('Admin123');
   const aiman = await prisma.user.upsert({
     where: { email: 'aiman@solo-ecommerce.com' },
-    update: {
-      passwordHash: aimanPassword, // Update password if user exists
-    },
+    update: { passwordHash: aimanPassword },
     create: {
       email: 'aiman@solo-ecommerce.com',
       passwordHash: aimanPassword,
@@ -34,17 +45,9 @@ async function main() {
       emailVerified: true,
     },
   });
-
   console.log('✅ Admin user Aiman created:', aiman.email);
 
-  // Legacy admin user
-  const adminPassword = await argon2.hash('AdminPassword123!', {
-    type: argon2.argon2id,
-    memoryCost: 65536,
-    timeCost: 3,
-    parallelism: 4,
-  });
-
+  const adminPassword = await hashPassword('AdminPassword123!');
   const admin = await prisma.user.upsert({
     where: { email: 'admin@solo-ecommerce.com' },
     update: {},
@@ -58,17 +61,9 @@ async function main() {
       emailVerified: true,
     },
   });
-
   console.log('✅ Admin user created:', admin.email);
 
-  // Create test customer
-  const customerPassword = await argon2.hash('Customer123!', {
-    type: argon2.argon2id,
-    memoryCost: 65536,
-    timeCost: 3,
-    parallelism: 4,
-  });
-
+  const customerPassword = await hashPassword('Customer123!');
   const customer = await prisma.user.upsert({
     where: { email: 'customer@example.com' },
     update: {},
@@ -83,14 +78,145 @@ async function main() {
       emailVerified: true,
     },
   });
-
   console.log('✅ Test customer created:', customer.email);
 
-  // Create cart for customer
   const existingCart = await prisma.cart.findFirst({ where: { userId: customer.id } });
   if (!existingCart) {
     await prisma.cart.create({ data: { userId: customer.id } });
   }
+}
+
+async function seedCategories(categories: Array<{ name: string; description: string }>) {
+  const created = [];
+  for (const [index, cat] of categories.entries()) {
+    const slug = cat.name.toLowerCase().replaceAll(/\s+/g, '-').replaceAll('&', 'and');
+    const category = await prisma.category.upsert({
+      where: { slug },
+      update: { name: cat.name, description: cat.description },
+      create: {
+        name: cat.name,
+        slug,
+        description: cat.description,
+        sort_order: index,
+        isActive: true,
+      },
+    });
+    created.push(category);
+  }
+  return created;
+}
+
+async function seedBrands(brands: Array<{ name: string; description: string }>) {
+  const created = [];
+  for (const [index, brand] of brands.entries()) {
+    const slug = brand.name.toLowerCase().replaceAll(/\s+/g, '-');
+    const item = await prisma.brand.upsert({
+      where: { slug },
+      update: { name: brand.name, description: brand.description },
+      create: {
+        name: brand.name,
+        slug,
+        description: brand.description,
+        sort_order: index,
+        isActive: true,
+      },
+    });
+    created.push(item);
+  }
+  return created;
+}
+
+async function seedProductsBatch(
+  products: any[],
+  categoryMap: Record<string, number>,
+  brandMap: Record<string, number>,
+): Promise<number> {
+  let productCount = 0;
+  for (const prod of products) {
+    const slug = prod.sku.toLowerCase() + '-' + prod.name.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
+    const productId = await upsertSeedProduct(prod, slug, categoryMap, brandMap);
+    await upsertSeedProductPricing(productId, prod.price);
+    productCount++;
+  }
+  return productCount;
+}
+
+async function upsertSeedProduct(
+  prod: any,
+  slug: string,
+  categoryMap: Record<string, number>,
+  brandMap: Record<string, number>,
+): Promise<number> {
+  const existing = await prisma.product.findUnique({ where: { sku: prod.sku } });
+  if (existing) {
+    await prisma.product.update({
+      where: { sku: prod.sku },
+      data: {
+        productName: prod.name,
+        shortDescription: prod.shortDesc,
+        fullDescription: prod.fullDesc,
+        description: prod.fullDesc,
+        highlights: prod.highlights,
+        specs: prod.specs,
+        deliveryNote: prod.deliveryNote,
+        returnsNote: prod.returnsNote,
+        metaTitle: prod.metaTitle,
+        metaDescription: prod.metaDesc,
+      },
+    });
+    return existing.id;
+  }
+  const newProduct = await prisma.product.create({
+    data: {
+      sku: prod.sku,
+      slug,
+      productName: prod.name,
+      shortDescription: prod.shortDesc,
+      fullDescription: prod.fullDesc,
+      description: prod.fullDesc,
+      highlights: prod.highlights,
+      specs: prod.specs,
+      deliveryNote: prod.deliveryNote,
+      returnsNote: prod.returnsNote,
+      metaTitle: prod.metaTitle,
+      metaDescription: prod.metaDesc,
+      categoryId: categoryMap[prod.category] ?? null,
+      brandId: brandMap[prod.brand] ?? null,
+      isActive: true,
+      isFeatured: prod.featured ?? false,
+      isBestSeller: prod.bestSeller ?? false,
+      isNew: prod.isNew ?? false,
+    },
+  });
+  return newProduct.id;
+}
+
+async function upsertSeedProductPricing(productId: number, priceIncl: number): Promise<void> {
+  const vatRate = 0.05;
+  const priceExcl = Math.round((priceIncl / (1 + vatRate)) * 100) / 100;
+  await prisma.productPricing.upsert({
+    where: { productId: productId },
+    update: {
+      price_incl_vat_aed: priceIncl,
+      price_excl_vat_aed: priceExcl,
+    },
+    create: {
+      productId: productId,
+      price_incl_vat_aed: priceIncl,
+      price_excl_vat_aed: priceExcl,
+      vatRate: vatRate,
+      isCurrent: true,
+    },
+  });
+}
+
+async function main() {
+  console.log('🌱 Seeding database...\n');
+
+  // ============================================================================
+  // 1. Create Admin Users
+  // ============================================================================
+  await seedAdminUsers();
 
   // ============================================================================
   // 2. Departments (REMOVED - model no longer exists)
@@ -114,25 +240,7 @@ async function main() {
   ];
 
   // Create in public schema (used by categories API)
-  const createdCategories = [];
-  for (const [index, cat] of categories.entries()) {
-    const slug = cat.name.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
-    const category = await prisma.category.upsert({
-      where: { slug },
-      update: { 
-        name: cat.name, 
-        description: cat.description,
-      },
-      create: {
-        name: cat.name,
-        slug,
-        description: cat.description,
-        sort_order: index,
-        isActive: true,
-      },
-    });
-    createdCategories.push(category);
-  }
+  const createdCategories = await seedCategories(categories);
 
   console.log(`✅ ${createdCategories.length} categories created`);
 
@@ -152,22 +260,7 @@ async function main() {
     { name: 'All-Clad', description: 'Premium stainless steel cookware' },
   ];
 
-  const createdBrands = [];
-  for (const [index, brand] of brands.entries()) {
-    const slug = brand.name.toLowerCase().replace(/\s+/g, '-');
-    const created = await prisma.brand.upsert({
-      where: { slug },
-      update: { name: brand.name, description: brand.description },
-      create: {
-        name: brand.name,
-        slug,
-        description: brand.description,
-        sort_order: index,
-        isActive: true,
-      },
-    });
-    createdBrands.push(created);
-  }
+  const createdBrands = await seedBrands(brands);
   console.log(`✅ ${createdBrands.length} brands created`);
 
   // ============================================================================
@@ -175,17 +268,9 @@ async function main() {
   // ============================================================================
   console.log('\nCreating products...');
 
-  // Get created brand IDs by name
-  const brandMap: Record<string, number> = {};
-  for (const b of createdBrands) {
-    brandMap[b.name] = b.id;
-  }
-
-  // Get created category IDs by name
-  const categoryMap: Record<string, number> = {};
-  for (const c of createdCategories) {
-    categoryMap[c.name] = c.id;
-  }
+  // Get created brand/category IDs by name
+  const brandMap: Record<string, number> = Object.fromEntries(createdBrands.map(b => [b.name, b.id]));
+  const categoryMap: Record<string, number> = Object.fromEntries(createdCategories.map(c => [c.name, c.id]));
 
   const products = [
     // Cookware
@@ -198,8 +283,8 @@ async function main() {
       brand: 'Le Creuset', 
       featured: true, 
       bestSeller: true, 
-      price: 1299.00, 
-      listPrice: 1499.00,
+      price: 1299, 
+      listPrice: 1499,
       highlights: ['Enameled cast iron', 'Lifetime durability', 'Compatible with all heat sources', 'Oven-safe to 500°F'],
       specs: [
         { key: 'Capacity', value: '5.5 Qt' },
@@ -221,8 +306,8 @@ async function main() {
       category: 'Cookware', 
       brand: 'Le Creuset', 
       featured: true, 
-      price: 799.00, 
-      listPrice: 899.00,
+      price: 799, 
+      listPrice: 899,
       highlights: ['Professional-grade', 'Even heat distribution', 'Naturally non-stick surface', 'Dishwasher safe'],
       specs: [
         { key: 'Size', value: '10.25 inches' },
@@ -244,7 +329,7 @@ async function main() {
       category: 'Cookware', 
       brand: 'All-Clad', 
       bestSeller: true, 
-      price: 549.00,
+      price: 549,
       highlights: ['5-ply construction', 'Stainless steel exterior', 'Riveted handles', 'Lifetime warranty'],
       specs: [
         { key: 'Size', value: '12 inches' },
@@ -267,8 +352,8 @@ async function main() {
       brand: 'Lodge', 
       featured: true, 
       bestSeller: true, 
-      price: 149.00, 
-      listPrice: 199.00,
+      price: 149, 
+      listPrice: 199,
       highlights: ['Pre-seasoned', 'Uses less oil', 'Improves with use', 'Budget-friendly'],
       specs: [
         { key: 'Size', value: '12 inches' },
@@ -292,7 +377,7 @@ async function main() {
       category: 'Bakeware', 
       brand: 'Pyrex', 
       bestSeller: true, 
-      price: 189.00,
+      price: 189,
       highlights: ['Tempered glass', 'Set of 4 sizes', 'Oven to table', 'Lifetime warranty'],
       specs: [
         { key: 'Material', value: 'Borosilicate glass' },
@@ -314,8 +399,8 @@ async function main() {
       category: 'Bakeware', 
       brand: 'Pyrex', 
       featured: true, 
-      price: 129.00, 
-      listPrice: 159.00,
+      price: 129, 
+      listPrice: 159,
       highlights: ['Includes lids', 'Nested design', '4 different sizes', 'Microwave safe'],
       specs: [
         { key: 'Set Size', value: '4 bowls with lids' },
@@ -340,7 +425,7 @@ async function main() {
       brand: 'OXO', 
       featured: true, 
       bestSeller: true, 
-      price: 249.00,
+      price: 249,
       highlights: ['15-piece set', 'Ergonomic handles', 'Heat-resistant to 400°F', 'Hanging storage'],
       specs: [
         { key: 'Pieces', value: '15' },
@@ -362,7 +447,7 @@ async function main() {
       category: 'Kitchen Tools', 
       brand: 'OXO', 
       bestSeller: true, 
-      price: 119.00,
+      price: 119,
       highlights: ['One-handed operation', 'Pump mechanism', 'Non-slip feet', 'Easy to clean'],
       specs: [
         { key: 'Capacity', value: '5 liters' },
@@ -384,7 +469,7 @@ async function main() {
       category: 'Kitchen Tools', 
       brand: 'Joseph Joseph', 
       featured: true, 
-      price: 179.00,
+      price: 179,
       highlights: ['Saves 50% space', 'Nested design', 'Heat-resistant silicone', 'Beautiful aesthetics'],
       specs: [
         { key: 'Set Size', value: '6 tools' },
@@ -408,7 +493,7 @@ async function main() {
       category: 'Drinkware', 
       brand: 'Le Creuset', 
       featured: true, 
-      price: 229.00,
+      price: 229,
       highlights: ['Set of 4', 'Stoneware', 'Microwave safe', 'Dishwasher safe'],
       specs: [
         { key: 'Set Size', value: '4 mugs' },
@@ -430,7 +515,7 @@ async function main() {
       category: 'Drinkware', 
       brand: 'Joseph Joseph', 
       isNew: true, 
-      price: 79.00,
+      price: 79,
       highlights: ['Leak-proof', 'Fruit infuser', 'Durable plastic', 'Easy to clean'],
       specs: [
         { key: 'Capacity', value: '600 ml' },
@@ -454,7 +539,7 @@ async function main() {
       category: 'Food Storage', 
       brand: 'Pyrex', 
       bestSeller: true, 
-      price: 199.00,
+      price: 199,
       highlights: ['18 containers', 'Snap-lock lids', 'Glass construction', 'Freezer safe'],
       specs: [
         { key: 'Set Size', value: '18 containers with lids' },
@@ -476,7 +561,7 @@ async function main() {
       category: 'Food Storage', 
       brand: 'Joseph Joseph', 
       isNew: true, 
-      price: 159.00,
+      price: 159,
       highlights: ['Space-saving', 'Leak-proof', 'Transparent lids', '4-piece set'],
       specs: [
         { key: 'Set Size', value: '4 containers' },
@@ -499,8 +584,8 @@ async function main() {
       brand: 'OXO', 
       featured: true, 
       bestSeller: true, 
-      price: 329.00, 
-      listPrice: 399.00,
+      price: 329, 
+      listPrice: 399,
       highlights: ['Pop-open lids', 'Airtight seals', 'Stackable', 'Assorted sizes'],
       specs: [
         { key: 'Set Size', value: 'Multiple sizes' },
@@ -525,8 +610,8 @@ async function main() {
       brand: 'KitchenAid', 
       featured: true, 
       bestSeller: true, 
-      price: 1899.00, 
-      listPrice: 2199.00,
+      price: 1899, 
+      listPrice: 2199,
       highlights: ['10 speeds', 'Tilt-head design', 'Powerful motor', 'Color options'],
       specs: [
         { key: 'Power', value: '300 watts' },
@@ -548,7 +633,7 @@ async function main() {
       category: 'Small Appliances', 
       brand: 'KitchenAid', 
       isNew: true, 
-      price: 349.00,
+      price: 349,
       highlights: ['9 speeds', 'Digital display', 'Lightweight', 'Easy control'],
       specs: [
         { key: 'Speeds', value: '9' },
@@ -570,8 +655,8 @@ async function main() {
       category: 'Small Appliances', 
       brand: 'Cuisinart', 
       featured: true, 
-      price: 699.00, 
-      listPrice: 799.00,
+      price: 699, 
+      listPrice: 799,
       highlights: ['14-cup capacity', 'Powerful motor', 'Multiple blades', 'Easy cleanup'],
       specs: [
         { key: 'Capacity', value: '14 cups' },
@@ -593,7 +678,7 @@ async function main() {
       category: 'Small Appliances', 
       brand: 'Cuisinart', 
       isNew: true, 
-      price: 249.00,
+      price: 249,
       highlights: ['Variable speed', 'Multiple attachments', 'Cordless', 'Ergonomic design'],
       specs: [
         { key: 'Power', value: '200 watts' },
@@ -617,7 +702,7 @@ async function main() {
       category: 'Outdoor & Travel', 
       brand: 'Lodge', 
       featured: true, 
-      price: 279.00,
+      price: 279,
       highlights: ['Pre-seasoned', 'Campfire ready', 'Lid doubles as skillet', 'Durable'],
       specs: [
         { key: 'Capacity', value: '4.5 quarts' },
@@ -639,7 +724,7 @@ async function main() {
       category: 'Outdoor & Travel', 
       brand: 'Joseph Joseph', 
       isNew: true, 
-      price: 189.00,
+      price: 189,
       highlights: ['Complete set', 'Compact design', 'Durable plastic', 'Travel-friendly'],
       specs: [
         { key: 'Includes', value: 'Plates, bowls, utensils, cups' },
@@ -655,77 +740,7 @@ async function main() {
     },
   ];
 
-  let productCount = 0;
-  for (const prod of products) {
-    const slug = prod.sku.toLowerCase() + '-' + prod.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '');
-    const existing = await prisma.product.findUnique({ where: { sku: prod.sku } });
-    
-    let productId: number;
-    
-    if (existing) {
-      await prisma.product.update({
-        where: { sku: prod.sku },
-        data: {
-          productName: prod.name,
-          shortDescription: prod.shortDesc,
-          fullDescription: prod.fullDesc,
-          description: prod.fullDesc,
-          highlights: prod.highlights,
-          specs: prod.specs,
-          deliveryNote: prod.deliveryNote,
-          returnsNote: prod.returnsNote,
-          metaTitle: prod.metaTitle,
-          metaDescription: prod.metaDesc,
-        },
-      });
-      productId = existing.id;
-    } else {
-      const newProduct = await prisma.product.create({
-        data: {
-          sku: prod.sku,
-          slug,
-          productName: prod.name,
-          shortDescription: prod.shortDesc,
-          fullDescription: prod.fullDesc,
-          description: prod.fullDesc,
-          highlights: prod.highlights,
-          specs: prod.specs,
-          deliveryNote: prod.deliveryNote,
-          returnsNote: prod.returnsNote,
-          metaTitle: prod.metaTitle,
-          metaDescription: prod.metaDesc,
-          categoryId: categoryMap[prod.category] ?? null,
-          brandId: brandMap[prod.brand] ?? null,
-          isActive: true,
-          isFeatured: prod.featured ?? false,
-          isBestSeller: prod.bestSeller ?? false,
-          isNew: prod.isNew ?? false,
-        },
-      });
-      productId = newProduct.id;
-    }
-    
-    // Create or update pricing for product
-    const priceIncl = prod.price;
-    const vatRate = 0.05;
-    const priceExcl = Math.round((priceIncl / (1 + vatRate)) * 100) / 100;
-    await prisma.productPricing.upsert({
-      where: { productId: productId },
-      update: {
-        price_incl_vat_aed: priceIncl,
-        price_excl_vat_aed: priceExcl,
-      },
-      create: {
-        productId: productId,
-        price_incl_vat_aed: priceIncl,
-        price_excl_vat_aed: priceExcl,
-        vatRate: vatRate,
-        isCurrent: true,
-      },
-    });
-    
-    productCount++;
-  }
+  const productCount = await seedProductsBatch(products, categoryMap, brandMap);
   console.log(`✅ ${productCount} products created with pricing and product page fields`);
 
   // ============================================================================
@@ -1032,7 +1047,6 @@ async function main() {
     { label: 'Brands', url: '/brands', sortOrder: 3 },
     { label: 'New Arrivals', url: '/new-arrivals', badge: 'NEW', badgeColor: '#dc3545', sortOrder: 4 },
     { label: 'Sale', url: '/sale', badge: 'HOT', badgeColor: '#fd7e14', sortOrder: 5 },
-    { label: 'Blog', url: '/blog', sortOrder: 6 },
   ];
 
   for (const item of mainNavItems) {
@@ -1085,7 +1099,7 @@ async function main() {
   }
 
   // Footer menu
-  const footerMenu = await prisma.navigationMenu.upsert({
+  const footerNavMenu = await prisma.navigationMenu.upsert({
     where: { key: 'footer-nav' },
     update: {},
     create: {
@@ -1094,6 +1108,76 @@ async function main() {
       isActive: true,
     },
   });
+
+  // Footer columns: top-level item = column heading, children = links.
+  const footerColumns: Array<{
+    label: string;
+    sortOrder: number;
+    links: Array<{ label: string; url: string }>;
+  }> = [
+    {
+      label: 'Shop',
+      sortOrder: 0,
+      links: [
+        { label: 'New Arrivals', url: '/new-arrivals' },
+        { label: 'Best Sellers', url: '/best-sellers' },
+        { label: 'Featured', url: '/featured' },
+        { label: 'Sale', url: '/sale' },
+      ],
+    },
+    {
+      label: 'Account',
+      sortOrder: 1,
+      links: [
+        { label: 'My Account', url: '/account' },
+        { label: 'Order History', url: '/account/orders' },
+        { label: 'Wishlist', url: '/favorites' },
+        { label: 'Cart', url: '/cart' },
+      ],
+    },
+    {
+      label: 'Help',
+      sortOrder: 2,
+      links: [
+        { label: 'Shipping', url: '/pages/shipping' },
+        { label: 'Returns', url: '/pages/returns' },
+        { label: 'Contact Us', url: '/pages/contact' },
+        { label: 'FAQ', url: '/pages/faq' },
+        { label: 'Bulk Orders', url: '/bulk-order' },
+      ],
+    },
+  ];
+
+  for (const col of footerColumns) {
+    const parentId = `footer-nav-${col.sortOrder}`;
+    await prisma.navigationMenuItem.upsert({
+      where: { id: parentId },
+      update: { label: col.label, sortOrder: col.sortOrder },
+      create: {
+        id: parentId,
+        menuId: footerNavMenu.id,
+        label: col.label,
+        sortOrder: col.sortOrder,
+        isActive: true,
+      },
+    });
+    for (const [li, link] of col.links.entries()) {
+      const childId = `${parentId}-${li}`;
+      await prisma.navigationMenuItem.upsert({
+        where: { id: childId },
+        update: { label: link.label, url: link.url, sortOrder: li },
+        create: {
+          id: childId,
+          menuId: footerNavMenu.id,
+          parentId,
+          label: link.label,
+          url: link.url,
+          sortOrder: li,
+          isActive: true,
+        },
+      });
+    }
+  }
 
   console.log('✅ Navigation menus created');
 
@@ -1128,97 +1212,7 @@ async function main() {
   console.log(`✅ ${collections.length} product collections created`);
 
   // ============================================================================
-  // 11. Create Blog Categories and Sample Posts
-  // ============================================================================
-  console.log('\nCreating blog content...');
-
-  const blogCategories = [
-    { name: 'Recipes', slug: 'recipes', description: 'Delicious recipes for your kitchen' },
-    { name: 'Tips & Tricks', slug: 'tips-tricks', description: 'Kitchen hacks and cooking tips' },
-    { name: 'Product Guides', slug: 'product-guides', description: 'How to choose and use our products' },
-    { name: 'Lifestyle', slug: 'lifestyle', description: 'Living well with quality kitchenware' },
-  ];
-
-  const createdBlogCategories: Record<string, any> = {};
-  for (const [index, cat] of blogCategories.entries()) {
-    const blogCat = await prisma.blogCategory.upsert({
-      where: { slug: cat.slug },
-      update: {},
-      create: {
-        name: cat.name,
-        slug: cat.slug,
-        description: cat.description,
-        sortOrder: index,
-        isActive: true,
-      },
-    });
-    createdBlogCategories[cat.slug] = blogCat;
-  }
-
-  // Create sample blog posts
-  const blogPosts = [
-    {
-      title: '10 Essential Kitchen Tools Every Home Cook Needs',
-      slug: 'essential-kitchen-tools',
-      categorySlug: 'product-guides',
-      excerpt: 'Discover the must-have tools that will transform your cooking experience.',
-      content: '<p>Whether you\'re a beginner or an experienced home cook, having the right tools makes all the difference...</p>',
-      featuredImage: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800',
-      author: 'Solo Team',
-      readTimeMinutes: 5,
-      isFeatured: true,
-    },
-    {
-      title: 'How to Care for Your Cast Iron Cookware',
-      slug: 'cast-iron-care-guide',
-      categorySlug: 'tips-tricks',
-      excerpt: 'Learn the secrets to keeping your cast iron in perfect condition for generations.',
-      content: '<p>Cast iron cookware is an investment that can last a lifetime with proper care...</p>',
-      featuredImage: 'https://images.unsplash.com/photo-1585515320310-259814833e62?w=800',
-      author: 'Solo Team',
-      readTimeMinutes: 7,
-      isFeatured: true,
-    },
-    {
-      title: 'Perfect One-Pot Sunday Dinner',
-      slug: 'one-pot-sunday-dinner',
-      categorySlug: 'recipes',
-      excerpt: 'A delicious and easy recipe for a hearty family meal using your Dutch oven.',
-      content: '<p>Sunday dinners should be special, but they don\'t have to be complicated...</p>',
-      featuredImage: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800',
-      author: 'Solo Team',
-      readTimeMinutes: 10,
-      isFeatured: false,
-    },
-  ];
-
-  for (const post of blogPosts) {
-    const categoryId = createdBlogCategories[post.categorySlug]?.id;
-    if (categoryId) {
-      await prisma.blogPost.upsert({
-        where: { slug: post.slug },
-        update: {},
-        create: {
-          categoryId,
-          title: post.title,
-          slug: post.slug,
-          excerpt: post.excerpt,
-          content: post.content,
-          featuredImage: post.featuredImage,
-          author: post.author,
-          readTimeMinutes: post.readTimeMinutes,
-          isFeatured: post.isFeatured,
-          isActive: true,
-          publishedAt: new Date(),
-        },
-      });
-    }
-  }
-
-  console.log(`✅ ${blogCategories.length} blog categories and ${blogPosts.length} posts created`);
-
-  // ============================================================================
-  // 12. Create Site Settings
+  // 11. Create Site Settings
   // ============================================================================
   console.log('\nCreating site settings...');
 
@@ -1244,6 +1238,10 @@ async function main() {
     // General
     { key: 'site.name', value: 'Solo E-commerce', type: 'string', group: 'general' },
     { key: 'site.tagline', value: 'Premium Kitchen & Home Goods', type: 'string', group: 'general' },
+
+    // Shipping (mandatory — fee applies to every order)
+    { key: 'shipping_fee', value: '10', type: 'number', group: 'shipping' },
+    { key: 'shipping_label', value: 'Shipping', type: 'string', group: 'shipping' },
   ];
 
   for (const setting of siteSettings) {
@@ -1272,7 +1270,6 @@ async function main() {
   console.log(`   - ${productCount} products`);
   console.log(`   - ${homePageSections.length} home page sections`);
   console.log(`   - ${collections.length} product collections`);
-  console.log(`   - ${blogPosts.length} blog posts`);
   console.log('\n✨ You can now start the backend with: npm run start:dev\n');
 }
 

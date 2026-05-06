@@ -1,10 +1,19 @@
+// Tracing must be the first import so OpenTelemetry can patch modules before
+// they are required by NestJS / Express / Prisma.
+import './tracing';
+
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType, VERSION_NEUTRAL } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from 'nestjs-pino';
 import { join } from 'path';
 import helmet from 'helmet';
+import * as compression from 'compression';
 import { AppModule } from './app.module';
+
+// Build marker: subcategories-feature-v1 (forces image rebuild)
 
 // ============================================================================
 // PROCESS EVENT HANDLERS FOR DEBUGGING
@@ -34,7 +43,10 @@ async function bootstrap() {
   try {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true, // Enable raw body for Stripe webhook signature verification
+    bufferLogs: true, // Buffer bootstrap logs until pino logger is attached
   });
+  // Use pino as the application logger (structured JSON in prod, pretty in dev).
+  app.useLogger(app.get(Logger));
   const configService = app.get(ConfigService);
 
   // ============================================================================
@@ -73,20 +85,31 @@ async function bootstrap() {
     }),
   );
 
+  // 1b. Response Compression (gzip / brotli) — large reduction in API payload size.
+  app.use(compression());
+
+  // 1c. Strip cache-busting query params (_t) before DTO validation.
+  // Frontend (especially admin) appends ?_t=<timestamp> to bypass browser+server cache.
+  // We delete it here so whitelist validation doesn't reject it, but the unique URL still
+  // produces a unique CacheInterceptor key (cache miss = fresh data).
+  app.use((req: any, _res: any, next: any) => {
+    if (req.query && Object.prototype.hasOwnProperty.call(req.query, '_t')) {
+      delete req.query._t;
+    }
+    next();
+  });
+
   // 2. CORS Configuration
   const frontendUrlRaw = configService.get<string>('FRONTEND_URL') || 'http://localhost:5000';
   const frontendUrls = frontendUrlRaw.split(',').map(u => u.trim()).filter(Boolean);
   app.enableCors({
     origin: [
       ...frontendUrls, 
-      /^http:\/\/localhost:\d+$/, 
-      /^http:\/\/127\.0\.0\.1:\d+$/,
-      'http://127.0.0.1:5000',
-      'http://localhost:5000'
+      ...(isDevelopment ? [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] : []),
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma'],
   });
 
   // 3. Global Validation Pipe (Input Validation)
@@ -104,10 +127,33 @@ async function bootstrap() {
   // 4. Global Prefix
   app.setGlobalPrefix('api');
 
-  // 5. Graceful Shutdown
-  // app.enableShutdownHooks(); // Temporarily disabled for debugging
+  // 4b. URI Versioning (opt-in via @Version on controllers; existing routes stay unversioned)
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: VERSION_NEUTRAL,
+    prefix: 'v',
+  });
 
-  const port = 3000;
+  // 4c. OpenAPI / Swagger documentation (production-safe — no secrets exposed)
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Solo Ecommerce API')
+    .setDescription('REST API for Solo Ecommerce backend')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addTag('health')
+    .addTag('auth')
+    .addTag('products')
+    .addTag('orders')
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: { persistAuthorization: true },
+  });
+
+  // 5. Graceful Shutdown
+  app.enableShutdownHooks();
+
+  const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3000;
   console.log('ABOUT_TO_LISTEN port=' + port);
   await app.listen(port, '0.0.0.0');
   console.log('LISTENING port=' + port + ' address=0.0.0.0');

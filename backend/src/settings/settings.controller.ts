@@ -3,7 +3,7 @@ import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { SaveVatConfigDto, SaveLoyaltyConfigDto } from './dto/settings.dto';
+import { SaveVatConfigDto, SaveLoyaltyConfigDto, SaveShippingConfigDto, SavePaymentsConfigDto } from './dto/settings.dto';
 
 @Controller('settings')
 export class SettingsController {
@@ -23,6 +23,12 @@ export class SettingsController {
   @Get('loyalty')
   async getPublicLoyaltyConfig() {
     return this.settingsService.getLoyaltyConfig();
+  }
+
+  /** Get shipping config (public — needed for cart/checkout display) */
+  @Get('shipping')
+  async getPublicShippingConfig() {
+    return this.settingsService.getShippingConfig();
   }
 
   // ══════════════════════════════════════════════
@@ -75,5 +81,53 @@ export class SettingsController {
       dto.isEnabled ?? true,
     );
     return { message: 'Loyalty configuration saved successfully' };
+  }
+
+  // ══════════════════════════════════════════════
+  //  ADMIN — manage Shipping configuration
+  // ══════════════════════════════════════════════
+
+  /** Get Shipping configuration (admin) */
+  @Get('admin/shipping')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  async getAdminShippingConfig() {
+    return this.settingsService.getShippingConfig();
+  }
+
+  /** Save Shipping configuration (admin) — fee is mandatory and cannot be disabled */
+  @Post('admin/shipping')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @HttpCode(HttpStatus.OK)
+  async saveShippingConfig(@Body() dto: SaveShippingConfigDto) {
+    await this.settingsService.saveShippingConfig(
+      dto.fee,
+      dto.label ?? 'Shipping',
+      dto.freeShippingThreshold ?? 0,
+    );
+    return { message: 'Shipping configuration saved successfully' };
+  }
+
+  // ══════════════════════════════════════════════
+  //  ADMIN — manage Payments (Tabby + Tamara)
+  // ══════════════════════════════════════════════
+
+  /** Get Payments configuration (admin) — secret values are masked */
+  @Get('admin/payments')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  async getAdminPaymentsConfig() {
+    return this.settingsService.getPaymentsConfig();
+  }
+
+  /** Save Payments configuration (admin). Empty/omitted secret fields preserve existing keys. */
+  @Post('admin/payments')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @HttpCode(HttpStatus.OK)
+  async savePaymentsConfig(@Body() dto: SavePaymentsConfigDto) {
+    await this.settingsService.savePaymentsConfig(dto);
+    return { message: 'Payments configuration saved successfully' };
   }
 }

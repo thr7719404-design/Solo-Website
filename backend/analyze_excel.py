@@ -37,7 +37,7 @@ try:
     print("=" * 80)
     print(f"Total Rows: {len(df)}")
     print(f"Total Columns: {len(df.columns)}")
-    print(f"\nMissing Values:")
+    print("\nMissing Values:")
     print(df.isnull().sum())
     
     # Check for unique values in category-related columns

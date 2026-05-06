@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Archify Report &mdash; Solo Website</title>
+  <style>
+    @page { margin: 0.6in; size: A4; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #222; background: #fff; line-height: 1.5; font-size: 13px; }
+    .container { max-width: 800px; margin: 0 auto; padding: 32px 24px; }
+
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #222; }
+    .header-left h1 { font-size: 24px; font-weight: 700; color: #222; letter-spacing: -0.5px; }
+    .header-left .subtitle { font-size: 12px; color: #888; margin-top: 2px; }
+    .header-right { text-align: right; }
+    .header-right .project-name { font-size: 16px; font-weight: 600; color: #222; }
+    .header-right .date { font-size: 11px; color: #888; margin-top: 2px; }
+
+    .hero { text-align: center; padding: 28px; margin-bottom: 24px; background: linear-gradient(135deg, #fafafa, #f0f0f0); border-radius: 12px; border: 1px solid #eee; }
+    .hero-score { font-size: 72px; font-weight: 800; line-height: 1; letter-spacing: -2px; }
+    .hero-grade { font-size: 28px; font-weight: 600; opacity: 0.6; margin-left: 8px; }
+    .hero-label { font-size: 12px; color: #888; margin-top: 6px; text-transform: uppercase; letter-spacing: 1px; }
+    .tech-stack { margin-top: 10px; }
+    .tech-chip { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 500; margin: 2px; border: 1px solid #ddd; color: #555; }
+
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+
+    .summary-text { padding: 12px 16px; border-left: 3px solid #3498db; background: #f8fbfe; font-size: 13px; color: #444; margin-bottom: 16px; }
+
+    .stats-row { display: flex; gap: 12px; margin-bottom: 20px; }
+    .stat-card { flex: 1; text-align: center; padding: 12px; border-radius: 8px; border: 1px solid #eee; background: #fafafa; }
+    .stat-number { font-size: 22px; font-weight: 700; color: #222; }
+    .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; color: #888; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #888; background: #fafafa; border-bottom: 2px solid #eee; }
+    td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+
+    .quick-wins { padding: 12px 16px; border-left: 3px solid #27ae60; background: #f5fdf8; }
+    .quick-wins h3 { font-size: 13px; font-weight: 600; color: #27ae60; margin-bottom: 6px; }
+    .quick-wins ul { list-style: none; padding: 0; }
+    .quick-wins li::before { content: "\2713 "; color: #27ae60; font-weight: bold; }
+
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 10px; color: #aaa; text-align: center; }
+
+    .print-bar { position: fixed; top: 0; left: 0; right: 0; padding: 10px 24px; background: #222; color: #fff; display: flex; justify-content: space-between; align-items: center; z-index: 1000; font-size: 13px; }
+    .print-bar button { padding: 6px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .print-bar .btn-print { background: #3498db; color: #fff; }
+    .print-bar .btn-print:hover { background: #2980b9; }
+
+    @media print {
+      .print-bar { display: none !important; }
+      body { padding-top: 0 !important; }
+      .container { padding: 0; }
+      .hero { break-inside: avoid; }
+      .section { break-inside: avoid; }
+    }
+
+    @media screen {
+      body { padding-top: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar">
+    <span><strong>Archify</strong> &mdash; Architecture Report</span>
+    <div>
+      <button class="btn-print" onclick="window.print()">Save as PDF</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <h1>Archify</h1>
+        <div class="subtitle">Architecture Quality Report</div>
+      </div>
+      <div class="header-right">
+        <div class="project-name">Solo Website</div>
+        <div class="date">May 6, 2026 at 09:46 AM</div>
+        <div style="font-size:10px;color:#aaa;margin-top:4px"><strong>Repo:</strong> thr7719404-design/Solo-Website &nbsp;&middot;&nbsp; <strong>Branch:</strong> main &nbsp;&middot;&nbsp; <strong>Commit:</strong> 0a54ca2</div>
+      </div>
+    </div>
+
+    
+
+    <!-- Hero Score -->
+    <div class="hero">
+      <span class="hero-score" style="color:#e74c3c">56</span>
+      <span class="hero-grade">C-</span>
+      <div class="hero-label">Architecture Quality Score</div>
+      <div class="tech-stack"><span class="tech-chip">TypeScript</span><span class="tech-chip">NestJS</span><span class="tech-chip">Passport</span><span class="tech-chip">Prisma</span></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-number">363</div><div class="stat-label">Files</div></div>
+      <div class="stat-card"><div class="stat-number">60,135</div><div class="stat-label">Lines of Code</div></div>
+      <div class="stat-card"><div class="stat-number">570</div><div class="stat-label">Dependencies</div></div>
+      <div class="stat-card"><div class="stat-number">0</div><div class="stat-label">Circular Deps</div></div>
+    </div>
+
+    <!-- Radar -->
+    <div style="text-align:center;margin-bottom:24px">
+      <svg viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg" style="max-width:360px">
+    <polygon points="180,154 195.28241655960431,158.96555814625137 204.727469423674,171.96555814625137 204.727469423674,188.03444185374863 195.28241655960431,201.03444185374863 180,206 164.7175834403957,201.03444185374863 155.272530576326,188.03444185374863 155.272530576326,171.96555814625137 164.71758344039569,158.96555814625137" fill="none" stroke="#ddd" stroke-width="0.5"/><polygon points="180,128 210.5648331192086,137.93111629250274 229.454938847348,163.93111629250274 229.454938847348,196.06888370749726 210.5648331192086,222.06888370749726 180,232 149.4351668807914,222.06888370749726 130.545061152652,196.06888370749726 130.545061152652,163.93111629250274 149.4351668807914,137.93111629250274" fill="none" stroke="#ddd" stroke-width="0.5"/><polygon points="180,102 225.84724967881291,116.8966744387541 254.18240827102198,155.8966744387541 254.18240827102198,204.1033255612459 225.84724967881291,243.1033255612459 180,258 134.1527503211871,243.1033255612459 105.81759172897803,204.1033255612459 105.81759172897802,155.8966744387541 134.15275032118709,116.8966744387541" fill="none" stroke="#ddd" stroke-width="0.5"/><polygon points="180,76 241.1296662384172,95.86223258500547 278.909877694696,147.86223258500547 278.909877694696,212.13776741499453 241.1296662384172,264.1377674149945 180,284 118.8703337615828,264.1377674149945 81.09012230530404,212.13776741499453 81.09012230530402,147.86223258500547 118.87033376158278,95.86223258500547" fill="none" stroke="#ddd" stroke-width="0.5"/><polygon points="180,50 256.4120827980215,74.82779073125683 303.63734711837,139.82779073125684 303.63734711837,220.17220926874316 256.4120827980215,285.1722092687432 180,310 103.58791720197851,285.1722092687432 56.36265288163004,220.1722092687432 56.36265288163003,139.82779073125687 103.58791720197848,74.82779073125684" fill="none" stroke="#ddd" stroke-width="0.5"/><text x="184" y="157" font-size="8" fill="#bbb">20</text><text x="184" y="131" font-size="8" fill="#bbb">40</text><text x="184" y="105" font-size="8" fill="#bbb">60</text><text x="184" y="79" font-size="8" fill="#bbb">80</text><text x="184" y="53" font-size="8" fill="#bbb">100</text><line x1="180" y1="180" x2="180" y2="50" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="256.4120827980215" y2="74.82779073125683" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="303.63734711837" y2="139.82779073125684" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="303.63734711837" y2="220.17220926874316" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="256.4120827980215" y2="285.1722092687432" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="180" y2="310" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="103.58791720197851" y2="285.1722092687432" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="56.36265288163004" y2="220.1722092687432" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="56.36265288163003" y2="139.82779073125687" stroke="#eee" stroke-width="0.5"/><line x1="180" y1="180" x2="103.58791720197848" y2="74.82779073125684" stroke="#eee" stroke-width="0.5"/>
+    <polygon points="180,117.6 221.26252471093161,123.2070069948787 248.00054091510347,157.90528490219126 251.7096613286546,203.29988137587102 222.79076636689206,238.89643719049616 180,268.4 135.68099197714753,240.99988137587104 137.96330197975422,193.65855115137268 90.98111007477362,151.07600932650493 133.38862949320688,115.84495234606668" fill="#e74c3c" fill-opacity="0.15" stroke="#e74c3c" stroke-width="2"/>
+    <text x="180" y="20" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Perf &amp; Scale</text><text x="274.04564036679574" y="50.55728090000841" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Reliability</text><text x="332.1690426072246" y="130.5572809000084" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Security</text><text x="332.1690426072246" y="229.4427190999916" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Maintain.</text><text x="274.04564036679574" y="309.44271909999156" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">UX</text><text x="180" y="340" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Integration</text><text x="85.95435963320432" y="309.44271909999156" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Efficiency</text><text x="27.830957392775446" y="229.4427190999916" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Biz Contin.</text><text x="27.830957392775417" y="130.55728090000844" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">Code Arch.</text><text x="85.95435963320428" y="50.557280900008436" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#555" font-weight="500">DevOps</text>
+  </svg>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="section">
+      <div class="section-title">Executive Summary</div>
+      <div class="summary-text">Classic NestJS modular monolith done by the book — clean feature modules, DI everywhere, Prisma centralized, and even a circuit-breaker for BNPL/Stripe calls. The concerning bits are the dozens of loose .js/.py utility scripts littering the backend root (check-db.js, reset-password.js, fix-cart-schema.js) which suggest ad-hoc ops, and the prisma.service has 48 fan-in meaning every module is hard-coupled to it. Test coverage is thin (one .spec.ts plus a handful of e2e specs) for a codebase this size.</div>
+    </div>
+
+    <!-- Category Scores -->
+    <div class="section">
+      <div class="section-title">Category Scores</div>
+      <table>
+        <thead><tr>
+          <th>Category</th><th style="text-align:center">Score</th><th style="text-align:center">Grade</th><th>Progress</th><th>Coverage</th>
+        </tr></thead>
+        <tbody><tr>
+      <td style="font-weight:500">Performance &amp; Scale</td>
+      <td style="text-align:center;color:#e74c3c;font-weight:700">48</td>
+      <td style="text-align:center">D</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#e74c3c;height:100%;width:48%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">9/9 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">Reliability &amp; Resilience</td>
+      <td style="text-align:center;color:#e74c3c;font-weight:700">54</td>
+      <td style="text-align:center">D+</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#e74c3c;height:100%;width:54%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">10/10 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">Security &amp; Compliance</td>
+      <td style="text-align:center;color:#e74c3c;font-weight:700">55</td>
+      <td style="text-align:center">C-</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#e74c3c;height:100%;width:55%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">10/10 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">Maintainability &amp; Operations</td>
+      <td style="text-align:center;color:#e74c3c;font-weight:700">58</td>
+      <td style="text-align:center">C-</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#e74c3c;height:100%;width:58%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">8/8 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">User Experience</td>
+      <td style="text-align:center;color:#e74c3c;font-weight:700">56</td>
+      <td style="text-align:center">C-</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#e74c3c;height:100%;width:56%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">5/5 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">Integration &amp; Portability</td>
+      <td style="text-align:center;color:#f39c12;font-weight:700">68</td>
+      <td style="text-align:center">C+</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#f39c12;height:100%;width:68%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">7/7 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">Efficiency</td>
+      <td style="text-align:center;color:#e74c3c;font-weight:700">58</td>
+      <td style="text-align:center">C-</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#e74c3c;height:100%;width:58%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">5/5 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">Business Continuity</td>
+      <td style="text-align:center;color:#e74c3c;font-weight:700">34</td>
+      <td style="text-align:center">D-</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#e74c3c;height:100%;width:34%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">3/3 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">Code Architecture</td>
+      <td style="text-align:center;color:#f39c12;font-weight:700">72</td>
+      <td style="text-align:center">B-</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#f39c12;height:100%;width:72%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">8/8 scored</td>
+    </tr>
+<tr>
+      <td style="font-weight:500">DevOps &amp; Evolution</td>
+      <td style="text-align:center;color:#f39c12;font-weight:700">61</td>
+      <td style="text-align:center">C</td>
+      <td>
+        <div style="background:#eee;border-radius:3px;height:8px;width:120px;overflow:hidden">
+          <div style="background:#f39c12;height:100%;width:61%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:#666">7/7 scored</td>
+    </tr></tbody>
+      </table>
+    </div>
+
+    <!-- Detailed Category Breakdown -->
+    <div class="section">
+      <div class="section-title">Detailed Attribute Analysis</div>
+      
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #e74c3c;padding-bottom:6px">
+            Performance &amp; Scale &mdash; 48/100 (D)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Scalability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">58</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No external cache/session store (Redis) visible; No database read replica or sharding strategy</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Performance</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No application-level cache (catalog, navigation, CMS endpoints are read-heavy and uncached); No evidence of Prisma query includes audit — N+1 risk in products/orders/admin reports</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Throughput</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">40</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No k6/Artillery/Locust load test config in repo; No batch endpoints for bulk admin operations (seed-images, product groups)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Latency</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No P50/P95/P99 SLO definitions or alerting; No HTTP Cache-Control/ETag on catalog read endpoints</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Elasticity</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">35</td>
+          <td style="text-align:center;padding:4px 8px">D-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No autoscaling policy (HPA, App Service rules) in repo; No scale-to-zero or scheduled scaling configuration</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Capacity</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">45</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No memory/CPU resource limits visible in compose or deployment configs; No bounded in-memory cache with eviction policy</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Concurrency</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">50</td>
+          <td style="text-align:center;padding:4px 8px">D+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No evidence of Prisma $transaction wrapping order creation + stock decrement; No optimistic/pessimistic locking strategy on inventory</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Cacheability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">38</td>
+          <td style="text-align:center;padding:4px 8px">D-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No Redis or in-memory cache layer for catalog/CMS reads; No Cache-Control/ETag on read endpoints (catalog.controller, cms.controller, navigation.controller)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Predictability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No explicit timeout budgets propagated through call chain; Synchronous PDF/invoice generation can spike latency unpredictably</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#e74c3c">&#9679; Order/stock flow lacks transactional concurrency control: Wrap the checkout pipeline in prisma.$transaction with row-level locking on stock, and add idempotency keys to POST /orders and webhook handlers.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No application-level caching for read-heavy endpoints: Add @nestjs/cache-manager backed by Redis with cache-aside + TTL, and emit Cache-Control/ETag headers; invalidate on admin mutations.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Synchronous side effects in checkout path: Introduce BullMQ (Redis-backed) for emails and invoice rendering; webhook handlers should enqueue and return 200 quickly.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #e74c3c;padding-bottom:6px">
+            Reliability &amp; Resilience &mdash; 54/100 (D+)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Reliability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">68</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No SLI/SLO definitions or error budget tracking; No error classification (transient vs permanent) visible in services</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Availability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No separate liveness vs readiness endpoints visible; No documented uptime SLA or multi-AZ deployment</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Resilience</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">72</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No explicit fallback/degraded responses when circuits open (e.g., cached BNPL availability); Bulkhead pattern not formalized — all services share the same Node event loop</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Fault Tolerance</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">58</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No DLQ for failed Stripe webhook processing in stripe-webhook.service.ts; No visible exponential backoff with jitter on retries</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Recoverability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">50</td>
+          <td style="text-align:center;padding:4px 8px">D+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No rollback automation in the CI workflows visible; No incident runbooks in docs/</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Durability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No backup/restore scripts or verification jobs; No documented DB replication strategy</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Consistency</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No saga pattern visible for distributed work (BNPL callback + order finalization); Stock decrement vs order create transactional boundary unverified</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Graceful Degradation</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">45</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No feature flag system (LaunchDarkly, Unleash, or env-driven flags); No partial-response markers in API DTOs</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Idempotency</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">40</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No processed-event ID table for Stripe webhook deduplication; No Idempotency-Key header support on POST /orders or /cart mutations</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Redundancy</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">35</td>
+          <td style="text-align:center;padding:4px 8px">D-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Backend deployment topology shows no replicas; No load balancer or failover configuration in repo</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#e74c3c">&#9679; Stripe webhook lacks idempotency / deduplication: Add a webhook_events table with unique constraint on Stripe event.id; check-then-insert before processing. Wrap downstream side effects in a transaction tied to that insert.</div><div style="font-size:11px;margin:2px 0;color:#e74c3c">&#9679; Order/stock transaction boundary unclear: Wrap stock check + decrement + order insert in a single prisma.$transaction with Serializable isolation, and move email/invoice into a post-commit outbox worker.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No dead-letter or retry queue for async work: Introduce BullMQ (Redis) for queued emails, invoice generation, and webhook side effects with configurable retry + DLQ.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #e74c3c;padding-bottom:6px">
+            Security &amp; Compliance &mdash; 55/100 (C-)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Security</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">68</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No @nestjs/throttler or rate limiting visible on auth endpoints; No Dependabot/Snyk/npm audit step in backend-check.yml visible</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Confidentiality</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No reference to Azure Key Vault, AWS Secrets Manager, or Doppler; No evidence of pino redact: [...] config to mask tokens/PII in logs</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Integrity</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Dockerfile output not signed (no cosign / Notary references); No append-only or hash-chained audit log implementation</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Authenticity</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">62</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No MFA / TOTP implementation found for admin accounts; JWT algorithm not explicitly pinned in visible code (risk of 'none' if misconfigured)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Compliance</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">45</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No documented data retention or deletion policy; No compliance checks (e.g. Checkov, OPA) in CI workflows</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Auditability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">48</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No AuditLog table or module in the schema/folder structure; Loyalty adjustments (adjust-loyalty.dto.ts) and admin actions not visibly recorded with actor + before/after</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Governance</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">50</td>
+          <td style="text-align:center;padding:4px 8px">D+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No CODEOWNERS, SECURITY.md, or branch protection config visible in repo; No policy-as-code (OPA/Sentinel) governing deployments</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Non-repudiation</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">42</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No digital signatures on invoices or orders; No tamper-evident ledger for returns/refunds/loyalty adjustments</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Authorization</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">72</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Unclear whether services enforce userId ownership on resource fetch (potential IDOR risk); Only two roles apparent — no fine-grained scope or permission model</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Privacy</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">48</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No consent tracking model visible (cookie/marketing/analytics); No DSAR/erasure endpoint in users or customers controllers</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No rate limiting on authentication endpoints: Install @nestjs/throttler, register ThrottlerModule globally, and apply stricter @Throttle limits on /auth/login and /auth/register.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No dependency vulnerability scanning in CI: Add a step running `npm audit --audit-level=high` and enable GitHub Dependabot alerts + auto-PRs.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Operational scripts with DB credentials proliferating in repo: Move into a dedicated /ops folder, gate behind explicit env confirmation, and convert schema-altering scripts into Prisma migrations.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #e74c3c;padding-bottom:6px">
+            Maintainability &amp; Operations &mdash; 58/100 (C-)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Maintainability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">74</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">30+ ad-hoc JS/Python scripts at backend/ root with overlapping purposes; Mixed tooling (Python + JS + TS) for seed/migration tasks increases cognitive load</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Operability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">SIGTERM handler only logs — no graceful shutdown/drain logic; No runbooks, RUNBOOK.md, or ops/ directory</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Debuggability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">68</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">console.log/console.error scattered in main.ts bootstrap; No clear correlation ID middleware visible across modules</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Supportability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">50</td>
+          <td style="text-align:center;padding:4px 8px">D+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No documented error code taxonomy; No KB / troubleshooting guide in /docs</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Testability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">58</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Only one unit spec found across the entire backend; No coverage thresholds enforced in CI</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Deployability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">62</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No visible blue/green, canary, or rolling deploy config; No feature flag system referenced</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Observability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">65</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No custom application/business metrics found (orders/min, BNPL success rate); No log aggregation backend referenced (Loki/ELK/Datadog)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Monitoring</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">35</td>
+          <td style="text-align:center;padding:4px 8px">D-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No alert rules, SLOs, or burn-rate definitions in repo; No PagerDuty/OpsGenie integration evident</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Graceful shutdown not implemented: Call app.enableShutdownHooks(), implement OnModuleDestroy in PrismaService for $disconnect, and wait for in-flight HTTP requests to complete before exit.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Sparse unit test coverage: Add unit specs for service-layer business rules and enforce a coverage threshold in backend-check.yml.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Sprawl of ad-hoc operational scripts: Consolidate into a single CLI under backend/scripts/ with documented commands, retire duplicates, and standardize on TypeScript.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #e74c3c;padding-bottom:6px">
+            User Experience &mdash; 56/100 (C-)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Usability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">68</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No visible skeleton/loading state components; No centralized toast/notification component found</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Accessibility</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No axe-core, jest-axe, or accessibility test files in the test inventory; No evidence of alt text strategy for product images (ImageUploadField doesn't show alt handling)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Responsiveness</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">72</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Cannot verify touch target sizes (≥44px) without component internals; No visible viewport-specific testing setup</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Learnability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No onboarding flow component found for admin or first-time customers; No tooltip/help-text component visible</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Internationalization</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">25</td>
+          <td style="text-align:center;padding:4px 8px">F</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No i18n library detected (no i18next, react-intl, formatjs); No locales/ or translations/ directory in frontend-react/src</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#e74c3c">&#9679; No internationalization despite MENA market focus: Integrate react-i18next, externalize all strings into en/ar locale files, and add RTL support using CSS logical properties and a dir attribute toggle.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No automated accessibility testing in CI: Add @axe-core/react in development, jest-axe for unit tests, and a Lighthouse CI step to the SWA workflow to enforce a minimum accessibility score.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No visible loading-state or empty-state component library: Build a small UX primitives library (Skeleton, Spinner, EmptyState, Toast) and use it consistently across pages.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #f39c12;padding-bottom:6px">
+            Integration &amp; Portability &mdash; 68/100 (C+)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Interoperability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">75</td>
+          <td style="text-align:center;padding:4px 8px">B</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No evidence of contract testing or OpenAPI spec being published/consumed by frontend; No AsyncAPI definitions for the webhook contracts (Stripe, Tabby, Tamara)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Portability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">72</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Frontend deployment tied to Azure Static Web Apps workflow specifically; No abstraction over Stripe/Tabby/Tamara SDKs — direct service implementations</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Extensibility</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">65</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No event bus or pub/sub for decoupled module communication — services directly import each other; No plugin/extension API; new BNPL providers require modifying bnpl.module and controller</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Reconfigurability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">68</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No feature flag library (LaunchDarkly, Unleash, or similar) detected; No A/B testing or gradual rollout mechanism</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Modularity</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">74</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">PrismaService has fan-in of 48 — every service depends directly on it; app.module.ts has fan-out of 32, acting as a god module assembler (somewhat unavoidable in NestJS)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">API Compatibility</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Controllers don't appear to declare explicit @Version() decorators; No CHANGELOG.md or API migration guide observed in repo structure</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Backward Compatibility</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">62</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Prisma migrations have no down/rollback scripts by default; Many ad-hoc .js scripts at backend/ root suggest one-off fixes rather than a disciplined migration log</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; PrismaService is a pervasive direct dependency: Introduce per-domain repository classes that wrap PrismaService; have services depend on repository interfaces rather than the ORM directly.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; API versioning enabled but not applied: Tag the current API surface as v1 explicitly and prefix routes accordingly; establish a deprecation policy with Sunset/Deprecation HTTP headers.</div><div style="font-size:11px;margin:2px 0;color:#3498db">&#9679; Loose ad-hoc scripts complicate reproducible migrations: Move data fixes into versioned Prisma migrations or a documented scripts/migrations/ folder with execution ordering and idempotency guarantees.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #e74c3c;padding-bottom:6px">
+            Efficiency &mdash; 58/100 (C-)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Cost Efficiency</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No auto-scaling, scale-to-zero, or serverless config visible; No cost dashboards, budget alerts, or FinOps tagging</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Resource Efficiency</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">62</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No Redis/in-memory cache for hot catalog, navigation, or CMS reads; Risk of N+1 queries in catalog/cart services — no DataLoader or explicit include strategy visible</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Energy Efficiency</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Invoice generation and email sending appear synchronous in request paths (orders.service.ts); No queue/worker (BullMQ, Azure Queue) for batchable work</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Conciseness</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">48</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Massive sprawl of one-off maintenance scripts at backend root (check-*, fix-*, update-*, test-*.js); Duplicate ProductCard.tsx in frontend-react/src/components/porto and /product</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Reusability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">65</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No shared admin CRUD table/form abstraction — 25+ AdminXPage.tsx likely duplicate logic; No design token file or theming layer visible</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Sprawl of ad-hoc maintenance scripts inflates repo and operational risk: Audit, consolidate into a single scripts/ folder with a README and npm-run targets, delete obsolete ones, and standardize on TypeScript.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No caching layer for read-heavy catalog endpoints: Add @nestjs/cache-manager with Redis for product lists, category trees, and CMS pages with short TTLs and cache invalidation on admin writes.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Synchronous side effects in order flow (email, invoice PDF): Introduce a job queue (BullMQ + Redis or Azure Storage Queues) to defer invoice generation and email dispatch.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #e74c3c;padding-bottom:6px">
+            Business Continuity &mdash; 34/100 (D-)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Disaster Recovery</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">30</td>
+          <td style="text-align:center;padding:4px 8px">D-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No infrastructure-as-code (no Terraform/Bicep/ARM templates) — Azure resources not reproducible from code; No multi-region or active-passive deployment evidence</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Business Continuity</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">38</td>
+          <td style="text-align:center;padding:4px 8px">D-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No Business Impact Analysis or prioritized recovery order documented in /docs; No incident communication templates or escalation paths (e.g., status page, customer comms for failed BNPL flows)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Backup Recovery</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">35</td>
+          <td style="text-align:center;padding:4px 8px">D-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No automated, scheduled DB backup configuration in repo or CI workflows; No PITR setup or retention policy documented</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#e74c3c">&#9679; No automated backup or restore strategy for production data: Configure managed Postgres automated backups with PITR, define retention, and add a quarterly restore-test workflow under .github/workflows.</div><div style="font-size:11px;margin:2px 0;color:#e74c3c">&#9679; No infrastructure-as-code for Azure resources: Author Bicep or Terraform modules for all Azure resources and store under an /infra directory; gate changes through CI.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; PrismaService is a single point of failure with no degraded mode: Introduce a read-through cache (Redis) for catalog/categories and a degraded read-only mode so browsing survives DB writes outages.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #f39c12;padding-bottom:6px">
+            Code Architecture &mdash; 72/100 (B-)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Cohesion</td>
+          <td style="text-align:center;padding:4px 8px;color:#27ae60;font-weight:700">80</td>
+          <td style="text-align:center;padding:4px 8px">B+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Backend root is littered with one-off scripts (check-db.js, fix-cart-schema.js, reset-password.js) that blur the cohesion boundary; admin/ module mixes dashboard, reports, product-groups, and seed-images — borderline grab-bag</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Coupling</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">62</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">PrismaService used as concrete dependency in 48 files — no repository/abstraction layer; orders.service.ts pulls in 8 collaborators (email, stock, stripe, loyalty, invoice, settings, prisma) — high efferent coupling</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Abstraction</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">70</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No repository abstraction over Prisma; BNPL providers (tabby, tamara) are concrete services without a common payment-provider interface despite being parallel implementations</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Encapsulation</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">68</td>
+          <td style="text-align:center;padding:4px 8px">C+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">catalog/index.ts re-exports module + controller + service — exposes internals; Many root-level .js scripts directly access the database bypassing module encapsulation</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Separation of Concerns</td>
+          <td style="text-align:center;padding:4px 8px;color:#27ae60;font-weight:700">80</td>
+          <td style="text-align:center;padding:4px 8px">B+</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Direct Prisma calls in services mix data-access with business logic; Some controllers (bnpl) inject PrismaService directly, bypassing service layer</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Composability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">70</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">orders.service likely contains a large orchestration function — risk of monolithic methods; No evidence of shared composable utilities for common query/pagination patterns</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Readability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">75</td>
+          <td style="text-align:center;padding:4px 8px">B</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Backend root has ~20 loose .js/.py scripts with cryptic names (fix-cart-schema, enable-uuid); Mixed languages (TS/JS/Python) for similar tasks — inconsistent conventions</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Simplicity</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">70</td>
+          <td style="text-align:center;padding:4px 8px">B-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Max dependency chain of 10 hints at deep collaborator graphs (likely orders/checkout); Two stripe modules (stripe.module + stripe-webhook.module) — could be unified</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; PrismaService is a coupling hotspot (fan-in 48): Introduce per-aggregate repository interfaces (OrderRepository, ProductRepository) that wrap Prisma calls; inject these into services instead of PrismaService directly.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Missing payment provider abstraction: Define a PaymentProvider port (initiate, capture, refund, webhookVerify) and have all three implement it; resolve via a registry keyed by provider name.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Controller bypasses service layer: Move Prisma access into bnpl service(s); keep the controller focused on HTTP concerns.</div></div></div>
+
+        <div style="page-break-inside:avoid;margin-bottom:24px">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#222;border-bottom:2px solid #f39c12;padding-bottom:6px">
+            DevOps &amp; Evolution &mdash; 61/100 (C)
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">
+            <thead><tr style="background:#f5f5f5">
+              <th style="text-align:left;padding:5px 8px">Attribute</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Score</th>
+              <th style="text-align:center;padding:5px 8px;width:50px">Grade</th>
+              <th style="text-align:left;padding:5px 8px">Key Findings</th>
+            </tr></thead><tbody><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Configurability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">75</td>
+          <td style="text-align:center;padding:4px 8px">B</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No evidence of feature flag system for runtime toggles; Numerous loose JS scripts (check-db.js, fix-cart-schema.js) likely read env ad-hoc</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Installability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No README files surfaced in folder structure; Mixed Python + Node tooling implies undocumented Python prerequisites</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Upgradability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No CHANGELOG.md or release notes detected; No clear API versioning strategy beyond VERSION_NEUTRAL in main.ts</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Rollbackability</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">45</td>
+          <td style="text-align:center;padding:4px 8px">D</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">Prisma migrations have no down scripts; Backfill scripts (migrate-return-statuses.js) appear destructive and irreversible</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Reproducibility</td>
+          <td style="text-align:center;padding:4px 8px;color:#e74c3c;font-weight:700">55</td>
+          <td style="text-align:center;padding:4px 8px">C-</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No package-lock.json / yarn.lock surfaced in manifests; No requirements.txt for the Python scripts (subcategories_seed.py, etc.)</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Evolvability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">75</td>
+          <td style="text-align:center;padding:4px 8px">B</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No ADRs or architecture documentation visible; PrismaService has fan-in of 48 — a central choke point that any schema change radiates through</td>
+        </tr><tr style="border-bottom:1px solid #eee">
+          <td style="padding:4px 8px;font-weight:500">Discoverability</td>
+          <td style="text-align:center;padding:4px 8px;color:#f39c12;font-weight:700">60</td>
+          <td style="text-align:center;padding:4px 8px">C</td>
+          <td style="padding:4px 8px;font-size:11px;color:#555">No README.md surfaced anywhere in the tree; 20+ loose .js / .py scripts at backend/ root with no index or docs</td>
+        </tr></tbody></table><div style="margin-top:4px"><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; No reversible migration strategy for BNPL/payment-critical schema: Adopt expand-contract migrations, write reversal SQL alongside each migration, and gate risky changes behind feature flags.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Missing README and onboarding documentation: Add a root README and per-package READMEs covering prerequisites, setup, env vars, and deployment.</div><div style="font-size:11px;margin:2px 0;color:#f39c12">&#9679; Reproducibility gaps: lockfiles and pinned images unverified: Commit lockfiles, use npm ci in Docker, pin base images by digest, and enable Dependabot/Renovate for both npm and Docker.</div></div></div>
+    </div>
+
+    <!-- Findings -->
+    <div class="section">
+      <div class="section-title">Findings (47 open)</div>
+      <table>
+        <thead><tr>
+          <th>Issue</th><th>Category</th><th>Effort</th><th>Description</th><th>Recommendation</th>
+        </tr></thead>
+        <tbody>
+          <tr><td colspan="5" style="background:#fafafa;padding:8px 12px;font-weight:600;color:#e74c3c;border-top:2px solid #e74c3c">&#9679; Critical (6)</td></tr><tr>
+        <td style="font-weight:500;max-width:200px">Order/stock flow lacks transactional concurrency control</td>
+        <td style="font-size:11px">Performance &amp; Scale</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Orders compose stock decrement, payment, loyalty, and email across multiple services without visible use of Prisma $transaction or row locking. Under concurrent checkouts, this risks overselling inventory — a high-impact correctness issue for a BNPL e-commerce site.</td>
+        <td style="font-size:11px">Wrap the checkout pipeline in prisma.$transaction with row-level locking on stock, and add idempotency keys to POST /orders and webhook handlers.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Stripe webhook lacks idempotency / deduplication</td>
+        <td style="font-size:11px">Reliability &amp; Resilience</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">The Stripe webhook handler verifies signatures but there's no visible processed-event ledger. Stripe retries webhooks aggressively on non-2xx responses, and without dedup the order/invoice/loyalty side effects in orders.service.ts can fire multiple times for the same payment.</td>
+        <td style="font-size:11px">Add a webhook_events table with unique constraint on Stripe event.id; check-then-insert before processing. Wrap downstream side effects in a transaction tied to that insert.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Order/stock transaction boundary unclear</td>
+        <td style="font-size:11px">Reliability &amp; Resilience</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">orders.service.ts orchestrates stock decrement, loyalty accrual, email, and invoice generation. Without a wrapping prisma.$transaction with appropriate isolation, race conditions on stock during high concurrency can oversell inventory.</td>
+        <td style="font-size:11px">Wrap stock check + decrement + order insert in a single prisma.$transaction with Serializable isolation, and move email/invoice into a post-commit outbox worker.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No internationalization despite MENA market focus</td>
+        <td style="font-size:11px">User Experience</td>
+        <td style="font-size:11px">high effort</td>
+        <td style="font-size:11px;max-width:300px">The integration of Tabby and Tamara BNPL providers strongly indicates a Saudi/UAE customer base, where Arabic-language and RTL support are baseline expectations. No i18n framework, translation files, or RTL styling are present in the codebase.</td>
+        <td style="font-size:11px">Integrate react-i18next, externalize all strings into en/ar locale files, and add RTL support using CSS logical properties and a dir attribute toggle.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No automated backup or restore strategy for production data</td>
+        <td style="font-size:11px">Business Continuity</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">The repo contains only ad-hoc backup scripts (backend/backup-categories.js) and seed scripts. There is no evidence of scheduled DB backups, PITR, or restore drills despite the system handling orders, payments (Stripe), and BNPL transactions.</td>
+        <td style="font-size:11px">Configure managed Postgres automated backups with PITR, define retention, and add a quarterly restore-test workflow under .github/workflows.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No infrastructure-as-code for Azure resources</td>
+        <td style="font-size:11px">Business Continuity</td>
+        <td style="font-size:11px">high effort</td>
+        <td style="font-size:11px;max-width:300px">Only the Static Web App workflow and a backend Dockerfile exist. There are no Bicep/Terraform/ARM templates, so the Azure environment (DB, blob storage, app service, networking) cannot be reproduced in a DR region.</td>
+        <td style="font-size:11px">Author Bicep or Terraform modules for all Azure resources and store under an /infra directory; gate changes through CI.</td>
+      </tr>
+          <tr><td colspan="5" style="background:#fafafa;padding:8px 12px;font-weight:600;color:#f39c12;border-top:2px solid #f39c12">&#9679; Warnings (29)</td></tr><tr>
+        <td style="font-weight:500;max-width:200px">No application-level caching for read-heavy endpoints</td>
+        <td style="font-size:11px">Performance &amp; Scale</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Catalog, navigation, CMS, brands, and announcements are read-heavy public endpoints but show no caching layer or HTTP cache headers, meaning every request hits Postgres via Prisma.</td>
+        <td style="font-size:11px">Add @nestjs/cache-manager backed by Redis with cache-aside + TTL, and emit Cache-Control/ETag headers; invalidate on admin mutations.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Synchronous side effects in checkout path</td>
+        <td style="font-size:11px">Performance &amp; Scale</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Email sending and PDF invoice generation happen inline within order/stripe-webhook flows, holding request threads and Stripe webhook responses longer than necessary.</td>
+        <td style="font-size:11px">Introduce BullMQ (Redis-backed) for emails and invoice rendering; webhook handlers should enqueue and return 200 quickly.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No load testing or rate limiting</td>
+        <td style="font-size:11px">Performance &amp; Scale</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">There is no load test harness in the repo and no @nestjs/throttler usage, so throughput ceilings and abuse protection are undefined.</td>
+        <td style="font-size:11px">Add k6 scripts for cart/checkout/catalog and run a smoke load test in CI; add @nestjs/throttler at the global guard level.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No dead-letter or retry queue for async work</td>
+        <td style="font-size:11px">Reliability &amp; Resilience</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Email sends, BNPL callbacks, and webhook side effects appear to execute inline. A transient SMTP or Stripe failure has no DLQ to land in for later reprocessing.</td>
+        <td style="font-size:11px">Introduce BullMQ (Redis) for queued emails, invoice generation, and webhook side effects with configurable retry + DLQ.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Single-instance backend deployment</td>
+        <td style="font-size:11px">Reliability &amp; Resilience</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">docker-compose.yml and a single Dockerfile suggest the backend runs as one instance, making it a single point of failure for the entire e-commerce stack.</td>
+        <td style="font-size:11px">Deploy to Azure App Service (multi-instance) or AKS with at least 2 replicas, behind a load balancer with health-based routing using the existing /health endpoint.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No rate limiting on authentication endpoints</td>
+        <td style="font-size:11px">Security &amp; Compliance</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">auth.controller.ts exposes login, register, refresh, and change-password but no @nestjs/throttler usage is visible, leaving the backend exposed to credential stuffing and brute force.</td>
+        <td style="font-size:11px">Install @nestjs/throttler, register ThrottlerModule globally, and apply stricter @Throttle limits on /auth/login and /auth/register.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No dependency vulnerability scanning in CI</td>
+        <td style="font-size:11px">Security &amp; Compliance</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">backend-check.yml is the only backend workflow and shows no evidence of npm audit, Snyk, or Dependabot integration for a dependency-heavy NestJS project with payment integrations.</td>
+        <td style="font-size:11px">Add a step running `npm audit --audit-level=high` and enable GitHub Dependabot alerts + auto-PRs.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Operational scripts with DB credentials proliferating in repo</td>
+        <td style="font-size:11px">Security &amp; Compliance</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Numerous loose scripts (reset-password.js, check-users.js, fix-cart-schema.js, enable-uuid.js) sit at backend/ root, suggesting ad-hoc production data manipulation outside the migration system and increasing risk of accidental secret commits and untracked schema drift.</td>
+        <td style="font-size:11px">Move into a dedicated /ops folder, gate behind explicit env confirmation, and convert schema-altering scripts into Prisma migrations.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No audit trail for sensitive admin and loyalty operations</td>
+        <td style="font-size:11px">Security &amp; Compliance</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Admin endpoints (admin.controller.ts), loyalty adjustments (adjust-loyalty.dto.ts), and refunds have no visible audit log table or interceptor recording actor identity, target, and before/after state.</td>
+        <td style="font-size:11px">Add an AuditLog Prisma model and a NestJS interceptor that records mutating admin requests with userId, action, resource, and diff.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No GDPR/PDPL data subject request implementation</td>
+        <td style="font-size:11px">Security &amp; Compliance</td>
+        <td style="font-size:11px">high effort</td>
+        <td style="font-size:11px;max-width:300px">Despite a PrivacyPolicyPage and PII collection (addresses, phone, payment methods), there is no visible /me/export or /me/erase endpoint and no consent tracking model, leaving privacy obligations unmet for MENA/EU customers.</td>
+        <td style="font-size:11px">Implement consent records, a data export endpoint, and a soft-delete + anonymization workflow tied to retention policies.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Graceful shutdown not implemented</td>
+        <td style="font-size:11px">Maintainability &amp; Operations</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">SIGTERM/SIGINT handlers in main.ts only log a message; the app does not call enableShutdownHooks or drain in-flight requests / disconnect Prisma cleanly, risking dropped requests and connection leaks during deploys.</td>
+        <td style="font-size:11px">Call app.enableShutdownHooks(), implement OnModuleDestroy in PrismaService for $disconnect, and wait for in-flight HTTP requests to complete before exit.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Sparse unit test coverage</td>
+        <td style="font-size:11px">Maintainability &amp; Operations</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Only one *.spec.ts file (products.service.spec.ts) is present alongside the e2e suite. Critical services like orders, cart, loyalty, BNPL, and promos lack unit tests, raising regression risk as the codebase grows.</td>
+        <td style="font-size:11px">Add unit specs for service-layer business rules and enforce a coverage threshold in backend-check.yml.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Sprawl of ad-hoc operational scripts</td>
+        <td style="font-size:11px">Maintainability &amp; Operations</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">The backend root contains 20+ uncoordinated JS/Python scripts (check-db.js, fix-cart-schema.js, reset-password.js, update-products.js, etc.) with overlapping responsibilities and no documented entry point, creating tribal knowledge and risky one-off ops.</td>
+        <td style="font-size:11px">Consolidate into a single CLI under backend/scripts/ with documented commands, retire duplicates, and standardize on TypeScript.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No alerting, SLOs, or runbooks committed</td>
+        <td style="font-size:11px">Maintainability &amp; Operations</td>
+        <td style="font-size:11px">high effort</td>
+        <td style="font-size:11px;max-width:300px">The repo includes tracing and structured logs but no alert rules, SLO definitions, dashboards-as-code, or runbooks. Operational knowledge is implicit, raising MTTR and on-call load.</td>
+        <td style="font-size:11px">Define SLOs for checkout/auth/BNPL, commit alert definitions and dashboards alongside code, and author runbooks linked from alerts.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No automated accessibility testing in CI</td>
+        <td style="font-size:11px">User Experience</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">The test directory contains backend e2e tests but no frontend accessibility tests (jest-axe, Playwright a11y). Given the breadth of the storefront and admin UI, WCAG violations are likely accumulating undetected.</td>
+        <td style="font-size:11px">Add @axe-core/react in development, jest-axe for unit tests, and a Lighthouse CI step to the SWA workflow to enforce a minimum accessibility score.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No visible loading-state or empty-state component library</td>
+        <td style="font-size:11px">User Experience</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">Across 30+ frontend pages, there's no shared Skeleton, Spinner, or EmptyState component visible in the file tree. Users may experience perceived unresponsiveness during async operations like cart updates or checkout.</td>
+        <td style="font-size:11px">Build a small UX primitives library (Skeleton, Spinner, EmptyState, Toast) and use it consistently across pages.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">PrismaService is a pervasive direct dependency</td>
+        <td style="font-size:11px">Integration &amp; Portability</td>
+        <td style="font-size:11px">high effort</td>
+        <td style="font-size:11px;max-width:300px">PrismaService is imported directly by 48 files including controllers (e.g., bnpl.controller.ts, debug.controller.ts) — not just services. This couples the entire codebase to Prisma and complicates testing, swapping data layers, or splitting the monolith.</td>
+        <td style="font-size:11px">Introduce per-domain repository classes that wrap PrismaService; have services depend on repository interfaces rather than the ORM directly.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">API versioning enabled but not applied</td>
+        <td style="font-size:11px">Integration &amp; Portability</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">main.ts configures URI versioning with VERSION_NEUTRAL, but controllers don't declare explicit @Version() values. This means the first breaking change will require retrofitting versions across every controller.</td>
+        <td style="font-size:11px">Tag the current API surface as v1 explicitly and prefix routes accordingly; establish a deprecation policy with Sunset/Deprecation HTTP headers.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Sprawl of ad-hoc maintenance scripts inflates repo and operational risk</td>
+        <td style="font-size:11px">Efficiency</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">The backend root contains 20+ one-off JS/Python scripts (check-db.js, fix-cart-schema.js, update-products.js, reset-password.js, enable-uuid.js, etc.) overlapping with /scripts and /prisma/scripts. This is dead-code risk, duplication, and confusion about source of truth for data ops.</td>
+        <td style="font-size:11px">Audit, consolidate into a single scripts/ folder with a README and npm-run targets, delete obsolete ones, and standardize on TypeScript.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No caching layer for read-heavy catalog endpoints</td>
+        <td style="font-size:11px">Efficiency</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Catalog, navigation, CMS, and product listing endpoints all hit Prisma directly with no visible cache. For an e-commerce site, this means every page view triggers DB reads, increasing compute and DB cost.</td>
+        <td style="font-size:11px">Add @nestjs/cache-manager with Redis for product lists, category trees, and CMS pages with short TTLs and cache invalidation on admin writes.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Synchronous side effects in order flow (email, invoice PDF)</td>
+        <td style="font-size:11px">Efficiency</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Orders service directly invokes EmailService and InvoiceService, suggesting PDF generation and SMTP calls happen on the request path, blocking the event loop and inflating response time.</td>
+        <td style="font-size:11px">Introduce a job queue (BullMQ + Redis or Azure Storage Queues) to defer invoice generation and email dispatch.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">PrismaService is a single point of failure with no degraded mode</td>
+        <td style="font-size:11px">Business Continuity</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">prisma.service.ts has 48 dependents, meaning any DB hiccup takes down auth, catalog browsing, cart, and checkout simultaneously. No read-replica or cache-fallback patterns are visible.</td>
+        <td style="font-size:11px">Introduce a read-through cache (Redis) for catalog/categories and a degraded read-only mode so browsing survives DB writes outages.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No documented incident response or BIA</td>
+        <td style="font-size:11px">Business Continuity</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">No /docs runbooks, BIA, RTO/RPO targets, or comms templates exist for handling outages of BNPL providers, Stripe, or the database itself.</td>
+        <td style="font-size:11px">Add docs/runbooks/ with a BIA, prioritized recovery order, and incident comms templates per critical dependency.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">PrismaService is a coupling hotspot (fan-in 48)</td>
+        <td style="font-size:11px">Code Architecture</td>
+        <td style="font-size:11px">high effort</td>
+        <td style="font-size:11px;max-width:300px">Every service in the system depends directly on PrismaService, mixing data access with business logic and making testing/refactoring brittle. There is no repository or data-mapper abstraction.</td>
+        <td style="font-size:11px">Introduce per-aggregate repository interfaces (OrderRepository, ProductRepository) that wrap Prisma calls; inject these into services instead of PrismaService directly.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Missing payment provider abstraction</td>
+        <td style="font-size:11px">Code Architecture</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Tabby, Tamara, and Stripe are implemented as concrete services with parallel responsibilities but no shared interface, leading to duplicated patterns and harder swap/add of providers.</td>
+        <td style="font-size:11px">Define a PaymentProvider port (initiate, capture, refund, webhookVerify) and have all three implement it; resolve via a registry keyed by provider name.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Controller bypasses service layer</td>
+        <td style="font-size:11px">Code Architecture</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">bnpl.controller.ts directly injects PrismaService, breaking the controller→service→data layering used elsewhere.</td>
+        <td style="font-size:11px">Move Prisma access into bnpl service(s); keep the controller focused on HTTP concerns.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No reversible migration strategy for BNPL/payment-critical schema</td>
+        <td style="font-size:11px">DevOps &amp; Evolution</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Prisma migrations are forward-only and several backfill scripts (migrate-return-statuses.js, fix-cart-schema.js) appear destructive. With live Stripe and BNPL integrations, a bad migration cannot be safely rolled back.</td>
+        <td style="font-size:11px">Adopt expand-contract migrations, write reversal SQL alongside each migration, and gate risky changes behind feature flags.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Missing README and onboarding documentation</td>
+        <td style="font-size:11px">DevOps &amp; Evolution</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">No README files appear in the project tree. New developers must reverse-engineer setup from Docker files and dozens of unlabeled scripts.</td>
+        <td style="font-size:11px">Add a root README and per-package READMEs covering prerequisites, setup, env vars, and deployment.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Reproducibility gaps: lockfiles and pinned images unverified</td>
+        <td style="font-size:11px">DevOps &amp; Evolution</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">No lockfiles or dependency manifests were detected, and Python scripts have no requirements.txt. Builds may drift between developer machines, CI, and production.</td>
+        <td style="font-size:11px">Commit lockfiles, use npm ci in Docker, pin base images by digest, and enable Dependabot/Renovate for both npm and Docker.</td>
+      </tr>
+          <tr><td colspan="5" style="background:#fafafa;padding:8px 12px;font-weight:600;color:#3498db;border-top:2px solid #3498db">&#9679; Info (12)</td></tr><tr>
+        <td style="font-weight:500;max-width:200px">No autoscaling or resource limits in deployment artifacts</td>
+        <td style="font-size:11px">Performance &amp; Scale</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">docker-compose.yml and Dockerfile don't define CPU/memory limits, and no IaC describes Azure autoscale rules for the backend service.</td>
+        <td style="font-size:11px">Capture deployment topology in Bicep/Terraform with explicit resource limits and CPU/RPS-based autoscale rules.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Circuit breaker present but no fallback responses</td>
+        <td style="font-size:11px">Reliability &amp; Resilience</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">The circuit-breaker.service.ts is a strong foundation, but opening the circuit currently just fails fast. There's no fallback (e.g., hide BNPL option, queue email) so the user experience still degrades to errors.</td>
+        <td style="font-size:11px">Define per-dependency fallbacks: cached BNPL availability, queued email retry, and frontend feature-flag exposure of circuit state.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">console.log debugging in bootstrap path</td>
+        <td style="font-size:11px">Maintainability &amp; Operations</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">main.ts uses console.log for BOOTSTRAP_START, SIGTERM, and process events instead of the configured pino logger, breaking structured-log invariants for the most operationally important events.</td>
+        <td style="font-size:11px">Use a Logger instance (or pino directly) for lifecycle events so they appear with severity, timestamp, and trace context.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Strong mobile navigation foundation</td>
+        <td style="font-size:11px">User Experience</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">Dedicated MobileDrawer, HamburgerButton, MenuDrawer, useFocusTrap, and useBodyScrollLock indicate the team has thought carefully about mobile UX and modal accessibility patterns.</td>
+        <td style="font-size:11px">Build on this foundation by extending the same patterns into admin pages and adding ARIA live regions for dynamic content.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Loose ad-hoc scripts complicate reproducible migrations</td>
+        <td style="font-size:11px">Integration &amp; Portability</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Numerous one-off scripts at the backend/ root (fix-cart-schema.js, migrate-return-statuses.js, update-products.js, etc.) sit outside the Prisma migration log, making environment state hard to reproduce.</td>
+        <td style="font-size:11px">Move data fixes into versioned Prisma migrations or a documented scripts/migrations/ folder with execution ordering and idempotency guarantees.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">BNPL providers not behind a common abstraction</td>
+        <td style="font-size:11px">Integration &amp; Portability</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">TabbyService and TamaraService are sibling implementations without a shared payment-provider interface, so adding a new BNPL or payment provider requires direct controller changes.</td>
+        <td style="font-size:11px">Define a PaymentProvider interface (similar to StorageProvider) and register implementations via DI tokens; have the controller dispatch by provider key.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Duplicate ProductCard components and admin page boilerplate</td>
+        <td style="font-size:11px">Efficiency</td>
+        <td style="font-size:11px">medium effort</td>
+        <td style="font-size:11px;max-width:300px">Two ProductCard.tsx components exist (porto/ and product/), and 25+ AdminXPage.tsx files likely repeat list/filter/form patterns.</td>
+        <td style="font-size:11px">Extract a generic AdminResourcePage abstraction and consolidate ProductCard into a single configurable component.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No visible cost monitoring or autoscaling configuration</td>
+        <td style="font-size:11px">Efficiency</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">Infra files include only Dockerfile, docker-compose, and SWA workflow — no autoscale rules, resource limits, or budget alerts are defined.</td>
+        <td style="font-size:11px">Define container resource requests/limits, deploy to a platform with autoscale (Azure Container Apps), and set up Azure Cost Management alerts with resource tags.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Loose scripts polluting backend root</td>
+        <td style="font-size:11px">Code Architecture</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">~20 ad-hoc .js/.py scripts (check-db, fix-cart-schema, reset-password, update-products, etc.) live at backend/ root, mixing operational tooling with source structure.</td>
+        <td style="font-size:11px">Relocate into backend/scripts/{maintenance,seed,debug}/ subfolders with a README; delete obsolete one-offs.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Leaky barrel export in catalog module</td>
+        <td style="font-size:11px">Code Architecture</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">catalog/index.ts re-exports module, controller, and service together, exposing internals that should remain private to the module.</td>
+        <td style="font-size:11px">Remove the barrel or restrict it to the module class only; let NestJS DI handle the rest.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">Script sprawl in backend/ root</td>
+        <td style="font-size:11px">DevOps &amp; Evolution</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">More than 20 ad-hoc .js and .py scripts (check-db.js, enable-uuid.js, update-products.js, etc.) live at the backend root with no apparent organization or documentation.</td>
+        <td style="font-size:11px">Move kept scripts into backend/scripts/ with a README documenting purpose, inputs, and safety; delete obsolete ones.</td>
+      </tr><tr>
+        <td style="font-weight:500;max-width:200px">No ADRs or architecture history</td>
+        <td style="font-size:11px">DevOps &amp; Evolution</td>
+        <td style="font-size:11px">low effort</td>
+        <td style="font-size:11px;max-width:300px">Significant choices (NestJS modular monolith, Prisma, Tabby/Tamara, multi-provider storage abstraction) are undocumented, making future evolution harder to reason about.</td>
+        <td style="font-size:11px">Start an /docs/adr folder using the MADR template; backfill ADRs for the most consequential past decisions.</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Quick Wins -->
+    
+    <div class="section">
+      <div class="quick-wins">
+        <h3>Quick Wins</h3>
+        <ul><li style="padding:3px 0">Move backend/*.js maintenance scripts into backend/scripts/ops and exclude from Docker image via .dockerignore.</li>
+<li style="padding:3px 0">Add a Stripe event-id idempotency table and check it at the start of stripe-webhook.service.handleEvent.</li>
+<li style="padding:3px 0">Enable @nestjs/cache-manager with Redis for catalog and CMS endpoints (5–60s TTL).</li>
+<li style="padding:3px 0">Add a /metrics endpoint via prom-client to complement the existing OpenTelemetry tracing.</li>
+<li style="padding:3px 0">Consolidate the duplicate product-image loader scripts into a single CLI with flags.</li></ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      Generated by <strong>Archify</strong> &mdash; Architecture Quality Review for VS Code<br>
+      Report ID: R-motmwjxy-k2iv &middot; May 6, 2026
+    </div>
+  </div>
+</body>
+</html>

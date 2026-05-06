@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { UserDto } from '../types';
 import { authApi } from '../api/auth';
 import { setTokens, clearTokens, getAccessToken, getRefreshToken } from '../api/client';
@@ -21,7 +21,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [state, setState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
@@ -107,8 +107,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(s => ({ ...s, error: null }));
   }, []);
 
+  const value = useMemo(
+    () => ({ ...state, loading: state.isLoading, login, register, logout, clearError }),
+    [state, login, register, logout, clearError],
+  );
+
   return (
-    <AuthContext.Provider value={{ ...state, loading: state.isLoading, login, register, logout, clearError }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

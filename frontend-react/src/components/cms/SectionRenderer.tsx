@@ -15,7 +15,7 @@ interface Props {
   onAddToCart?: (product: ProductDto) => void;
 }
 
-export default function SectionRenderer({ section, getProducts, onAddToCart }: Props) {
+export default function SectionRenderer({ section, getProducts, onAddToCart }: Readonly<Props>) {
   if (!section.isActive) return null;
 
   const source = section.data?.source as string | undefined;
@@ -62,7 +62,23 @@ export default function SectionRenderer({ section, getProducts, onAddToCart }: P
     case LandingSectionType.NEWSLETTER_BLOCK:
       return <NewsletterBlock section={section} />;
 
+    case LandingSectionType.RICH_TEXT:
+    case LandingSectionType.TEXT_BLOCK:
+      return <RichTextSection section={section} />;
+
     default:
       return null;
   }
+}
+
+function RichTextSection({ section }: Readonly<{ section: LandingSectionDto }>) {
+  const content = section.data?.content as string | undefined;
+  if (!content) return null;
+  return (
+    <section className="max-w-[1320px] mx-auto px-4 md:px-[60px] py-8">
+      {section.title && <h2 className="text-xl font-bold mb-4">{section.title}</h2>}
+      {/* eslint-disable-next-line react/no-danger */}
+      <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
+    </section>
+  );
 }

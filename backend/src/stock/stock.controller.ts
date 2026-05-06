@@ -75,4 +75,9 @@ export class StockController {
       req.user.sub || req.user.id,
     );
   }
+
+  @Post('recalculate-reserved')
+  async recalculateReserved() {
+    return this.stockService.recalculateReservedQuantities();
+  }
 }

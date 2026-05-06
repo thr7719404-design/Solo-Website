@@ -48,7 +48,7 @@ def safe_int(value):
         return None
     try:
         return int(float(value))
-    except:
+    except (ValueError, TypeError):
         return None
 
 def safe_float(value):
@@ -58,7 +58,7 @@ def safe_float(value):
         return None
     try:
         return float(value)
-    except:
+    except (ValueError, TypeError):
         return None
 
 def safe_bool(value):
@@ -285,7 +285,7 @@ def import_products(conn, df, master_data):
     conn.commit()
     cursor.close()
     
-    print(f"\nImport complete!")
+    print("\nImport complete!")
     print(f"  Successful: {successful}")
     print(f"  Failed: {failed}")
     print(f"  Total: {successful + failed}")

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { authApi } from '@/api/auth';
+import styles from './Auth.module.css';
 
 export default function ResetPasswordPage() {
   const [params] = useSearchParams();
@@ -26,34 +27,40 @@ export default function ResetPasswordPage() {
 
   if (status === 'success') {
     return (
-      <div className="auth-page">
-        <div className="auth-card" style={{ textAlign: 'center' }}>
+      <div className={styles['auth-page']}>
+        <div className={styles['auth-card']} style={{ textAlign: 'center' }}>
           <h1>Password Reset!</h1>
-          <p>Your password has been changed. You can now sign in.</p>
-          <Link to="/login" className="btn btn-accent" style={{ marginTop: 16, display: 'inline-block' }}>Sign In</Link>
+          <p style={{ color: 'var(--color-text-muted)', marginBottom: 20 }}>Your password has been changed. You can now sign in.</p>
+          <Link to="/login" className={styles['submit-btn']} style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>Sign In</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
+    <div className={styles['auth-page']}>
+      <div className={styles['auth-card']}>
         <h1>Reset Password</h1>
-        {status === 'error' && <div className="error-box">Failed to reset password. The link may have expired.</div>}
+        {status === 'error' && <div className={styles['error-msg']}>Failed to reset password. The link may have expired.</div>}
         <form onSubmit={submit}>
-          <div className="form-group">
-            <label>New Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} />
+          <div className={styles['form-group']}>
+            <label htmlFor="new-password">New Password</label>
+            <input id="new-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoFocus />
           </div>
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={8} />
+          <div className={styles['form-group']}>
+            <label htmlFor="confirm-password">Confirm Password</label>
+            <input id="confirm-password" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={8} />
           </div>
-          <button className="btn btn-accent" style={{ width: '100%' }} type="submit" disabled={submitting || password !== confirm}>
+          {password && confirm && password !== confirm && (
+            <div className={styles['error-msg']}>Passwords do not match</div>
+          )}
+          <button className={styles['submit-btn']} type="submit" disabled={submitting || password !== confirm}>
             {submitting ? 'Resetting…' : 'Reset Password'}
           </button>
         </form>
+        <div className={styles['auth-footer']}>
+          Remember your password? <Link to="/login">Sign In</Link>
+        </div>
       </div>
     </div>
   );
