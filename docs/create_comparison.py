@@ -196,7 +196,7 @@ feat_data = [
     ["", "", "", ""],
     ["── SOLO-SPECIFIC FIT ──", "", "", ""],
     ["NestJS Backend", "App Service runs Node natively\nPM2 or built-in process mgmt", "EC2, Elastic Beanstalk,\nor Lightsail — all work well", "Azure (simpler setup)"],
-    ["Flutter Web Frontend", "Static Web Apps — perfect fit\nFree tier generous", "S3 + CloudFront — battle-tested\nSlightly more setup", "Azure (easier)"],
+    ["React SPA Frontend (Vite)", "Static Web Apps — perfect fit\nFree tier generous", "S3 + CloudFront — battle-tested\nSlightly more setup", "Azure (easier)"],
     ["PostgreSQL Database", "Flexible Server — managed,\nauto-backups, point-in-time recovery", "RDS PostgreSQL — mature,\nmore instance size options", "AWS (more options)"],
     ["Image/File Upload", "Blob Storage — simple SDK\nCDN integration", "S3 — industry standard\nMore tooling available", "AWS"],
     ["Email (Order Confirm)", "SendGrid via Marketplace\nor Communication Services", "SES — very cheap\n$0.10 per 1000 emails", "AWS (much cheaper)"],
@@ -324,7 +324,7 @@ scores = [
     ["Documentation", "7/10 — Good but sometimes scattered", "9/10 — Excellent, more examples"],
     ["Community & Ecosystem", "7/10 — Growing fast", "9/10 — Largest cloud ecosystem"],
     ["Enterprise Features", "9/10 — Entra ID, compliance", "8/10 — IAM, compliance"],
-    ["NestJS + Flutter Fit", "9/10 — App Service + Static Web Apps", "7/10 — Works well, more assembly"],
+    ["NestJS + React Fit", "9/10 — Container Apps + Static Web Apps", "7/10 — Works well, more assembly"],
     ["", "", ""],
     ["OVERALL SCORE", "7.5/10", "7.8/10"],
 ]
@@ -360,7 +360,7 @@ recs = [
     ["Choose AZURE if:", "• You want the simplest setup experience\n• You prefer VS Code-first workflow\n• You already have Microsoft 365 / Entra ID\n• Enterprise compliance is a priority\n• You value convenience over cost savings\n• Budget: ~$28/mo starter, ~$140/mo growth", ""],
     ["Choose AWS if:", "• Cost is the primary concern\n• You want maximum flexibility\n• You plan to scale significantly\n• You want the cheapest email (SES)\n• You're comfortable with more configuration\n• Budget: ~$18/mo starter, ~$80/mo growth", ""],
     ["", "", ""],
-    ["FOR SOLO E-COMMERCE\nSPECIFICALLY:", "AZURE is recommended for your case because:\n\n1. Simpler deployment — App Service + Static Web Apps is a natural fit for NestJS + Flutter Web\n\n2. VS Code integration — Deploy directly from your editor\n\n3. Free tier — 12 months free compute + always-free Static Web Apps\n\n4. Less DevOps work — You can focus on the product, not infrastructure\n\n5. The ~$8-10/mo premium over AWS is worth the time savings\n\nStart with free tier → move to B1 ($13/mo) + Flex B1ms ($12/mo) = $26/mo when ready", ""],
+    ["FOR SOLO E-COMMERCE\nSPECIFICALLY:", "AZURE is recommended for your case because:\n\n1. Simpler deployment — Container Apps + Static Web Apps is a natural fit for NestJS + React SPA\n\n2. VS Code integration — Deploy directly from your editor\n\n3. Free tier — 12 months free compute + always-free Static Web Apps\n\n4. Less DevOps work — You can focus on the product, not infrastructure\n\n5. The ~$8-10/mo premium over AWS is worth the time savings\n\nStart with free tier → move to B1 ($13/mo) + Flex B1ms ($12/mo) = $26/mo when ready", ""],
 ]
 
 for data in recs:
@@ -417,7 +417,7 @@ for i, h in enumerate(arch_headers, 1):
     cell.border = thin_border
 
 arch_data = [
-    ["Flutter Web (Frontend)", "Azure Static Web Apps\n→ Auto-deploy from GitHub\n→ Global CDN built-in\n→ Custom domain + SSL", "S3 Static Website\n→ CloudFront CDN in front\n→ Route 53 for DNS\n→ ACM for SSL", "Serves Flutter web\nbuild output (HTML/JS/CSS)"],
+    ["React SPA (Frontend)", "Azure Static Web Apps\n→ Auto-deploy from GitHub\n→ Global CDN built-in\n→ Custom domain + SSL", "S3 Static Website\n→ CloudFront CDN in front\n→ Route 53 for DNS\n→ ACM for SSL", "Serves Vite build\noutput (HTML/JS/CSS)"],
     ["NestJS API (Backend)", "Azure App Service (Linux)\n→ Node.js 18+ runtime\n→ GitHub Actions CI/CD\n→ App Settings for env vars", "EC2 instance or\nElastic Beanstalk\n→ PM2 process manager\n→ CodeDeploy CI/CD\n→ Environment properties", "Runs NestJS API server\non port 3000"],
     ["PostgreSQL Database", "Azure Database for PostgreSQL\nFlexible Server\n→ Automated backups\n→ Point-in-time restore\n→ VNet integration", "Amazon RDS for PostgreSQL\n→ Automated backups\n→ Point-in-time restore\n→ VPC security groups\n→ Multi-AZ option", "Stores all application\ndata (products, users,\norders, etc.)"],
     ["File/Image Storage", "Azure Blob Storage\n→ Container for uploads\n→ CDN endpoint\n→ SAS tokens for access", "Amazon S3\n→ Bucket for uploads\n→ CloudFront distribution\n→ Presigned URLs", "Stores product images,\nbanner images,\nuser uploads"],

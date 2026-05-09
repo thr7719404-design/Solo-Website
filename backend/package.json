@@ -20,6 +20,7 @@
     "test:e2e:setup": "ts-node scripts/test-setup.ts",
     "test:e2e": "npm run test:e2e:setup && jest --config ./test/jest-e2e.json",
     "test:e2e:only": "jest --config ./test/jest-e2e.json",
+    "test:smoke": "jest --config ./test/smoke/jest-smoke.json",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",

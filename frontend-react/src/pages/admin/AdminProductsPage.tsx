@@ -423,7 +423,13 @@ export default function AdminProductsPage() {
               ?? (full.subcategory?.id ? [String(full.subcategory.id)] : []))),
         stockQuantity: String(full.stockQuantity ?? full.stockQty ?? 0), lowStockThreshold: String(full.lowStockThreshold ?? 5),
         isFeatured: full.isFeatured ?? false, isNew: full.isNew ?? false, isBestSeller: full.isBestSeller ?? false,
-        status: full.isActive === false ? 'draft' : (full.status ?? 'active'),
+        // Normalise the API's computed status ('out-of-stock' is not a selectable form value;
+        // it just means stock=0 on an active product, so keep the form status as 'active').
+        status: (() => {
+          if (full.isActive === false) return 'draft';
+          if (full.isDiscontinued === true || full.status === 'archived') return 'archived';
+          return 'active';
+        })(),
         metaTitle: full.metaTitle ?? '', metaDescription: full.metaDescription ?? '',
         specifications: typeof full.specifications === 'string' ? full.specifications : JSON.stringify(full.specifications ?? '', null, 2),
         highlights: Array.isArray(full.highlights) ? full.highlights.join('\n') : (full.highlights ?? ''),
@@ -466,6 +472,15 @@ export default function AdminProductsPage() {
     if (missing.length) {
       alert(`Please fill in the required field(s): ${missing.join(', ')}`);
       return;
+    }
+    // Compare At Price must be strictly greater than Price (it's the "was" / strikethrough price).
+    if (form.compareAtPrice) {
+      const price = Number.parseFloat(form.price);
+      const compareAt = Number.parseFloat(form.compareAtPrice);
+      if (!Number.isNaN(compareAt) && !Number.isNaN(price) && compareAt <= price) {
+        alert('Compare At Price must be higher than the selling Price (it represents the original / strikethrough price).');
+        return;
+      }
     }
     // Each selected category that HAS subcategories must have at least one selected.
     const catsMissingSubs: string[] = [];

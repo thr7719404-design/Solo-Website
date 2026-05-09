@@ -58,6 +58,7 @@ const AdminProductGroupDetailPage = lazy(() => import('@/pages/admin/AdminProduc
 const AdminNavigationPage = lazy(() => import('@/pages/admin/AdminNavigationPage'));
 const AdminCollectionsPage = lazy(() => import('@/pages/admin/AdminCollectionsPage'));
 const AdminCmsPagesPage = lazy(() => import('@/pages/admin/AdminCmsPagesPage'));
+const AdminAuditLogPage = lazy(() => import('@/pages/admin/AdminAuditLogPage'));
 const BulkOrderPage = lazy(() => import('@/pages/BulkOrderPage'));
 const BrandsPage = lazy(() => import('@/pages/BrandsPage'));
 const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
@@ -178,6 +179,7 @@ export default function App() {
           <Route path="navigation" element={<AdminNavigationPage />} />
           <Route path="collections" element={<AdminCollectionsPage />} />
           <Route path="pages" element={<AdminCmsPagesPage />} />
+          <Route path="audit-log" element={<AdminAuditLogPage />} />
         </Route>
       </Routes>
     </Suspense>

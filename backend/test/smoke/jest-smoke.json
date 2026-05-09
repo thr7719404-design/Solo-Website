@@ -1,0 +1,12 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".smoke-spec.ts$",
+  "transform": { "^.+\\.(t|j)s$": "ts-jest" },
+  "testTimeout": 60000,
+  "maxWorkers": 1,
+  "verbose": true,
+  "globalSetup": "<rootDir>/global-setup.js",
+  "globalTeardown": "<rootDir>/global-teardown.js"
+}

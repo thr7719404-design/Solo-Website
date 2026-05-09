@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { CacheModule } from '@nestjs/cache-manager';
-import { APP_GUARD } from '@nestjs/core';
-import { LoggerModule } from 'nestjs-pino';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { randomUUID } from 'crypto';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
@@ -36,7 +35,10 @@ import { BnplModule } from './bnpl/bnpl.module';
 import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
 import { ResilienceModule } from './common/resilience/resilience.module';
+import { AuditModule } from './audit/audit.module';
+import { AuditInterceptor } from './audit/audit.interceptor';
 import { envValidationSchema } from './common/config/env.validation';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -148,6 +150,7 @@ import { envValidationSchema } from './common/config/env.validation';
     MediaModule,
     CatalogModule,
     AdminModule,
+    AuditModule,
     
     // Porto Theme CMS modules
     NavigationModule,
@@ -174,6 +177,11 @@ import { envValidationSchema } from './common/config/env.validation';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    // Global audit interceptor — logs all admin write operations automatically
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
     },
   ],
 })

@@ -57,6 +57,9 @@ export default function AdminLayout() {
           <li><NavLink to="/admin/vat" className={({ isActive }) => isActive ? styles.active : ''}>VAT</NavLink></li>
           <li><NavLink to="/admin/shipping" className={({ isActive }) => isActive ? styles.active : ''}>Shipping</NavLink></li>
           <li><NavLink to="/admin/payments" className={({ isActive }) => isActive ? styles.active : ''}>Payments</NavLink></li>
+
+          <li className={styles['admin-nav-group']}>Security</li>
+          <li><NavLink to="/admin/audit-log" className={({ isActive }) => isActive ? styles.active : ''}>Audit Trail</NavLink></li>
         </ul>
         <div className={styles['theme-toggle-wrap']}>
           <button className={styles['theme-toggle']} onClick={toggle} type="button">

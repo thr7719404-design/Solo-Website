@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto';
 import { EmailService } from '../email/email.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
+    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -219,7 +221,7 @@ export class AuthService {
   /**
    * Login user with credentials (OWASP ASVS V2.2)
    */
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, context?: { ipAddress?: string; userAgent?: string }) {
     const { email, password } = loginDto;
 
     // Find user
@@ -241,6 +243,16 @@ export class AuthService {
 
     if (!isPasswordValid) {
       // Log failed attempt (for monitoring/security)
+      if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+        this.auditService.log({
+          userEmail: email.toLowerCase(),
+          action: 'LOGIN_FAILED',
+          entityType: 'Auth',
+          description: `Failed admin login for ${email.toLowerCase()}`,
+          ipAddress: context?.ipAddress,
+          userAgent: context?.userAgent,
+        });
+      }
       // TODO: Implement account lockout after X failed attempts
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -250,6 +262,19 @@ export class AuthService {
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
     });
+
+    // Audit successful admin logins
+    if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
+      this.auditService.log({
+        userId: user.id,
+        userEmail: user.email,
+        action: 'LOGIN_SUCCESS',
+        entityType: 'Auth',
+        description: `Admin login: ${user.email} (${user.role})`,
+        ipAddress: context?.ipAddress,
+        userAgent: context?.userAgent,
+      });
+    }
 
     // Generate tokens
     const tokens = await this.generateTokens(user.id, user.email, user.role);

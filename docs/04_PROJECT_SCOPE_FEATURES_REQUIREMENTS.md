@@ -1,551 +1,345 @@
 # Solo E-Commerce Platform — Project Scope, Features & Requirements
 
-**Document Version**: 1.0  
-**Date**: 17 March 2026  
-**Author**: Solo Engineering Team  
-**Status**: Final  
+**Document Version:** 1.1
+**Date:** 09 May 2026
+**Author:** Solo Engineering Team
+**Status:** Final
 
 ---
 
-## 1. Project Overview
+## 1. Document Purpose
 
-### 1.1 Project Name
-**Solo E-Commerce** — Premium Kitchenware & Home Goods Online Store
+This document defines the **scope** of the Solo E-Commerce platform, the
+**functional requirements (FR-xxx)** and **non-functional requirements
+(NFR-xxx)** that the system must satisfy, the user roles, the assumptions
+and constraints, the in/out-of-scope items, and the future roadmap.
 
-### 1.2 Project Description
-A full-featured e-commerce web application serving the UAE market for premium kitchenware, tableware, glassware, and home goods. The platform supports end-to-end retail operations including product catalog management, shopping cart, online checkout with Stripe payments, order fulfillment, customer loyalty programs, and a content management system for marketing.
+It is a contractual reference for engineering, QA, design and operations.
 
-### 1.3 Target Market
-- **Geography**: United Arab Emirates (UAE)
-- **Currency**: AED (Arab Emirates Dirham)
-- **Tax**: 5% VAT (standard UAE rate)
-- **Language**: English (primary)
-- **Product Focus**: Premium kitchenware brands (Eva Solo, Eva Trio, PWtbS, Eva)
-
-### 1.4 Business Objectives
-
-| # | Objective | Success Metric |
-|---|-----------|---------------|
-| BO-1 | Launch online retail presence | Website live with 800+ products |
-| BO-2 | Enable no-code content management | Admin can update homepage, banners, and landing pages without developer |
-| BO-3 | Automate order processing | End-to-end: browse → pay → order confirmed in < 5 minutes |
-| BO-4 | Build customer loyalty | Loyalty points program drives repeat purchases |
-| BO-5 | Reduce manual operations | Admin dashboard replaces spreadsheet-based inventory tracking |
-| BO-6 | Data-driven decisions | Reports dashboard provides revenue, product, and customer analytics |
+Companions: [01 HLD](./01_HIGH_LEVEL_DESIGN.md),
+[02 LLD](./02_LOW_LEVEL_DESIGN.md),
+[03 Architecture](./03_ARCHITECTURE_DOCUMENT.md),
+[05 Technical Features](./05_TECHNICAL_FEATURES.md).
 
 ---
 
-## 2. Project Scope
+## 2. Project Vision & Goals
 
-### 2.1 In Scope
+Solo is a multi-brand, multi-category, premium-positioned e-commerce
+storefront serving the UAE market initially, with planned expansion to
+KSA. The platform combines:
 
-| Area | Description |
+- A modern, content-rich storefront for browsing and purchase.
+- A complete admin/operations console for catalog, orders, content,
+  customers, returns, loyalty and audit.
+- A clean, headless API ready for a future mobile companion app
+  (React Native / Capacitor).
+
+Strategic goals:
+
+| ID | Goal |
+|----|------|
+| G1 | Deliver a fast, premium storefront experience (Core Web Vitals "Good" on p75) |
+| G2 | Enable non-engineering staff to fully manage catalog and content via the admin SPA |
+| G3 | Provide regulator-grade order/payment/audit history (UAE VAT, FTA, PDPL) |
+| G4 | Support multiple payment rails: Stripe (cards), Tabby & Tamara (BNPL), Cash on Delivery |
+| G5 | Build a loyalty programme that drives repeat purchase |
+| G6 | Operate on cloud-native, IaC-managed Azure infrastructure with one-command deploy |
+| G7 | Maintain a green, secure baseline against OWASP Top 10 |
+| G8 | Make the platform observable with end-to-end traces, structured logs, and dashboards |
+
+---
+
+## 3. Stakeholders & Roles
+
+### 3.1 External Users
+
+| Role | Description |
 |------|-------------|
-| **Product Catalog** | Browse, search, and filter 805+ products across categories, brands, and price ranges |
-| **User Accounts** | Registration, login, profile management, address book, order history |
-| **Shopping Cart** | Server-synced cart with quantity management, promo code application |
-| **Checkout & Payment** | Multi-step checkout with Stripe payment integration (card payments) |
-| **Order Management** | Order lifecycle from creation to delivery, with status tracking and invoices |
-| **Admin Dashboard** | Product CRUD, order management, customer management, banner management |
-| **Content Management** | Homepage sections, hero banners, landing pages, blog posts |
-| **Promotions** | Promo codes (percentage, fixed, free shipping) with validation rules |
-| **Loyalty Program** | Points earned per purchase, redeemable on future orders |
-| **Favorites/Wishlist** | Save products for later viewing |
-| **Search** | Text-based product search across name and description |
-| **Reports & Analytics** | Revenue, orders, products, customers, VAT, and category reports |
-| **Media Management** | Image upload, optimization, and CDN-ready serving |
-| **Navigation Management** | Admin-configurable menu system |
-| **VAT Configuration** | Admin-configurable VAT rate and calculation |
-| **Stripe Configuration** | Admin-configurable payment gateway settings |
-| **Email Notifications** | Order confirmation, password reset, email verification |
-| **Security** | JWT authentication, RBAC, rate limiting, OWASP compliance |
+| **Guest** | Anonymous visitor; can browse, search, build cart, start checkout |
+| **Customer** | Registered shopper; full purchase, address book, orders, returns, favorites, loyalty |
+| **B2B Customer** | Bulk-order requests with quote workflow |
 
-### 2.2 Out of Scope (Current Release)
+### 3.2 Internal Users
 
-| Area | Reason |
-|------|--------|
-| Mobile native apps (iOS/Android) | Web-first approach; Flutter supports future mobile build |
-| Multi-language (Arabic) | Phase 2 consideration |
-| Multi-currency | UAE market only (AED) |
-| Marketplace (multi-vendor) | Single-vendor model |
-| Live chat / customer support widget | External tool integration planned |
-| SMS notifications | Email-only in current release |
-| Subscription/recurring orders | Not required for current product types |
-| Product reviews & ratings | Phase 2 feature |
-| Advanced recommendation engine | Phase 2 (ML-based) |
-| Warehouse management system | External WMS integration planned |
-| Accounting software integration | Manual export via reports currently |
+| Role | Description |
+|------|-------------|
+| **Admin** | Full back-office access: catalog, orders, customers, content, audit, settings |
+| **Super Admin** | Admin + system-level settings, role management, irreversible actions |
+
+(Future: granular sub-roles such as `CONTENT_EDITOR`, `ORDER_MANAGER`,
+`SUPPORT_AGENT` — see roadmap §10.)
+
+### 3.3 External Systems
+
+| System | Role |
+|--------|------|
+| Stripe | Card payments + webhook |
+| Tabby | BNPL provider |
+| Tamara | BNPL provider |
+| SMTP relay | Transactional email (order confirmation, password reset, etc.) |
+| Azure Blob Storage | Product imagery and CMS media |
+| Application Insights | Telemetry, traces, RUM |
 
 ---
 
-## 3. Functional Requirements
+## 4. In Scope
 
-### 3.1 Customer-Facing Requirements
+- React 19 + Vite SPA storefront (responsive, mobile-first, light/dark)
+- Admin SPA (lazy-loaded, role-gated)
+- NestJS REST API (single deploy unit, ~50 modules)
+- PostgreSQL data store (~50 tables)
+- Stripe + Tabby + Tamara + Cash on Delivery payment rails
+- UAE VAT (5%), AED currency
+- Loyalty wallet (earn + redeem)
+- Promo codes (percentage + fixed)
+- Returns workflow (request → approve → refund)
+- CMS for home page, landing pages, banners, navigation, collections,
+  announcements
+- Append-only audit trail across all admin writes
+- Azure deployment via `azd up` / `azd deploy` with Bicep IaC
+- Application Insights + Log Analytics observability
+- Email notifications via SMTP
 
-#### FR-001: User Registration & Authentication
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-001.1 | Users can register with email and password | Must Have |
-| FR-001.2 | Users receive email verification after registration | Must Have |
-| FR-001.3 | Users can log in with email/password | Must Have |
-| FR-001.4 | Users can reset forgotten passwords via email | Must Have |
-| FR-001.5 | Users can change their password when logged in | Must Have |
-| FR-001.6 | Session persists across browser refreshes (JWT stored securely) | Must Have |
-| FR-001.7 | Tokens auto-refresh before expiration | Must Have |
-| FR-001.8 | Users can log out (revokes refresh token) | Must Have |
+## 5. Out of Scope (current release)
 
-#### FR-002: Product Browsing
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-002.1 | Homepage displays featured products, best sellers, and new arrivals | Must Have |
-| FR-002.2 | Users can browse products by category | Must Have |
-| FR-002.3 | Users can filter products by category, brand, and price range | Must Have |
-| FR-002.4 | Users can search products by name and description | Must Have |
-| FR-002.5 | Product listing shows image, name, brand, price | Must Have |
-| FR-002.6 | Products paginate at 20 items per page | Must Have |
-| FR-002.7 | Products can be sorted (price, name, newest) | Should Have |
-| FR-002.8 | Category landing pages display curated content | Should Have |
-
-#### FR-003: Product Detail
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-003.1 | Product page shows name, brand, images, price, description | Must Have |
-| FR-003.2 | Product page shows multiple images (gallery) | Must Have |
-| FR-003.3 | Product page shows specifications table | Should Have |
-| FR-003.4 | Product page shows dimensions and packaging info | Should Have |
-| FR-003.5 | Product page shows related products | Should Have |
-| FR-003.6 | Users can add product to cart from detail page | Must Have |
-| FR-003.7 | Users can add/remove product from favorites | Must Have |
-| FR-003.8 | Product page shows delivery and returns information | Should Have |
-
-#### FR-004: Shopping Cart
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-004.1 | Users can add products to cart with quantity | Must Have |
-| FR-004.2 | Cart persists server-side (survives logout/login) | Must Have |
-| FR-004.3 | Users can update item quantities in cart | Must Have |
-| FR-004.4 | Users can remove items from cart | Must Have |
-| FR-004.5 | Users can clear entire cart | Must Have |
-| FR-004.6 | Cart shows subtotal, VAT, and total | Must Have |
-| FR-004.7 | Users can apply promo codes in cart | Must Have |
-| FR-004.8 | Cart shows product images and names for each item | Must Have |
-
-#### FR-005: Checkout & Payment
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-005.1 | Multi-step checkout: address → payment → review → confirm | Must Have |
-| FR-005.2 | Users can select existing shipping address or add new | Must Have |
-| FR-005.3 | Users can select existing billing address or add new | Must Have |
-| FR-005.4 | Payment via Stripe (credit/debit card) | Must Have |
-| FR-005.5 | Order confirmation displayed on success | Must Have |
-| FR-005.6 | Order confirmation email sent | Must Have |
-| FR-005.7 | Promo code discount applied to order total | Must Have |
-| FR-005.8 | VAT calculated and displayed (5%) | Must Have |
-| FR-005.9 | Loyalty points awarded after order completion | Should Have |
-
-#### FR-006: User Account
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-006.1 | Users can view and edit their profile (name, phone) | Must Have |
-| FR-006.2 | Users can manage multiple addresses | Must Have |
-| FR-006.3 | Users can set a default shipping address | Must Have |
-| FR-006.4 | Users can view order history | Must Have |
-| FR-006.5 | Users can view individual order details | Must Have |
-| FR-006.6 | Users can download order invoices (PDF) | Should Have |
-| FR-006.7 | Users can view loyalty points balance | Should Have |
-| FR-006.8 | Users can save payment methods | Nice to Have |
-
-#### FR-007: Favorites / Wishlist
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-007.1 | Users can add/remove products from favorites | Must Have |
-| FR-007.2 | Favorites page shows all saved products | Must Have |
-| FR-007.3 | Favorite status shown on product cards and detail page | Must Have |
-| FR-007.4 | Toggle favorite from product card (heart icon) | Must Have |
-
-#### FR-008: Search
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-008.1 | Search bar accessible from header on all pages | Must Have |
-| FR-008.2 | Search queries product name and description (case-insensitive) | Must Have |
-| FR-008.3 | Search results show in product grid format | Must Have |
-| FR-008.4 | No results state shows helpful message | Must Have |
+- Native mobile applications (planned in roadmap)
+- Multi-currency at runtime (AED only at launch — KSA roadmap)
+- Multi-language UI beyond English (Arabic in roadmap)
+- Marketplace / multi-vendor sellers
+- Real-time chat support (use third-party widget for launch)
+- Subscription / recurring billing
+- Direct social-commerce integrations (Instagram Shop, TikTok Shop)
+- ERP / accounting integration (CSV export at launch; deeper roadmap)
+- In-store POS integration
 
 ---
 
-### 3.2 Admin-Facing Requirements
+## 6. Functional Requirements
 
-#### FR-100: Admin Dashboard
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-100.1 | Dashboard shows total revenue (current month) | Must Have |
-| FR-100.2 | Dashboard shows total orders (current month) | Must Have |
-| FR-100.3 | Dashboard shows new customers (current month) | Must Have |
-| FR-100.4 | Dashboard shows average order value | Must Have |
-| FR-100.5 | Dashboard shows top selling products | Should Have |
-| FR-100.6 | Dashboard shows recent orders list | Must Have |
-| FR-100.7 | Dashboard shows order status distribution | Should Have |
-| FR-100.8 | Dashboard shows revenue by category | Should Have |
+### 6.1 Storefront — Catalog & Browse
 
-#### FR-101: Product Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-101.1 | Admin can view all products with pagination | Must Have |
-| FR-101.2 | Admin can create new products with all fields | Must Have |
-| FR-101.3 | Admin can edit existing products | Must Have |
-| FR-101.4 | Admin can delete products | Must Have |
-| FR-101.5 | Admin can upload product images | Must Have |
-| FR-101.6 | Admin can set product flags (featured, best seller, new) | Must Have |
-| FR-101.7 | Admin can set product pricing (selling, original, cost) | Must Have |
-| FR-101.8 | Admin can assign products to categories and brands | Must Have |
+| ID | Requirement |
+|----|-------------|
+| FR-001 | Storefront SHALL render a configurable home page assembled from CMS sections (hero banner, category tiles, brand strip, collections, editorial, best sellers, new arrivals, promo strip, testimonials) |
+| FR-002 | Storefront SHALL provide category and subcategory landing pages |
+| FR-003 | Storefront SHALL provide brand and designer landing pages |
+| FR-004 | Storefront SHALL provide a faceted product list with filters: category, brand, designer, price range, in-stock, on-sale, new, featured, best seller |
+| FR-005 | Storefront SHALL support sort orders: price asc/desc, newest, popular |
+| FR-006 | Storefront SHALL paginate product lists with configurable page size |
+| FR-007 | Storefront SHALL provide full-text search over product name, SKU, brand, description |
+| FR-008 | Product detail page SHALL display gallery, price (incl + excl VAT), stock, variant axes (color/size/material), description, related products |
+| FR-009 | Variants SHALL be addressable by slug; switching a variant SHALL update the URL without full reload |
+| FR-010 | Storefront SHALL render schedulable banners and announcements |
 
-#### FR-102: Category Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-102.1 | Admin can view, create, edit, delete categories | Must Have |
-| FR-102.2 | Admin can reorder categories | Should Have |
-| FR-102.3 | Admin can manage subcategories | Should Have |
+### 6.2 Account, Auth & Identity
 
-#### FR-103: Brand Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-103.1 | Admin can view, create, edit, delete brands | Must Have |
+| ID | Requirement |
+|----|-------------|
+| FR-020 | Users SHALL register with email + password (Argon2id hashed) |
+| FR-021 | Users SHALL receive an email-verification link valid for 1 hour |
+| FR-022 | Users SHALL log in and receive a 15-minute access JWT plus a 7-day refresh token |
+| FR-023 | Refresh tokens SHALL be rotated on use; reuse SHALL revoke the entire chain |
+| FR-024 | Users SHALL be able to request password reset via email link |
+| FR-025 | Authenticated users SHALL view & update profile (first/last name, phone) |
+| FR-026 | Users SHALL maintain an address book (multiple shipping + billing addresses) |
+| FR-027 | Users SHALL view order history with status, totals, and downloadable invoice |
+| FR-028 | Users SHALL view loyalty balance, lifetime earn, and transaction ledger |
+| FR-029 | Users SHALL maintain a favorites list (idempotent add/remove) |
+| FR-030 | Users SHALL request returns from delivered orders |
 
-#### FR-104: Order Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-104.1 | Admin can view all orders with filtering by status | Must Have |
-| FR-104.2 | Admin can view order details (items, addresses, payment) | Must Have |
-| FR-104.3 | Admin can update order status with tracking info | Must Have |
-| FR-104.4 | Admin can generate and download invoice PDFs | Must Have |
-| FR-104.5 | Order status history is recorded (audit trail) | Must Have |
+### 6.3 Cart & Checkout
 
-#### FR-105: Customer Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-105.1 | Admin can view all customers with search/filter | Must Have |
-| FR-105.2 | Admin can view customer details and order history | Must Have |
-| FR-105.3 | Admin can create new customer accounts | Should Have |
-| FR-105.4 | Admin can edit customer profiles | Must Have |
-| FR-105.5 | Admin can soft-delete customers | Must Have |
-| FR-105.6 | Admin can adjust customer loyalty point balances | Should Have |
-| FR-105.7 | Admin can manage customer addresses | Should Have |
+| ID | Requirement |
+|----|-------------|
+| FR-040 | Guests and authenticated users SHALL build a cart |
+| FR-041 | Cart totals SHALL be computed server-side on every read (never trust client) |
+| FR-042 | Adding the same SKU to cart twice SHALL merge quantities |
+| FR-043 | Setting line quantity to zero SHALL remove the line |
+| FR-044 | Promo codes SHALL be validatable from cart with clear error messaging |
+| FR-045 | Loyalty redemption SHALL be capped at `min(walletBalance, subtotal × maxRedeemPct)` |
+| FR-046 | Checkout SHALL collect shipping address, shipping method, and payment method |
+| FR-047 | Checkout SHALL show a final total breakdown before payment confirmation |
+| FR-048 | On Stripe selection the SPA SHALL open Stripe Elements with `clientSecret` from API |
+| FR-049 | On Tabby/Tamara the SPA SHALL redirect to provider-hosted checkout |
+| FR-050 | On Cash on Delivery the order SHALL be created in `PROCESSING` directly |
 
-#### FR-106: Banner Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-106.1 | Admin can create banners with title, subtitle, images, CTA | Must Have |
-| FR-106.2 | Admin can assign banners to placements (hero, top, mid, bottom) | Must Have |
-| FR-106.3 | Admin can set banner active dates (start/end) | Should Have |
-| FR-106.4 | Admin can enable/disable individual banners | Must Have |
-| FR-106.5 | Admin can reorder banners within a placement | Must Have |
+### 6.4 Orders, Payments & Returns
 
-#### FR-107: Promo Code Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-107.1 | Admin can create promo codes (percentage, fixed, free shipping) | Must Have |
-| FR-107.2 | Admin can set minimum order amount for promo | Should Have |
-| FR-107.3 | Admin can set usage limits (total and per user) | Must Have |
-| FR-107.4 | Admin can set validity period (start/end dates) | Must Have |
-| FR-107.5 | Admin can activate/deactivate promos | Must Have |
-| FR-107.6 | Admin can view orders that used each promo code | Should Have |
+| ID | Requirement |
+|----|-------------|
+| FR-060 | Order creation SHALL atomically lock product rows, snapshot totals, decrement stock, post pending loyalty earn, and write audit |
+| FR-061 | Stock reservation SHALL move from `reservedQty` to deducted on PAID |
+| FR-062 | Webhook processing SHALL be idempotent via provider event tables (`stripe_events`, `tabby_events`, `tamara_events`) |
+| FR-063 | Invoices SHALL be generated as PDF (pdfkit), stored, and downloadable |
+| FR-064 | Order status transitions SHALL follow the documented state machine and emit `order_status_history` rows |
+| FR-065 | Refunds via Stripe SHALL set order status to REFUNDED and roll back loyalty earn |
+| FR-066 | Returns SHALL move through `REQUESTED → APPROVED → IN_TRANSIT → RECEIVED → COMPLETED` (or `REJECTED`) |
+| FR-067 | Approved returns SHALL trigger Stripe refund + loyalty wallet refund |
 
-#### FR-108: Content Management (CMS)
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-108.1 | Admin can configure homepage sections and order | Must Have |
-| FR-108.2 | Admin can create/edit landing pages | Should Have |
-| FR-108.3 | Admin can configure category-specific landing pages | Should Have |
-| FR-108.4 | Admin can manage blog posts with categories and tags | Should Have |
-| FR-108.5 | Admin can configure navigation menus | Should Have |
-| FR-108.6 | Admin can manage curated product collections | Should Have |
+### 6.5 Admin — Catalog & Content
 
-#### FR-109: Reports & Analytics
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-109.1 | Revenue report with date range filtering | Must Have |
-| FR-109.2 | Order report (count, status breakdown, trends) | Must Have |
-| FR-109.3 | Product report (top sellers, revenue by product) | Must Have |
-| FR-109.4 | Customer report (new vs returning, top spenders) | Should Have |
-| FR-109.5 | VAT report (taxable amount, VAT collected) | Must Have |
-| FR-109.6 | Category performance report | Should Have |
-| FR-109.7 | Promo code usage report | Should Have |
-| FR-109.8 | Stock/inventory status report | Should Have |
+| ID | Requirement |
+|----|-------------|
+| FR-080 | Admin SHALL create / update / soft-delete / restore products with images, pricing, and flags |
+| FR-081 | Admin SHALL manage categories, subcategories, brands, designers (CRUD) |
+| FR-082 | Admin SHALL manage product groups (variant sets) |
+| FR-083 | Admin SHALL upload images via the media module; sharp SHALL generate thumb/medium/large variants |
+| FR-084 | Admin SHALL configure the home page (sections, ordering, scheduling) |
+| FR-085 | Admin SHALL CRUD landing pages, banners, navigation, collections, announcements |
+| FR-086 | Admin SHALL CRUD promo codes (PERCENT/FIXED, min order, max uses, per-user cap, schedule) |
 
-#### FR-110: Settings Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-110.1 | Admin can configure VAT rate | Must Have |
-| FR-110.2 | Admin can configure Stripe API keys | Must Have |
-| FR-110.3 | Admin can enable/disable Stripe payments | Must Have |
+### 6.6 Admin — Operations
 
-#### FR-111: Media Management
-| ID | Requirement | Priority |
-|----|------------|----------|
-| FR-111.1 | Admin can upload images (JPEG, PNG, WebP, SVG) | Must Have |
-| FR-111.2 | Images auto-optimized on upload (WebP, resize) | Should Have |
-| FR-111.3 | Admin can delete uploaded media | Must Have |
-| FR-111.4 | Max file size: 5 MB | Must Have |
+| ID | Requirement |
+|----|-------------|
+| FR-090 | Admin SHALL view dashboard KPIs (revenue today/7d, orders today, new customers 7d, low-stock count) |
+| FR-091 | Admin SHALL view the orders queue filtered by status, date range, customer |
+| FR-092 | Admin SHALL transition orders through the documented state machine |
+| FR-093 | Admin SHALL view customer profiles with order history and loyalty balance |
+| FR-094 | Admin SHALL adjust loyalty balances (`ADJUSTED` ledger entry) with reason captured in audit |
+| FR-095 | Admin SHALL receive low-stock notifications (in-app + email-optional) |
+| FR-096 | Admin SHALL generate reports: sales summary, revenue period, top products, customers LTV, orders by status, low stock |
+| FR-097 | Admin SHALL view the audit log filtered by user, action, entity, date range |
+| FR-098 | Admin SHALL configure site settings (VAT rate, shipping tiers, loyalty earn rate, redemption cap) |
+| FR-099 | Admin SHALL handle bulk-order (B2B) requests through approval workflow |
 
 ---
 
-## 4. Non-Functional Requirements
+## 7. Non-Functional Requirements
 
-### 4.1 Performance
-| ID | Requirement | Target |
-|----|------------|--------|
-| NFR-001 | API response time (p95) | < 500ms |
-| NFR-002 | Page load time (initial) | < 3 seconds |
-| NFR-003 | Concurrent users support | 100+ |
-| NFR-004 | Product listing pagination | 20 items/page |
-| NFR-005 | Image load time | < 1 second (optimized + CDN) |
+### 7.1 Performance
 
-### 4.2 Security
-| ID | Requirement | Standard |
-|----|------------|----------|
-| NFR-010 | Password hashing | Argon2id |
-| NFR-011 | Transport encryption | TLS 1.2+ |
-| NFR-012 | JWT token expiry | Access: 15min, Refresh: 7 days |
-| NFR-013 | Rate limiting | 1000 req/min general, stricter on auth |
-| NFR-014 | Input validation | All inputs validated via DTOs |
-| NFR-015 | SQL injection prevention | Parameterized queries (Prisma) |
-| NFR-016 | XSS prevention | Helmet CSP headers, no raw HTML render |
-| NFR-017 | CORS | Whitelisted frontend origin only |
-| NFR-018 | Payment security | PCI-DSS via Stripe (no card data storage) |
+| ID | Requirement |
+|----|-------------|
+| NFR-001 | API p95 read latency SHALL be ≤ 700 ms region-internal |
+| NFR-002 | API p95 write latency SHALL be ≤ 1.2 s |
+| NFR-003 | LCP on storefront pages SHALL be ≤ 2.5 s on 3G p75 |
+| NFR-004 | CLS SHALL be ≤ 0.1 on storefront pages |
+| NFR-005 | Container cold-start SHALL be ≤ 5 s |
+| NFR-006 | Admin lazy chunk SHALL not exceed 500 KB gzipped |
 
-### 4.3 Reliability
-| ID | Requirement | Target |
-|----|------------|--------|
-| NFR-020 | Uptime SLA | 99.9% |
-| NFR-021 | Database backup frequency | Daily automated |
-| NFR-022 | Recovery point objective (RPO) | < 1 hour |
-| NFR-023 | Recovery time objective (RTO) | < 1 hour |
-| NFR-024 | Error handling | Graceful degradation, user-friendly messages |
+### 7.2 Scalability
 
-### 4.4 Usability
-| ID | Requirement | Target |
-|----|------------|--------|
-| NFR-030 | Responsive design | Desktop, tablet, mobile viewports |
-| NFR-031 | Browser support | Chrome, Safari, Firefox, Edge (last 2 versions) |
-| NFR-032 | Accessibility | WCAG 2.1 AA target |
-| NFR-033 | Error messages | Clear, actionable user feedback |
+| ID | Requirement |
+|----|-------------|
+| NFR-010 | API SHALL autoscale 1–10 replicas based on concurrent HTTP requests |
+| NFR-011 | DB SHALL be vertically scalable without code changes |
+| NFR-012 | The system SHALL sustain ≥ 50 concurrent checkouts per minute at launch |
+| NFR-013 | Catalog read endpoints SHALL be safe to add a read-replica fan-out later |
 
-### 4.5 Maintainability
-| ID | Requirement | Target |
-|----|------------|--------|
-| NFR-040 | Code structure | Modular (NestJS modules, Flutter providers) |
-| NFR-041 | API documentation | All endpoints documented |
-| NFR-042 | Database migrations | Version-controlled (Prisma Migrate) |
-| NFR-043 | Deployment | Automated CI/CD pipeline |
+### 7.3 Availability
 
----
+| ID | Requirement |
+|----|-------------|
+| NFR-020 | Monthly availability SHALL be ≥ 99.9% (≤ 43 min downtime / month) |
+| NFR-021 | Planned maintenance SHALL be announced 48 h in advance |
+| NFR-022 | Application Insights availability test SHALL ping `/api/health` every 5 minutes |
 
-## 5. Feature Implementation Matrix
+### 7.4 Security
 
-| Feature | Design | Backend | Frontend | Testing | Status |
-|---------|--------|---------|----------|---------|--------|
-| User Registration | ✅ | ✅ | ✅ | ✅ | Complete |
-| User Login | ✅ | ✅ | ✅ | ✅ | Complete |
-| Password Reset | ✅ | ✅ | ✅ | ✅ | Complete |
-| Email Verification | ✅ | ✅ | ✅ | ⬜ | Backend + Frontend Done |
-| Product Listing | ✅ | ✅ | ✅ | ✅ | Complete |
-| Product Filtering | ✅ | ✅ | ✅ | ✅ | Complete |
-| Product Detail | ✅ | ✅ | ✅ | ✅ | Complete |
-| Product Search | ✅ | ✅ | ✅ | ✅ | Complete |
-| Shopping Cart | ✅ | ✅ | ✅ | ✅ | Complete |
-| Checkout Flow | ✅ | ✅ | ✅ | ✅ | Complete |
-| Stripe Payments | ✅ | ✅ | ✅ | ✅ | Complete |
-| Order Management | ✅ | ✅ | ✅ | ✅ | Complete |
-| Invoice PDF | ✅ | ✅ | ✅ | ⬜ | API Complete |
-| Favorites | ✅ | ✅ | ✅ | ✅ | Complete |
-| Loyalty Program | ✅ | ✅ | ✅ | ✅ | Complete |
-| Promo Codes | ✅ | ✅ | ✅ | ✅ | Complete |
-| Admin Dashboard | ✅ | ✅ | ✅ | ✅ | Complete |
-| Admin Products | ✅ | ✅ | ✅ | ✅ | Complete |
-| Admin Categories | ✅ | ✅ | ✅ | ✅ | Complete |
-| Admin Brands | ✅ | ✅ | ✅ | ✅ | Complete |
-| Admin Orders | ✅ | ✅ | ✅ | ✅ | Complete |
-| Admin Customers | ✅ | ✅ | ✅ | ✅ | Complete |
-| Banners CMS | ✅ | ✅ | ✅ | ✅ | Complete |
-| Landing Pages | ✅ | ✅ | ✅ | ⬜ | Frontend In Progress |
-| Blog | ✅ | ✅ | ⬜ | ⬜ | Backend Complete |
-| Navigation Menus | ✅ | ✅ | ✅ | ⬜ | Functional |
-| Collections | ✅ | ✅ | ⬜ | ⬜ | Backend Complete |
-| Reports | ✅ | ✅ | ✅ | ⬜ | Functional |
-| Media Upload | ✅ | ✅ | ✅ | ✅ | Complete |
-| VAT Config | ✅ | ✅ | ✅ | ✅ | Complete |
-| Stripe Config | ✅ | ✅ | ✅ | ✅ | Complete |
+| ID | Requirement |
+|----|-------------|
+| NFR-030 | All transport SHALL be HTTPS with HSTS |
+| NFR-031 | Passwords SHALL be hashed with Argon2id (memory ≥ 19 MB, time-cost ≥ 2) |
+| NFR-032 | Access JWTs SHALL expire ≤ 15 min; refresh tokens ≤ 7 d, rotated on use |
+| NFR-033 | All inputs SHALL pass `class-validator` whitelist + transform |
+| NFR-034 | Helmet, CORS allow-list, ThrottlerGuard SHALL be globally enabled |
+| NFR-035 | Webhooks SHALL verify HMAC signatures and dedup via provider event tables |
+| NFR-036 | Containers SHALL run as non-root with minimal Node 20 alpine image |
+| NFR-037 | Secrets SHALL be sourced from Container App secrets (Key Vault recommended) |
+| NFR-038 | The system SHALL maintain an OWASP Top 10 (2021) green checklist |
 
-**Legend**: ✅ Complete | ⬜ Pending
+### 7.5 Compliance
+
+| ID | Requirement |
+|----|-------------|
+| NFR-040 | Invoices SHALL include UAE TRN, VAT split, sequential invoice number |
+| NFR-041 | VAT rate SHALL be snapshotted per order (`vatRateSnapshot`) for retro correctness |
+| NFR-042 | Audit log SHALL be append-only with ≥ 90-day hot retention and cold export |
+| NFR-043 | Personal data deletion requests SHALL be supported (PDPL/GDPR alignment) |
+
+### 7.6 Accessibility
+
+| ID | Requirement |
+|----|-------------|
+| NFR-050 | Storefront SHALL meet WCAG 2.1 AA on key flows (browse, PDP, cart, checkout, account) |
+| NFR-051 | All interactive elements SHALL be keyboard-navigable with visible focus |
+| NFR-052 | Forms SHALL have proper label/aria associations |
+
+### 7.7 Maintainability & DevOps
+
+| ID | Requirement |
+|----|-------------|
+| NFR-060 | Codebase SHALL be 100% TypeScript across both tiers |
+| NFR-061 | All endpoints SHALL be documented in Swagger UI at `/api/docs` |
+| NFR-062 | Backend test coverage on services SHALL be ≥ 70% |
+| NFR-063 | Frontend test coverage on stores + hooks SHALL be ≥ 70% |
+| NFR-064 | CI SHALL run lint + test + build on every PR |
+| NFR-065 | One-command production deploy SHALL be supported via `azd deploy` |
+
+### 7.8 Observability
+
+| ID | Requirement |
+|----|-------------|
+| NFR-070 | Backend SHALL emit Pino structured logs with correlation IDs |
+| NFR-071 | Backend SHALL emit App Insights traces for every HTTP request |
+| NFR-072 | Custom events SHALL be emitted for `ORDER_PAID`, `ORDER_REFUNDED`, `RETURN_COMPLETED` |
+| NFR-073 | Alerts SHALL fire on error-rate > 1% / 5 min, container-restart > 3 / 10 min, PG CPU > 80% / 10 min |
 
 ---
 
-## 6. User Stories Summary
+## 8. Assumptions & Constraints
 
-### 6.1 Customer Stories
-
-| ID | Story | Priority |
-|----|-------|----------|
-| US-01 | As a visitor, I want to browse products by category so I can find what I need | Must |
-| US-02 | As a visitor, I want to search for products so I can find specific items quickly | Must |
-| US-03 | As a visitor, I want to view product details with images and specs so I can make informed decisions | Must |
-| US-04 | As a customer, I want to register an account so I can save my preferences | Must |
-| US-05 | As a customer, I want to add items to cart and check out so I can purchase products | Must |
-| US-06 | As a customer, I want to pay securely with my credit card so my payment info is safe | Must |
-| US-07 | As a customer, I want to save my favorite products so I can buy them later | Must |
-| US-08 | As a customer, I want to view my order history so I can track my purchases | Must |
-| US-09 | As a customer, I want to manage my addresses so checkout is faster | Must |
-| US-10 | As a customer, I want to earn loyalty points so I get rewarded for purchasing | Should |
-| US-11 | As a customer, I want to use promo codes so I can get discounts | Should |
-| US-12 | As a customer, I want to download invoices so I have records of my purchases | Should |
-
-### 6.2 Admin Stories
-
-| ID | Story | Priority |
-|----|-------|----------|
-| US-20 | As an admin, I want a dashboard showing key metrics so I can monitor business health | Must |
-| US-21 | As an admin, I want to manage products so I can keep the catalog current | Must |
-| US-22 | As an admin, I want to manage orders and update statuses so customers know their order progress | Must |
-| US-23 | As an admin, I want to manage customers so I can provide support | Must |
-| US-24 | As an admin, I want to create promo codes so I can run promotions | Should |
-| US-25 | As an admin, I want to manage homepage banners so I can promote products | Must |
-| US-26 | As an admin, I want to view reports so I can make data-driven decisions | Must |
-| US-27 | As an admin, I want to configure payment settings so I can manage Stripe | Must |
-| US-28 | As an admin, I want to upload product images efficiently so the catalog looks professional | Must |
+| # | Item |
+|---|------|
+| A1 | Single primary region: Azure East US 2 (low-cost; UAE Central optional) |
+| A2 | Single currency at launch: AED |
+| A3 | Single language at launch: English (LTR) |
+| A4 | Stripe, Tabby, Tamara provider accounts available |
+| A5 | SMTP relay credentials available |
+| A6 | UAE TRN issued for invoice generation |
+| C1 | Budget excludes premium WAF in launch (recommended in roadmap) |
+| C2 | Mobile native app deferred to roadmap |
+| C3 | Marketplace / multi-vendor model not in scope |
+| C4 | No integration with external ERP at launch (CSV export only) |
 
 ---
 
-## 7. Data Requirements
+## 9. Acceptance Criteria
 
-### 7.1 Product Data
+The release SHALL be considered ready when:
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| Name | String | Yes | Product display name (max 500 chars) |
-| Slug | String | Yes | URL-friendly identifier |
-| Description | Text | No | Full product description |
-| Short Description | Text | No | Summary for listing cards |
-| Brand | Reference | Yes | FK to Brand |
-| Category | Reference | Yes | FK to Category |
-| Subcategory | Reference | No | FK to Subcategory |
-| Selling Price | Decimal | Yes | Current price in AED |
-| Original Price | Decimal | No | Before-discount price |
-| Cost Price | Decimal | No | Internal cost (admin only) |
-| Currency | String | Yes | Default: AED |
-| VAT Rate | Decimal | Yes | Default: 5% |
-| Images | Array | Yes | 1+ product images with display order |
-| Specifications | Array | No | Key-value specification pairs |
-| Dimensions | Object | No | Width, height, depth, unit |
-| Is Active | Boolean | Yes | Show in store |
-| Is Featured | Boolean | No | Show in featured section |
-| Is Best Seller | Boolean | No | Show in best sellers |
-| Is New | Boolean | No | Show in new arrivals |
-| Designer | Reference | No | FK to Designer |
-| Country | Reference | No | FK to Country of origin |
-
-### 7.2 Order Data
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| Order Number | String | Yes | Auto-generated: "SO-{timestamp}{random}" |
-| Customer | Reference | Yes | FK to User |
-| Status | Enum | Yes | PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED |
-| Items | Array | Yes | Snapshot of ordered products |
-| Subtotal | Decimal | Yes | Sum of item totals |
-| Discount | Decimal | No | Applied promo discount |
-| VAT Amount | Decimal | Yes | Calculated VAT |
-| Shipping Amount | Decimal | No | Delivery charges |
-| Total | Decimal | Yes | Final payable amount |
-| Payment Intent | String | No | Stripe payment reference |
-| Shipping Address | JSON | Yes | Address snapshot (immutable) |
-| Billing Address | JSON | Yes | Address snapshot (immutable) |
-| Promo Code | Reference | No | FK to PromoCode if applied |
-| Loyalty Earned | Integer | No | Points awarded for this order |
-| Loyalty Redeemed | Integer | No | Points used on this order |
+- All FR-0xx requirements are implemented and covered by automated tests.
+- All NFR-0xx requirements are measured and met in pre-prod load tests.
+- Penetration test (OWASP scope) yields no Critical or High findings.
+- Disaster recovery drill (DB restore + frontend redeploy) completes
+  inside the 4-hour RTO target.
+- Admin user-acceptance test sign-off on all admin workflows.
+- Customer user-acceptance test sign-off on browse/PDP/cart/checkout/
+  account/returns flows.
 
 ---
 
-## 8. Constraints & Assumptions
+## 10. Future Roadmap
 
-### 8.1 Constraints
+| Phase | Feature |
+|-------|---------|
+| **Phase 2 (Q3 2026)** | Arabic locale (RTL), KSA market launch (15% VAT), multi-currency |
+| **Phase 2** | Granular admin sub-roles (CONTENT_EDITOR, ORDER_MANAGER, SUPPORT_AGENT) |
+| **Phase 3 (Q4 2026)** | Mobile companion app — **React Native** (Expo) or **Capacitor** wrapper sharing the React component library |
+| **Phase 3** | Real-time inventory sync from supplier feeds |
+| **Phase 4 (Q1 2027)** | Multi-region active-passive (Azure UAE Central + East US 2) |
+| **Phase 4** | Azure Front Door + WAF in front of SWA + ACA |
+| **Phase 4** | Dedicated Redis (cart sessions, rate-limit counters, hot caches) |
+| **Phase 5** | Personalised recommendations (Azure ML) |
+| **Phase 5** | Marketplace / multi-vendor support |
+| **Phase 5** | ERP & accounting integration (Microsoft Dynamics, SAP B1) |
 
-| # | Constraint |
-|---|-----------|
-| C-1 | Single-tenant: one Solo store per deployment |
-| C-2 | AED currency only (no multi-currency) |
-| C-3 | English language only (current release) |
-| C-4 | Maximum file upload size: 5 MB |
-| C-5 | Stripe is the only payment gateway supported |
-| C-6 | PostgreSQL 14+ required |
-| C-7 | Node.js 18+ required for backend |
-| C-8 | Flutter 3.38+ required for frontend builds |
-
-### 8.2 Assumptions
-
-| # | Assumption |
-|---|-----------|
-| A-1 | Products are physical goods with basic shipping (no digital downloads) |
-| A-2 | Single warehouse fulfillment model |
-| A-3 | Admin users are trusted internal staff (no audit for admin actions beyond orders) |
-| A-4 | Email delivery is critical for password reset and order confirmation |
-| A-5 | Product catalog is manually maintained by admin (no automated supplier feeds) |
-| A-6 | Internet connectivity is required for all operations (no offline mode) |
+> **Note:** The mobile app strategy is **React Native** or **Capacitor**
+> — not Flutter — so we can share components, types, and the existing
+> API client with the web codebase.
 
 ---
 
-## 9. Acceptance Criteria (Key Flows)
-
-### 9.1 Customer Registration
-- **Given** a visitor on the signup page
-- **When** they enter valid email, password, first name, last name
-- **Then** an account is created, verification email is sent, and they are redirected to verification prompt
-
-### 9.2 Product Purchase
-- **Given** a logged-in customer with items in cart
-- **When** they complete checkout with valid shipping address and Stripe payment
-- **Then** an order is created, cart is cleared, loyalty points are awarded, and confirmation email is sent
-
-### 9.3 Admin Order Management
-- **Given** an admin viewing order with status "CONFIRMED"
-- **When** they update status to "SHIPPED" with tracking number
-- **Then** order status is updated, status history entry is created, and customer can view new status
-
-### 9.4 Promo Code Application
-- **Given** a customer with a cart subtotal of AED 500
-- **When** they apply a valid promo code for 10% off (min order AED 200)
-- **Then** AED 50 discount is applied, new total reflects reduction
-
----
-
-## 10. Release Plan
-
-### Phase 1 — MVP (Current Release) ✅
-- Full product catalog with search and filtering
-- User registration, login, account management
-- Shopping cart + checkout + Stripe payments
-- Admin dashboard + product/order/customer management
-- Banner CMS + homepage configuration
-- Promo codes + loyalty program (basic)
-- Reports dashboard
-
-### Phase 2 — Enhancements (Planned)
-- Product reviews and ratings
-- Arabic language support (RTL)
-- Advanced search (filters UI, faceted search)
-- Customer email marketing integration
-- Blog frontend display
-- Curated collections frontend
-- Stock management alerts
-- Shipping integration (Aramex / Emirates Post)
-
-### Phase 3 — Scale (Future)
-- Mobile native shell (Flutter → Android/iOS)
-- AI-powered product recommendations
-- Multi-warehouse support
-- Accounting software integration
-- Advanced analytics (conversion funnels, cohort analysis)
-- A/B testing framework for CMS content
-
----
-
-*End of Project Scope, Features & Requirements Document*
+*End of Project Scope, Features & Requirements.*

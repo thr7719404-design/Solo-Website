@@ -1958,8 +1958,38 @@
   background: var(--admin-rose-glow);
 }
 
+.filter-input {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--admin-glass-border);
+  border-radius: var(--admin-radius-xs);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--admin-glass);
+  color: var(--admin-text);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.filter-input::placeholder { color: var(--admin-text-muted); }
+
+.filter-input:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-accent-glow);
+}
+
+.filter-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+
 /* Light mode option text fix */
 .admin-shell[data-theme="light"] .filter-select option {
   background: #fff;
+  color: #1e293b;
+}
+
+.admin-shell[data-theme="light"] .filter-input {
   color: #1e293b;
 }

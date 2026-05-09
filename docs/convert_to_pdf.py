@@ -152,28 +152,42 @@ def render_table(pdf, rows):
     num_cols = len(rows[0])
     page_width = 190  # mm (210 - 2*10 margins)
 
-    # Calculate column widths based on content
-    col_widths = []
+    # Approx mm-per-character at font size 7 (Helvetica)
+    char_w = 1.45
+    cell_pad = 2.0  # mm padding inside each cell
+
+    # For each column compute:
+    #   min_w  = width of the longest unbreakable token (so IDs like "FR-001" never wrap mid-token)
+    #   pref_w = width of the longest full cell (ideal width if space allowed)
+    min_widths = []
+    pref_widths = []
     for col_idx in range(num_cols):
-        max_len = 0
+        longest_token = 3
+        longest_cell = 3
         for row in rows:
-            if col_idx < len(row):
-                cell_text = clean_text(row[col_idx])
-                max_len = max(max_len, len(cell_text))
-        col_widths.append(max(max_len, 3))
+            if col_idx >= len(row):
+                continue
+            cell_text = clean_text(row[col_idx])
+            longest_cell = max(longest_cell, len(cell_text))
+            for tok in re.split(r'\s+', cell_text):
+                longest_token = max(longest_token, len(tok))
+        min_widths.append(longest_token * char_w + cell_pad)
+        pref_widths.append(longest_cell * char_w + cell_pad)
 
-    total = sum(col_widths)
-    col_widths = [w / total * page_width for w in col_widths]
+    # Cap min widths so no single column exceeds 40% of the page (long URLs etc.)
+    max_min = page_width * 0.4
+    min_widths = [min(w, max_min) for w in min_widths]
 
-    # Cap any single column at 60% of page width
-    for i in range(len(col_widths)):
-        if col_widths[i] > page_width * 0.6:
-            col_widths[i] = page_width * 0.6
-
-    # Recalculate to fit page
-    total = sum(col_widths)
-    if total > page_width:
-        col_widths = [w / total * page_width for w in col_widths]
+    # Start from min widths; distribute remaining space proportional to (pref - min)
+    total_min = sum(min_widths)
+    if total_min >= page_width:
+        # Not enough room even for minimums — scale down proportionally
+        col_widths = [w / total_min * page_width for w in min_widths]
+    else:
+        remaining = page_width - total_min
+        extra = [max(0, p - m) for p, m in zip(pref_widths, min_widths)]
+        total_extra = sum(extra) or 1
+        col_widths = [m + (e / total_extra) * remaining for m, e in zip(min_widths, extra)]
 
     pdf.set_font("Helvetica", "", 7)
     line_height = 4.5
@@ -198,11 +212,26 @@ def render_table(pdf, rows):
         for col_idx in range(num_cols):
             cell_text = clean_text(row[col_idx]) if col_idx < len(row) else ""
             cell_texts.append(cell_text)
-            # Estimate lines needed
-            char_width = 1.8  # approximate character width at font size 7
-            chars_per_line = max(int(col_widths[col_idx] / char_width), 1)
-            lines_needed = max(1, -(-len(cell_text) // chars_per_line))  # ceiling division
-            max_lines = max(max_lines, lines_needed)
+            # Estimate lines needed (account for word wrapping on whitespace)
+            avail_chars = max(int((col_widths[col_idx] - cell_pad) / char_w), 1)
+            # Wrap simulation: count lines after greedy word wrap
+            words = cell_text.split() or [""]
+            lines_used = 1
+            cur = 0
+            for w in words:
+                wl = len(w)
+                if cur == 0:
+                    cur = min(wl, avail_chars)
+                elif cur + 1 + wl <= avail_chars:
+                    cur += 1 + wl
+                else:
+                    lines_used += 1
+                    cur = min(wl, avail_chars)
+            # Also handle very long single tokens that exceed avail_chars
+            for w in words:
+                if len(w) > avail_chars:
+                    lines_used += (len(w) - 1) // avail_chars
+            max_lines = max(max_lines, lines_used)
 
         row_height = line_height * max_lines
 

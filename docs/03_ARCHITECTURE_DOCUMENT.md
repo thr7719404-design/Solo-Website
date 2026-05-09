@@ -1,701 +1,535 @@
 # Solo E-Commerce Platform — Architecture Document
 
-**Document Version**: 1.0  
-**Date**: 17 March 2026  
-**Author**: Solo Engineering Team  
-**Status**: Final  
+**Document Version:** 1.1
+**Date:** 09 May 2026
+**Author:** Solo Engineering Team
+**Status:** Final
 
 ---
 
-## 1. Architecture Overview
+## 1. Introduction
 
-Solo E-Commerce follows a **three-tier client-server architecture** with clear separation between the presentation layer (Flutter Web), the business logic layer (NestJS API), and the data persistence layer (PostgreSQL). Communication between tiers is strictly through RESTful JSON APIs over HTTPS.
+This document is the canonical reference for the architecture of the Solo
+E-Commerce platform. It describes the macro-level structure (tiers,
+components, data flow), the cross-cutting concerns (security, observability,
+deployment), and the conventions that bind them. It complements:
 
-### 1.1 Architecture Style
+- [01 HLD](./01_HIGH_LEVEL_DESIGN.md) — system context & goals
+- [02 LLD](./02_LOW_LEVEL_DESIGN.md) — module-level class detail
+- [04 Scope & Requirements](./04_PROJECT_SCOPE_FEATURES_REQUIREMENTS.md)
+- [05 Technical Features](./05_TECHNICAL_FEATURES.md)
 
-| Characteristic | Implementation |
-|---------------|----------------|
-| **Pattern** | Monolithic modular (backend), SPA (frontend) |
-| **API Style** | RESTful with JSON payloads |
-| **State Management** | Stateless backend (JWT), stateful frontend (Provider) |
-| **Data Access** | ORM (Prisma) + Raw SQL for inventory |
-| **Authentication** | Token-based (JWT access + refresh) |
-| **Deployment** | Static frontend + API server + managed database |
-
-### 1.2 Design Principles
-
-1. **Separation of Concerns** — Each NestJS module owns one business domain
-2. **Single Responsibility** — Controllers handle HTTP, Services handle logic, Prisma handles data
-3. **Dependency Injection** — NestJS IoC container manages all service lifecycles
-4. **Fail-Fast Validation** — DTO validation at controller boundary before business logic
-5. **Defence in Depth** — Multiple security layers (Helmet, CORS, Throttle, JWT, RBAC)
+The system is implemented as a **headless three-tier web application** on
+Microsoft Azure: a React + Vite SPA frontend, a NestJS REST API backend,
+and a PostgreSQL database. All inter-tier traffic is HTTPS/TLS, and all
+business invariants live behind the API.
 
 ---
 
-## 2. System Context Diagram
+## 2. Architectural Principles
 
-```
-                    ┌──────────────────────┐
-                    │     Customer         │
-                    │  (Web Browser)       │
-                    └──────────┬───────────┘
-                               │ HTTPS
-                               ▼
-                    ┌──────────────────────┐
-                    │   Solo E-Commerce    │
-                    │     Platform         │
-                    └──────────┬───────────┘
-                               │
-         ┌─────────────────────┼─────────────────────┐
-         │                     │                     │
-         ▼                     ▼                     ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│   Stripe API    │ │   SMTP Email    │ │  File Storage   │
-│  (Payments)     │ │  (Notifications)│ │  (Images)       │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
-```
+| # | Principle | Practical implication |
+|---|-----------|------------------------|
+| P1 | **Strict tier separation** | SPA never speaks to DB; API is the only steward of business state |
+| P2 | **Type-safety end-to-end** | TypeScript on both tiers; Prisma-generated types feed DTOs |
+| P3 | **Snapshot, don't recompute** | VAT, prices, shipping, discount captured on `orders` at creation |
+| P4 | **Idempotent integrations** | Webhooks dedup via provider event IDs (`stripe_events`, …) |
+| P5 | **Soft-delete by default** | `deletedAt` tombstones on user-visible entities (e.g., products) |
+| P6 | **RBAC at the controller** | `RolesGuard` + `@Roles()` on every admin route |
+| P7 | **Stateless API** | All session data in JWT + DB; no in-process user state — horizontal scale |
+| P8 | **Append-only audit** | `audit_logs` is write-only via `AuditInterceptor` |
+| P9 | **One-command deploy** | `azd deploy` covers backend + frontend |
+| P10 | **Observability is non-negotiable** | Pino structured logs + App Insights traces, correlated by trace ID |
+| P11 | **Configuration over code** | Site settings (VAT rate, shipping tiers) live in `site_settings` table |
+| P12 | **Defence in depth** | Helmet, CORS allow-list, throttler, validation pipe with whitelist + transform |
 
 ---
 
-## 3. Component Architecture
-
-### 3.1 Frontend Component Map
+## 3. Three-Tier Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLUTTER WEB APPLICATION                       │
-│                                                                 │
-│  ┌─── ENTRY ──────────────────────────────────────────────────┐ │
-│  │  main.dart → App (MaterialApp + MultiProvider + Router)    │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── SCREENS (Views) ────────────────────────────────────────┐ │
-│  │                                                             │ │
-│  │  ┌─── Storefront ──────────┐  ┌─── Account ─────────────┐ │ │
-│  │  │ HomeScreen              │  │ LoginScreen              │ │ │
-│  │  │ HomeScreenCms           │  │ SignupScreen              │ │ │
-│  │  │ CategoryScreen          │  │ ForgotPasswordScreen      │ │ │
-│  │  │ CategoryLandingScreen   │  │ VerifyEmailScreen         │ │ │
-│  │  │ ProductDetailScreen     │  │ MyAccountScreen           │ │ │
-│  │  │ SearchScreen            │  │ MyAddressesScreen         │ │ │
-│  │  │ FavoritesScreen         │  │ LoyaltyProgramScreen      │ │ │
-│  │  │ CartScreen              │  └───────────────────────────┘ │ │
-│  │  │ CheckoutScreen          │                                │ │
-│  │  │ AboutUsScreen           │  ┌─── Admin ────────────────┐ │ │
-│  │  │ BulkOrderScreen         │  │ AdminDashboardScreen     │ │ │
-│  │  └─────────────────────────┘  │ AdminProductsScreen      │ │ │
-│  │                               │ AdminCategoriesScreen     │ │ │
-│  │                               │ AdminBrandsScreen         │ │ │
-│  │                               │ AdminOrdersScreen         │ │ │
-│  │                               │ AdminCustomersScreen      │ │ │
-│  │                               │ AdminBannersScreen        │ │ │
-│  │                               │ AdminPromoCodesScreen     │ │ │
-│  │                               │ AdminLandingPagesScreen   │ │ │
-│  │                               │ AdminReportsScreen        │ │ │
-│  │                               │ AdminStripeConfigScreen   │ │ │
-│  │                               │ AdminVatConfigScreen      │ │ │
-│  │                               └───────────────────────────┘ │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── STATE (Providers) ──────────────────────────────────────┐ │
-│  │ AuthProvider │ CartProvider │ ProductListProvider           │ │
-│  │ ProductDetailsProvider │ CategoryProvider │ SearchProvider  │ │
-│  │ FavoritesProvider │ HomeCmsProvider │ HomeProvider          │ │
-│  │ AccountProvider │ ContentProvider                           │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── API LAYER ──────────────────────────────────────────────┐ │
-│  │ ApiClient (HTTP + Auth Interceptor + Error Handling)        │ │
-│  │ ├── AuthApi      ├── ProductsApi   ├── CartApi             │ │
-│  │ ├── CategoriesApi├── BrandsApi     ├── OrdersApi           │ │
-│  │ ├── FavoritesApi ├── ContentApi    ├── MediaApi            │ │
-│  │ ├── AccountApi   ├── AdminApi      ├── CustomersApi        │ │
-│  │ ├── StripeApi    ├── PromoCodesApi └── LoyaltyApi          │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── WIDGETS (Reusable) ─────────────────────────────────────┐ │
-│  │ AppHeader │ AppDrawer │ Footer │ ProductCard │ SearchBar   │ │
-│  │ HeroBanner │ TopBanner │ SectionHeader │ BrandLogo         │ │
-│  │ CartDialog │ CategoryList │ MediaUploadWidget              │ │
-│  │ CMS Widgets │ Porto Theme Widgets │ Home Widgets           │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── MODELS ─────────────────────────────────────────────────┐ │
-│  │ Product │ Category │ CartItem │ Address │ Blog │ Loyalty   │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── CONFIG / THEME ─────────────────────────────────────────┐ │
-│  │ AppConfig (API URL, env) │ AppTheme (Material 3 tokens)    │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------------+
+|                          CLIENT BROWSERS                              |
+|        Customer SPA               Admin SPA               Marketing   |
++------------+--------------+-----------+--------------+----------+-----+
+             |                          |                         |
+             v                          v                         v
++-----------------------------------------------------------------------+
+|                  PRESENTATION TIER  (Azure SWA)                       |
+|                                                                       |
+|   +---------------------------------------------------------------+   |
+|   |          React 19 + Vite 6 + TypeScript 5  (SPA)              |   |
+|   |                                                               |   |
+|   |   index.html  ->  main.tsx                                    |   |
+|   |     |                                                         |   |
+|   |     v                                                         |   |
+|   |   <BrowserRouter>                                             |   |
+|   |     <ThemeProvider><ToastProvider>                            |   |
+|   |       <AppRoutes/>          <- React Router 7, lazy admin     |   |
+|   |     </ToastProvider></ThemeProvider>                          |   |
+|   |   </BrowserRouter>                                            |   |
+|   |                                                               |   |
+|   |   Stores (Zustand): authStore, cartStore, favoritesStore,     |   |
+|   |                     homeStore                                 |   |
+|   |                                                               |   |
+|   |   API client (lib/apiClient.ts): fetch + Bearer token +       |   |
+|   |                                  one-shot 401 refresh          |   |
+|   +---------------------------------------------------------------+   |
+|                                                                       |
+|   Reverse-proxy:  /api/*  ----->  backend Container App               |
++-------------------------+---------------------------------------------+
+                          | HTTPS  /api/*
+                          v
++-----------------------------------------------------------------------+
+|                  APPLICATION TIER  (Azure Container Apps)             |
+|                                                                       |
+|   +---------------------------------------------------------------+   |
+|   |              NestJS 10 REST API   (Node.js 20)                |   |
+|   |                                                               |   |
+|   |   main.ts                                                     |   |
+|   |     |- tracing.ts (App Insights bootstrap, must be first)     |   |
+|   |     |- NestFactory.create(AppModule, { bufferLogs: true })    |   |
+|   |     |- Pino logger                                            |   |
+|   |     |- setGlobalPrefix('api')                                 |   |
+|   |     |- ValidationPipe (whitelist + transform + forbid)        |   |
+|   |     |- HttpExceptionFilter (global)                           |   |
+|   |     |- Helmet, CORS allow-list, compression                   |   |
+|   |     |- AuditInterceptor (APP_INTERCEPTOR)                     |   |
+|   |     |- Swagger UI /api/docs (env-gated)                       |   |
+|   |     |- listen(PORT)                                           |   |
+|   |                                                               |   |
+|   |   Modules:                                                    |   |
+|   |     Auth, Users, Catalog, Products, Categories, Brands,       |   |
+|   |     Designers, Cart, Orders, Returns, Promo, Loyalty,         |   |
+|   |     Stripe, Tabby, Tamara, CMS, Content, Banners, Navigation, |   |
+|   |     Collections, Announcements, Media, Stock, Admin, Reports, |   |
+|   |     Customers, Settings, BulkOrders, Email, Health, Audit,    |   |
+|   |     Common                                                    |   |
+|   +---------------------------------------------------------------+   |
++-------------------------+---------------------------------------------+
+                          | TCP 5432 / TLS                  | HTTPS
+                          v                                  v
++----------------------------------------+   +-----------------------------+
+|     DATA TIER  (Azure PostgreSQL)      |   |     Azure Blob Storage      |
+|                                        |   |     (media container)       |
+|   ~50 tables (Prisma migrations)       |   +-----------------------------+
+|   Daily backups + PITR                 |
++----------------------------------------+
+
+   All tiers feed Application Insights / Log Analytics for telemetry.
 ```
 
-### 3.2 Backend Component Map
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    NESTJS API SERVER                             │
-│                                                                 │
-│  ┌─── CROSS-CUTTING CONCERNS ────────────────────────────────┐ │
-│  │                                                             │ │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐             │ │
-│  │  │   Helmet   │ │    CORS    │ │  Throttler │             │ │
-│  │  │  (Headers) │ │  (Origins) │ │ (Rate Limit│             │ │
-│  │  └────────────┘ └────────────┘ └────────────┘             │ │
-│  │                                                             │ │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐             │ │
-│  │  │ Validation │ │ Exception  │ │  Logging   │             │ │
-│  │  │   Pipe     │ │  Filter    │ │ Interceptor│             │ │
-│  │  └────────────┘ └────────────┘ └────────────┘             │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── SECURITY LAYER ────────────────────────────────────────┐ │
-│  │                                                             │ │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐             │ │
-│  │  │ JwtAuth    │ │  Roles     │ │ @Current   │             │ │
-│  │  │   Guard    │ │  Guard     │ │  User()    │             │ │
-│  │  └────────────┘ └────────────┘ └────────────┘             │ │
-│  │                                                             │ │
-│  │  ┌────────────┐ ┌────────────┐                             │ │
-│  │  │ JWT        │ │ Local      │                             │ │
-│  │  │ Strategy   │ │ Strategy   │                             │ │
-│  │  └────────────┘ └────────────┘                             │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── DOMAIN MODULES ────────────────────────────────────────┐ │
-│  │                                                             │ │
-│  │  ┌─ Commerce ──────────────────────────────────────────┐   │ │
-│  │  │  Products │ Categories │ Brands │ Collections       │   │ │
-│  │  │  Cart │ Orders │ Packages │ Favorites               │   │ │
-│  │  └────────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │  ┌─ Identity ──────────────────────────────────────────┐   │ │
-│  │  │  Auth │ Users (Account) │ Customers                 │   │ │
-│  │  └────────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │  ┌─ Content ───────────────────────────────────────────┐   │ │
-│  │  │  Content (Banners/Landing) │ CMS │ Blog │ Navigation│   │ │
-│  │  └────────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │  ┌─ Operations ────────────────────────────────────────┐   │ │
-│  │  │  Admin (Dashboard/Reports) │ Media │ Settings       │   │ │
-│  │  └────────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  │  ┌─ Integration ──────────────────────────────────────┐    │ │
-│  │  │  Stripe │ Promos │ Loyalty                          │   │ │
-│  │  └────────────────────────────────────────────────────────┘  │ │
-│  │                                                             │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  ┌─── DATA ACCESS LAYER ─────────────────────────────────────┐ │
-│  │                                                             │ │
-│  │  ┌────────────┐ ┌────────────┐ ┌────────────┐             │ │
-│  │  │  Prisma    │ │   Raw SQL  │ │  Multer    │             │ │
-│  │  │  Client    │ │  Queries   │ │ (File I/O) │             │ │
-│  │  └──────┬─────┘ └──────┬─────┘ └──────┬─────┘             │ │
-│  │         │               │               │                   │ │
-│  └─────────┼───────────────┼───────────────┼───────────────────┘ │
-│            │               │               │                     │
-└────────────┼───────────────┼───────────────┼─────────────────────┘
-             │               │               │
-             ▼               ▼               ▼
-      ┌────────────┐ ┌────────────┐ ┌────────────┐
-      │ PostgreSQL │ │ PostgreSQL │ │ Filesystem  │
-      │  App DB    │ │ Inventory  │ │  /uploads/  │
-      └────────────┘ └────────────┘ └────────────┘
-```
+**Why three tiers?** Clear failure boundaries (one tier down does not
+cascade), independent scaling characteristics (CDN vs CPU vs IOPS),
+clean security perimeters (the DB is never directly exposed), and
+deployment independence (rolling the API does not require redeploying
+the SPA).
 
 ---
 
-## 4. Data Architecture
+## 4. Frontend Architecture (React SPA)
 
-### 4.1 Dual-Database Strategy
-
-The platform uses a **dual-database architecture** within a single PostgreSQL instance:
+### 4.1 Component Hierarchy
 
 ```
-solo_ecommerce (PostgreSQL Instance)
-│
-├── Application Schema (Prisma-Managed)
-│   ├── Users & Authentication
-│   │   └── users, refresh_tokens, password_reset_tokens, 
-│   │       email_verification_tokens, addresses, saved_payment_methods
-│   ├── Shopping & Orders
-│   │   └── carts, cart_items, orders, order_items, 
-│   │       order_status_history, invoices, favorites
-│   ├── Loyalty
-│   │   └── loyalty_wallets, loyalty_transactions
-│   ├── Promotions
-│   │   └── promo_codes
-│   ├── Content
-│   │   └── banners, landing_pages, landing_sections,
-│   │       home_page_configs, home_page_sections,
-│   │       category_landing_page_configs, category_landing_sections
-│   ├── Blog
-│   │   └── blog_posts, blog_categories, blog_tags, blog_post_tags
-│   ├── Navigation
-│   │   └── navigation_menus, navigation_menu_items
-│   ├── Collections
-│   │   └── product_collections, product_collection_items
-│   └── Settings
-│       └── site_settings
-│
-└── Inventory Schema (Direct SQL)
-    ├── Product Catalog
-    │   └── products, product_images, product_pricing,
-    │       product_dimensions, product_packaging,
-    │       product_specifications, product_overrides,
-    │       product_variants
-    ├── Taxonomy
-    │   └── categories, subcategories, brands,
-    │       designers, countries
-    └── Media
-        └── media_assets
+App
+ |- ThemeProvider     (Context — light/dark)
+ |- ToastProvider     (Context — toast notifications)
+ |- BrowserRouter
+     |- AppHeader        (logo, nav, search, cart icon, account menu)
+     |- main
+     |   |- <Routes>
+     |       |- HomePage
+     |       |- ProductListPage
+     |       |   |- ProductFilters
+     |       |   |- ProductGrid
+     |       |       |- ProductCard *
+     |       |- ProductDetailPage
+     |       |   |- ImageGallery
+     |       |   |- VariantSelector  (color/size/material)
+     |       |   |- BuyBox           (price, stock, add-to-cart)
+     |       |   |- DescriptionTabs
+     |       |- CartPage
+     |       |- CheckoutPage         (address, shipping, payment)
+     |       |- AccountLayout
+     |       |   |- ProfilePage
+     |       |   |- AddressesPage
+     |       |   |- OrdersPage
+     |       |   |- ReturnsPage
+     |       |   |- LoyaltyPage
+     |       |- AdminLayout          (lazy chunk; RBAC-gated)
+     |           |- AdminDashboardPage
+     |           |- AdminProductsPage
+     |           |- AdminOrdersPage
+     |           |- AdminCustomersPage
+     |           |- AdminCmsPage
+     |           |- AdminAuditLogPage   (Security nav group)
+     |- AppFooter
 ```
 
-### 4.2 Entity Relationship Overview
+### 4.2 Routing (React Router 7)
 
-```
-Users ──────┬─── 1:N ───── Addresses
-            ├─── 1:N ───── Orders ──────┬── 1:N ── OrderItems
-            ├─── 1:1 ───── Cart ────────┤── 1:N ── CartItems
-            ├─── 1:1 ───── LoyaltyWallet┤── 1:N ── LoyaltyTransactions
-            ├─── 1:N ───── Favorites    │
-            ├─── 1:N ───── RefreshTokens│
-            └─── 1:N ───── SavedPaymentMethods
+| Path | Component | Auth |
+|------|-----------|------|
+| `/` | `HomePage` | public |
+| `/products`, `/products/:slug` | `ProductListPage` / `ProductDetailPage` | public |
+| `/categories[/:slug]` | category pages | public |
+| `/brands[/:slug]` | brand pages | public |
+| `/landing/:slug` | `LandingPage` | public |
+| `/cart`, `/checkout`, `/payment-callback` | cart & checkout | public/JWT |
+| `/favorites` | `FavoritesPage` | JWT |
+| `/account/*` | account pages | JWT |
+| `/auth/*` | login, register, reset, verify | public |
+| `/admin/*` | admin shell (lazy) | JWT + ADMIN |
+| `*` | `NotFoundPage` | — |
 
-Products ───┬─── N:1 ───── Categories ── 1:N ── Subcategories
-            ├─── N:1 ───── Brands
-            ├─── 1:N ───── ProductImages
-            ├─── 1:1 ───── ProductPricing
-            ├─── 1:1 ───── ProductDimensions
-            ├─── 1:N ───── ProductSpecifications
-            ├─── 1:N ───── ProductVariants
-            └─── N:1 ───── Designers, Countries
+Guarded routes go through `useAuth()` and redirect to
+`/auth/login?next=...` when unauthenticated.
 
-PromoCode ──┬── used by ── Orders
-Banner ─────┤── placed at ── HOME_HERO, etc.
-BlogPost ───┼── belongs to ── BlogCategory
-            └── tagged with ── BlogTags (M:N via BlogPostTag)
+### 4.3 State Management (Context + Zustand)
 
-NavigationMenu ── 1:N ── MenuItems (self-referencing for hierarchy)
-```
+- **Zustand** stores domain state that survives navigation: `authStore`,
+  `cartStore`, `favoritesStore`, `homeStore`. The `authStore` persists
+  to `localStorage`; the others persist only their identity (cart id,
+  favorite ids) and refresh from server on hydrate.
+- **React Context** carries UI-only state: theme (light/dark), toast
+  notifications.
+- Stores never call `fetch` directly — every network call goes through
+  `src/api/<domain>.ts` modules that use `apiClient.ts`.
+
+### 4.4 API Client Layer (Axios-style fetch wrapper)
+
+Single `src/lib/apiClient.ts` wraps `fetch`:
+
+- Base URL from `import.meta.env.VITE_API_URL`.
+- Attaches `Authorization: Bearer <accessToken>` from `authStore`.
+- On `401` → calls `/auth/refresh` once, retries the original request,
+  logs out on failure.
+- Decodes server error envelope (`{ statusCode, message, error }`) into
+  a typed `ApiError`.
+
+Per-domain modules export typed wrappers (`auth.ts`, `products.ts`,
+`cart.ts`, `orders.ts`, `admin.ts`, …) so pages call e.g.
+`adminApi.getAuditLogs(query)` rather than touching the raw client.
+
+### 4.5 Build & Bundle (Vite)
+
+- `npm run dev` → Vite dev server at `http://localhost:5173` with HMR.
+- `npm run build` → bundles to `dist/` (tree-shaken ESM, code-split per
+  route via `React.lazy()` for admin chunk and heavy pages).
+- `npm run preview` → local prod preview of `dist/`.
+- `npm run test` → Vitest (jsdom + RTL).
+- ESLint + Prettier on commit.
+
+The admin chunk is **lazy-loaded** so the customer storefront bundle
+stays small; first-paint TTI on a 3G profile remains within the NFR
+budget.
 
 ---
 
-## 5. Security Architecture
+## 5. Backend Architecture (NestJS)
 
-### 5.1 Defence in Depth Layers
+### 5.1 Module System
+
+Each business capability is a **NestJS module** (`*.module.ts`) that
+exports a controller + service + DTOs. Modules import their direct
+collaborators only — there is no global service registry. The dependency
+graph is shown in [02 LLD §2.2](./02_LOW_LEVEL_DESIGN.md#22-module-dependency-graph).
+
+### 5.2 Cross-Cutting Concerns (Guards, Interceptors, Pipes, Filters)
+
+| Concern | Implementation | Scope |
+|---------|----------------|-------|
+| Validation | `ValidationPipe({ whitelist, transform, forbidNonWhitelisted })` | global |
+| Auth | `JwtAuthGuard` (Passport-JWT) | per-route via `@UseGuards()` |
+| Optional auth | `OptionalJwtAuthGuard` | guest carts |
+| RBAC | `RolesGuard` + `@Roles()` | admin routes |
+| Throttling | `ThrottlerGuard` (60/min default; 5/15min on `/auth/*`) | global |
+| Errors | `HttpExceptionFilter` (uniform envelope) | global |
+| Logging | `nestjs-pino` middleware + per-service child loggers | global |
+| Tracing | App Insights SDK (boot-strapped in `tracing.ts`) | global |
+| Audit | `AuditInterceptor` (auto-logs admin writes) | global via `APP_INTERCEPTOR` |
+| Caching | `CacheInterceptor` on hot reads (catalog landing) | per-controller |
+| Headers | Helmet | global |
+| CORS | Allow-list from `CORS_ORIGINS` env | global |
+| Compression | `compression` middleware | global |
+
+### 5.3 Audit Trail System
+
+A NestJS interceptor reads request context (user, IP, UA, route, body)
+and on success writes a row to `audit_logs`. The action name is derived
+from the controller method (`createProduct` → `PRODUCT_CREATED`) or
+explicitly set via `@AuditAction('ORDER_REFUNDED')`. Auth events
+(`AUTH_LOGIN_SUCCESS/FAILED/REGISTERED`) are written explicitly from
+`AuthService` since they happen outside the standard admin-write flow.
+
+The `audit_logs` table is **append-only**: there is no UPDATE or DELETE
+endpoint. Retention is 90 days hot in PostgreSQL with a nightly export
+to cold storage for the regulatory window.
+
+### 5.4 Authentication & Authorization Flow
 
 ```
-Layer 1: NETWORK
-  ├── HTTPS/TLS 1.2+ (all traffic encrypted)
-  ├── CORS whitelist (only frontend origin)
-  └── Rate limiting (1000 req/min global, stricter on auth)
-
-Layer 2: APPLICATION 
-  ├── Helmet.js (security headers: HSTS, X-Frame-Options, CSP)
-  ├── Input validation (class-validator DTOs, whitelist mode)
-  ├── SQL injection prevention (Prisma parameterized queries)
-  └── XSS prevention (no HTML rendering from user input)
-
-Layer 3: AUTHENTICATION
-  ├── Password hashing (Argon2id)
-  ├── JWT tokens (short-lived access, server-stored refresh)
-  ├── Token rotation on refresh
-  └── Brute-force protection (rate limiting on login)
-
-Layer 4: AUTHORIZATION
-  ├── Role-Based Access Control (CUSTOMER, ADMIN, SUPER_ADMIN)
-  ├── Row-level security (users access own data only)
-  ├── Guard-based endpoint protection
-  └── Decorator-based role requirements
-
-Layer 5: DATA
-  ├── Encrypted at rest (cloud provider)
-  ├── Encrypted in transit (TLS)
-  ├── Sensitive fields hashed (passwords)
-  └── PCI-DSS compliance (Stripe handles card data)
-
-Layer 6: AUDIT
-  ├── Order status change history
-  ├── Loyalty transaction log
-  └── Application logs (errors, requests)
+  Login                  Use API                  Refresh                Logout
+  -----                  -------                  -------                ------
+  POST /auth/login       GET /api/...             POST /auth/refresh     POST /auth/logout
+        |                  |                            |                       |
+   verify pwd        AuthGuard validates         rotate refresh           revoke refresh
+   (argon2)          access JWT (HS256)          (issue new pair)         (revokedAt = now)
+        |                  |                            |
+   sign access JWT    extract role from           detect reuse =>
+   issue refresh,     JWT, RolesGuard            revoke whole chain
+   store hashed       checks @Roles()
+        |                  |
+   return tokens     200 / 401 / 403
 ```
 
-### 5.2 Authentication Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     REQUEST LIFECYCLE                             │
-│                                                                  │
-│  Client Request                                                  │
-│      │                                                           │
-│      ▼                                                           │
-│  Helmet Middleware (security headers)                            │
-│      │                                                           │
-│      ▼                                                           │
-│  CORS Check (origin validation)                                  │
-│      │                                                           │
-│      ▼                                                           │
-│  ThrottlerGuard (rate limit check)                               │
-│      │                                                           │
-│      ▼                                                           │
-│  ValidationPipe (DTO validation, whitelist stripping)            │
-│      │                                                           │
-│      ▼                                                           │
-│  ┌──────────────────────────────────────────────────────┐        │
-│  │  Route Handler                                       │        │
-│  │                                                      │        │
-│  │  Is endpoint protected? (@UseGuards)                 │        │
-│  │  ├── NO → Execute controller method                  │        │
-│  │  └── YES ─┐                                          │        │
-│  │           ▼                                          │        │
-│  │  JwtAuthGuard                                        │        │
-│  │  ├── Extract Bearer token from Authorization header  │        │
-│  │  ├── Verify JWT signature                            │        │
-│  │  ├── Check token expiration                          │        │
-│  │  ├── Load user from database                         │        │
-│  │  └── Attach user to request                          │        │
-│  │           │                                          │        │
-│  │           ▼                                          │        │
-│  │  RolesGuard (if @Roles decorator present)            │        │
-│  │  ├── Get required roles from metadata                │        │
-│  │  ├── Compare with user.role                          │        │
-│  │  └── Allow or throw ForbiddenException               │        │
-│  │           │                                          │        │
-│  │           ▼                                          │        │
-│  │  Controller Method (business logic via Service)      │        │
-│  │                                                      │        │
-│  └──────────────────────────────────────────────────────┘        │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-```
+Refresh-token reuse detection: every `refresh_tokens` row tracks
+`replacedByTokenId`; presenting a `revokedAt`-set token causes the
+chain to be revoked, forcing re-login and surfacing the incident in
+`audit_logs` as `AUTH_REFRESH_REUSE_DETECTED`.
 
 ---
 
-## 6. API Architecture
+## 6. Data Architecture
 
-### 6.1 URL Namespace
+### 6.1 PostgreSQL Schema
+
+Approximately 50 tables. Domain groupings:
+
+- **Identity:** `users`, `refresh_tokens`, `password_reset_tokens`,
+  `email_verification_tokens`, `addresses`, `saved_payment_methods`
+- **Catalog:** `products`, `product_groups`, `product_images`,
+  `product_pricing`, `categories`, `subcategories`, `brands`,
+  `designers`, `countries`
+- **Cart & Orders:** `carts`, `cart_items`, `orders`, `order_items`,
+  `order_status_history`, `invoices`
+- **Returns:** `returns`, `return_items`
+- **Payments:** `stripe_events`, `tabby_events`, `tamara_events`
+- **CMS:** `home_page_config`, `home_page_sections`, `landing_pages`,
+  `category_landing_pages`, `banners`, `navigation_menu_items`,
+  `product_collections`, `announcements`, `media_assets`
+- **Loyalty / Promo:** `loyalty_wallets`, `loyalty_transactions`,
+  `promo_codes`, `user_promo_usages`
+- **Stock:** `stock_movements`
+- **Ops:** `site_settings`, `bulk_orders`, `audit_logs`, `favorites`
+
+### 6.2 Prisma ORM Layer
+
+- Single `schema.prisma` is the source of truth.
+- Prisma-generated types feed DTOs and service signatures.
+- Migrations stored under `backend/prisma/migrations/` and applied via
+  `npx prisma migrate deploy` on container start.
+- Soft delete handled by adding `where: { deletedAt: null }` filters in
+  query helpers.
+- Critical writes use `prisma.$transaction()` to keep order/stock/
+  loyalty/audit fan-out atomic.
+
+### 6.3 Migrations
+
+Workflow:
 
 ```
-/api
-  ├── /auth            ← Authentication (public + protected)
-  ├── /account         ← User account management (protected)
-  ├── /products        ← Product catalog (public + admin)
-  ├── /categories      ← Categories (public + admin)
-  ├── /brands          ← Brands (public + admin)
-  ├── /cart            ← Shopping cart (protected)
-  ├── /orders          ← Order management (protected)
-  ├── /favorites       ← Wishlist (protected)
-  ├── /promo-codes     ← Promotions (protected + admin)
-  ├── /stripe          ← Payments (public + protected + admin)
-  ├── /media           ← File uploads (admin)
-  ├── /content         ← CMS content (public + admin)
-  ├── /cms             ← CMS pages (public + admin)
-  ├── /blog            ← Blog (public + admin)
-  ├── /navigation      ← Menu system (public + admin)
-  ├── /collections     ← Curated lists (public + admin)
-  ├── /settings        ← Site settings (public + admin)
-  ├── /admin           ← Admin dashboard (admin only)
-  │   ├── /stats       ← Dashboard KPIs
-  │   ├── /orders      ← Order management
-  │   ├── /customers   ← Customer management
-  │   └── /reports     ← Analytics & reports
-  └── /uploads/*       ← Static file serving (public, no /api prefix)
+# Local dev: edit schema.prisma, then:
+npx prisma migrate dev --name <descriptive_name>
+
+# CI / production:
+npx prisma migrate deploy
 ```
 
-### 6.2 API Response Contract
-
-```
-Success (200/201):
-{
-  "data": { ... } | [ ... ],
-  "meta": {                          // For paginated responses
-    "total": 805,
-    "page": 1,
-    "limit": 20,
-    "totalPages": 41
-  }
-}
-
-Error (4xx/5xx):
-{
-  "statusCode": 400,
-  "message": "Validation failed" | ["field must be string"],
-  "error": "Bad Request"
-}
-```
-
-### 6.3 Endpoint Summary
-
-| Access Level | Count | Description |
-|-------------|-------|-------------|
-| Public | 34 | Product browsing, CMS, blog, navigation |
-| Protected (Customer) | 34 | Cart, orders, favorites, account, payments |
-| Admin Only | 100+ | CRUD operations, reports, settings, media |
-| **Total** | **170+** | Complete API surface |
+The Container App start script is
+`prisma migrate deploy && node dist/main.js` so a fresh deploy is
+self-healing.
 
 ---
 
-## 7. Frontend Architecture
+## 7. Communication Architecture (REST/JSON over HTTPS)
 
-### 7.1 State Management Pattern
-
-```
-                    ┌─────────────────────┐
-                    │    UI Widgets       │
-                    │  (Screens + Widgets)│
-                    └─────────┬───────────┘
-                              │ Consumer<Provider>
-                              │ context.read/watch
-                              ▼
-                    ┌─────────────────────┐
-                    │   ChangeNotifier    │
-                    │   Providers (11)    │
-                    │                     │
-                    │ • Holds UI state    │
-                    │ • Orchestrates API  │
-                    │ • Notifies listeners│
-                    └─────────┬───────────┘
-                              │ await api.method()
-                              ▼
-                    ┌─────────────────────┐
-                    │   API Service Layer │
-                    │   (14 *_api.dart)   │
-                    │                     │
-                    │ • Typed API calls   │
-                    │ • JSON ↔ Model      │
-                    └─────────┬───────────┘
-                              │ HTTP request
-                              ▼
-                    ┌─────────────────────┐
-                    │     ApiClient       │
-                    │                     │
-                    │ • Base URL config   │
-                    │ • Auth interceptor  │
-                    │ • Error handling    │
-                    │ • Token refresh     │
-                    └─────────┬───────────┘
-                              │ HTTPS
-                              ▼
-                    ┌─────────────────────┐
-                    │   NestJS Backend    │
-                    └─────────────────────┘
-```
-
-### 7.2 Navigation Architecture
-
-```
-MaterialApp
-  │
-  ├── / (home) ──────────────── HomeScreen / HomeScreenCms
-  ├── /login ────────────────── LoginScreen
-  ├── /signup ───────────────── SignupScreen
-  ├── /forgot-password ──────── ForgotPasswordScreen
-  ├── /verify-email ─────────── VerifyEmailScreen
-  ├── /products ─────────────── CategoryScreen (product listing)
-  ├── /product/:id ──────────── ProductDetailScreen
-  ├── /category/:id ─────────── CategoryLandingScreen
-  ├── /search ───────────────── SearchScreen
-  ├── /cart ──────────────────── CartScreen
-  ├── /checkout ─────────────── CheckoutScreen
-  ├── /favorites ────────────── FavoritesScreen
-  ├── /account ──────────────── MyAccountScreen (with sub-routes)
-  │   ├── /addresses ────────── MyAddressesScreen
-  │   └── /orders ───────────── Order History
-  ├── /loyalty ──────────────── LoyaltyProgramScreen
-  ├── /about ────────────────── AboutUsScreen
-  ├── /bulk-order ───────────── BulkOrderScreen
-  │
-  └── /admin ────────────────── Admin Routes (protected by role check)
-      ├── /admin/dashboard ──── AdminDashboardScreen
-      ├── /admin/products ───── AdminProductsScreen
-      ├── /admin/categories ─── AdminCategoriesScreen
-      ├── /admin/brands ─────── AdminBrandsScreen
-      ├── /admin/orders ─────── AdminOrdersScreen
-      ├── /admin/customers ──── AdminCustomersScreen
-      ├── /admin/banners ────── AdminBannersScreen
-      ├── /admin/promos ─────── AdminPromoCodesScreen
-      ├── /admin/landing ────── AdminLandingPagesScreen
-      ├── /admin/reports ────── AdminReportsScreen
-      ├── /admin/stripe ─────── AdminStripeConfigScreen
-      └── /admin/vat ────────── AdminVatConfigScreen
-```
+- **Protocol:** HTTPS only; SWA + ACA terminate TLS at the edge.
+- **Format:** JSON request/response, UTF-8.
+- **Versioning:** Single major version under `/api`; breaking changes
+  introduce a new path segment (`/api/v2/...`) when needed.
+- **Pagination:** Query string `page` + `pageSize` → response shape
+  `{ items, total, page, pageSize, totalPages }`.
+- **Errors:** Uniform envelope `{ statusCode, error, message, timestamp,
+  path }` (see [02 LLD §17](./02_LOW_LEVEL_DESIGN.md#17-error-handling-strategy)).
+- **Webhooks:** Stripe / Tabby / Tamara POST signed payloads to
+  `/api/{provider}/webhook`; the API verifies HMAC, dedups via
+  provider-event tables, then performs the PAID transition inside a
+  transaction.
 
 ---
 
-## 8. Infrastructure Architecture
+## 8. Security Architecture
 
-### 8.1 Development Environment
+| Layer | Control |
+|-------|---------|
+| Transport | HTTPS only, HSTS via Helmet |
+| Identity | JWT access (15m) + opaque refresh (7d, hashed at rest) |
+| Passwords | Argon2id (memory-hard, salted) |
+| Input | `class-validator` on every DTO; global ValidationPipe whitelist |
+| Output | Prisma typed queries (no string concatenation) |
+| Headers | Helmet defaults + CSP recommended on SWA |
+| CORS | Allow-list from `CORS_ORIGINS` (SWA hostnames only in prod) |
+| Rate limit | Throttler (global 60/min; `/auth/*` 5/15min) |
+| Webhooks | HMAC signature verification + idempotency tables |
+| RBAC | `RolesGuard` + `@Roles(...)` on every admin route |
+| Ownership | Per-resource `userId` checks before mutation |
+| Secrets | Container App `secrets`; recommended upgrade to Azure Key Vault |
+| Container | Non-root user, minimal Node 20 alpine base image |
+| DB firewall | ACA subnet + admin IPs only; no `0.0.0.0/0` |
+| Image pulls | User-Assigned Managed Identity with `AcrPull` |
+| Audit | `AuditInterceptor` writes append-only `audit_logs` |
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                 Developer Workstation                     │
-│                                                         │
-│  ┌─────────────────┐  ┌──────────────────────────────┐ │
-│  │ Flutter DevTools │  │ VS Code                      │ │
-│  │ Chrome :52391    │  │ + Dart/Flutter extensions     │ │
-│  └────────┬────────┘  │ + NestJS extensions           │ │
-│           │           │ + PostgreSQL extension         │ │
-│           │ HTTP      └──────────────────────────────┘ │
-│           ▼                                             │
-│  ┌─────────────────┐                                   │
-│  │ NestJS Dev      │  npm run start:dev                │
-│  │ localhost:3000   │  (hot reload via ts-node)         │
-│  └────────┬────────┘                                   │
-│           │ Prisma                                      │
-│           ▼                                             │
-│  ┌─────────────────┐  ┌──────────────────────────────┐ │
-│  │ PostgreSQL      │  │ Mailhog                      │ │
-│  │ localhost:5433   │  │ SMTP :1025 │ Web UI :8025    │ │
-│  └─────────────────┘  └──────────────────────────────┘ │
-│                                                         │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │ Docker Compose (optional services)                │  │
-│  │ └── mailhog                                       │  │
-│  └──────────────────────────────────────────────────┘  │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 8.2 Production Architecture
-
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                        INTERNET                                    │
-└────────────────────────────┬──────────────────────────────────────┘
-                             │
-            ┌────────────────┼────────────────┐
-            │                │                │
-            ▼                ▼                ▼
-     ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-     │ CDN Edge    │ │ CDN Edge    │ │ CDN Edge    │
-     │ (Region A)  │ │ (Region B)  │ │ (Region C)  │
-     └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
-            │                │                │
-            └────────────────┼────────────────┘
-                             │
-                             ▼
-     ┌───────────────────────────────────────────────┐
-     │         Static Web App (Flutter Build)         │
-     │         *.html, *.js, *.css, assets            │
-     │         Custom domain + managed SSL            │
-     └───────────────────────┬───────────────────────┘
-                             │ /api/* proxy
-                             ▼
-     ┌───────────────────────────────────────────────┐
-     │         API Server (App Service / EC2)         │
-     │         NestJS + Node.js 18                    │
-     │         Environment: env vars from vault       │
-     │         Health check: /api/health              │
-     │         Auto-restart on failure                │
-     └───────────┬───────────────────┬───────────────┘
-                 │                   │
-                 ▼                   ▼
-     ┌──────────────────┐    ┌──────────────┐
-     │ Managed PostgreSQL│    │ Blob / S3    │
-     │ Automated backups │    │ (Images)     │
-     │ Point-in-time     │    │ CDN-fronted  │
-     │ SSL connections   │    └──────────────┘
-     └──────────────────┘
-```
+OWASP Top 10 mapping: see [08 Security &
+Compliance](./08-security-and-compliance.md#8-owasp-top-10-2021-checklist).
 
 ---
 
-## 9. Build & Deployment Pipeline
+## 9. Deployment Architecture (Azure)
 
-### 9.1 CI/CD Flow
+### 9.1 Development Environment
 
 ```
-Developer Push to GitHub
-         │
-         ▼
-  GitHub Actions Trigger
-         │
-         ├── Backend Pipeline:
-         │   ├── Install dependencies (npm ci)
-         │   ├── Lint (ESLint)
-         │   ├── Build (tsc → dist/)
-         │   ├── Unit tests (Jest)
-         │   ├── E2E tests (Supertest)
-         │   └── Deploy to App Service / EC2
-         │
-         └── Frontend Pipeline:
-             ├── Install dependencies (flutter pub get)
-             ├── Analyze (flutter analyze)
-             ├── Build (flutter build web --release)
-             └── Deploy to Static Web Apps / S3
++----------------------------+      +-----------------------------+
+|  Vite Dev Server           | <--> |  NestJS Dev Server          |
+|  http://localhost:5173     | /api |  http://localhost:3000/api  |
+|  (HMR, source maps)        |      |  (ts-node + nodemon)        |
++----------------------------+      +--------------+--------------+
+                                                   |
+                                                   v
+                                +-----------------------------+
+                                |  Local PostgreSQL 14        |
+                                |  port 5432                  |
+                                |  (or Docker Compose service)|
+                                +-----------------------------+
 ```
 
-### 9.2 Environment Configuration
+Dev launch: `npm run dev` in both `frontend-react/` and `backend/`. The
+SPA's `vite.config.ts` proxies `/api` → `localhost:3000` so the
+production reverse-proxy contract is honoured locally.
 
-| Variable | Development | Production |
-|----------|------------|------------|
-| DATABASE_URL | localhost:5433 | Managed DB connection string |
-| NODE_ENV | development | production |
-| JWT_ACCESS_SECRET | dev-secret | 32+ char random |
-| JWT_REFRESH_SECRET | dev-secret | 32+ char random |
-| FRONTEND_URL | http://localhost:5000 | https://solo-ecommerce.com |
-| STRIPE_SECRET_KEY | sk_test_xxx | sk_live_xxx |
-| SMTP_HOST | localhost | smtp.sendgrid.net |
-| UPLOAD_PATH | ./uploads | /app/uploads or cloud storage |
+### 9.2 Production Environment
+
+```
+                         GitHub
+                            |
+                            v
+                     azd up / azd deploy
+                            |
+        +-------------------+--------------------+
+        |                                        |
+        v                                        v
+ SWA build artifact                  Docker image build
+  (frontend dist/)                    (backend/Dockerfile)
+        |                                        |
+        v                                        v
+ Azure Static Web Apps                Azure Container Registry
+        |                                        |
+        |   /api proxy                           v pull (via UAMI AcrPull)
+        +-----------> Azure Container Apps Environment
+                              |
+                              |- backend ContainerApp (min=1 max=10)
+                              |     env: DATABASE_URL, JWT_*, STRIPE_*,
+                              |          TABBY_*, TAMARA_*, SMTP_*,
+                              |          BLOB_*, APPINSIGHTS_*
+                              |
+                              v
+                      PostgreSQL Flexible Server (private TCP)
+                      Azure Blob Storage           (media container)
+                      Application Insights         (telemetry)
+                      Log Analytics                (logs sink)
+```
+
+All resources defined in [`infra/main.bicep`](../infra/main.bicep) with
+parameters in
+[`infra/main.parameters.json`](../infra/main.parameters.json).
+
+### 9.3 CI/CD Pipeline (azd + GitHub Actions)
+
+```
+push to main
+     |
+     v
+GitHub Actions (.github/workflows)
+     |- npm ci         (frontend + backend)
+     |- npm run lint
+     |- npm run build  (frontend -> dist/)
+     |- npm run build  (backend  -> dist/)
+     |- npm run test
+     |- docker build -t backend:<sha> backend/
+     |- docker push   <acr>/backend:<sha>
+     |- az containerapp update --image <acr>/backend:<sha>
+     |- swa deploy    frontend/dist  (token from secret)
+
+Routine devops alternatives:
+   azd deploy backend       # build, push, update ACA in one step
+   azd deploy frontend      # build dist, upload to SWA
+   azd deploy               # both
+```
+
+Rolling traffic: ACA shifts 100% to the new revision by default; rollback
+= portal or `az containerapp revision activate <prev>`.
 
 ---
 
-## 10. Performance Architecture
+## 10. Scalability & Performance
 
-### 10.1 Optimization Strategies
+| Layer | Strategy |
+|-------|----------|
+| SPA | Static asset edge caching via SWA-managed CDN; lazy admin chunk |
+| API | ACA HTTP-concurrency autoscale (min 1, max 10); stateless containers |
+| DB | Vertical scale on Flexible Server SKU; read-replica plan for catalog reads |
+| Caching | Per-controller `CacheInterceptor` on hot reads (60s TTL); future Redis for cart sessions and rate-limit counters |
+| Images | sharp-generated thumb/medium/large variants; `srcset` in markup; Blob → CDN |
+| Payload | `compression` middleware; lean DTOs with explicit `select` |
+| Cold start | `min-replicas = 1` plus warm-up endpoint pinged by App Insights availability test |
 
-| Layer | Strategy | Implementation |
-|-------|----------|----------------|
-| **CDN** | Cache static assets | Flutter build output served from edge |
-| **API** | Response caching headers | Cache-Control for product lists |
-| **Database** | Strategic indexing | Indexes on FK columns, email, slug |
-| **Images** | Optimized uploads | WebP conversion, max 1920px width |
-| **Frontend** | Lazy loading | Provider-based on-demand data loading |
-| **Queries** | Batch operations | resolveProductImageUrls batches DB lookups |
-| **Pagination** | Cursor/offset | 20 items per page default |
+Performance budgets (also in HLD §8):
 
-### 10.2 Scalability Path
-
-```
-Phase 1 (Current): Single Server
-  └── App Service B1 + Flexible Server B1ms
-
-Phase 2 (Growth): Vertical Scaling
-  └── App Service S1 + Flexible Server B2s + Redis Cache
-
-Phase 3 (Scale): Horizontal Scaling
-  └── Multiple API instances + Load Balancer
-      + Read Replicas + CDN + Background Workers
-```
+- API p95 read < **700 ms** region-internal
+- API p95 write < **1.2 s**
+- LCP storefront p75 < **2.5 s** on 3G
+- Cold start container < **5 s**
 
 ---
 
 ## 11. Monitoring & Observability
 
-| Concern | Tool | What's Monitored |
-|---------|------|-----------------|
-| **Health Check** | /api/health endpoint | Server alive, DB connected |
-| **Error Tracking** | Application Insights / CloudWatch | Unhandled exceptions, 5xx rates |
-| **Performance** | APM metrics | Response times, throughput, p95 latency |
-| **Availability** | Uptime monitoring | HTTP 200 checks every 60s |
-| **Logs** | Structured logging | Request/response, auth events, order events |
-| **Alerts** | Threshold-based | Error rate > 1%, latency > 2s, disk > 90% |
+| Signal | Source | Sink |
+|--------|--------|------|
+| HTTP traces | App Insights SDK in NestJS | Application Insights |
+| Structured logs | Pino → stdout | Container Apps → Log Analytics |
+| ACA metrics | Built-in | ACA portal + Log Analytics |
+| Postgres metrics | Built-in | Postgres portal |
+| Browser RUM | App Insights JS snippet (optional) | Application Insights |
+| Custom events | `AppInsights.trackEvent()` (e.g., `ORDER_PAID`) | Application Insights |
+
+Recommended alerts:
+
+- Server errors > 1% of requests for 5 min
+- Container restarts > 3 in 10 min
+- Postgres CPU > 80% sustained for 10 min
+- Stripe webhook failure spike
+- App Insights availability test failure
 
 ---
 
 ## 12. Disaster Recovery
 
-| Scenario | RTO | RPO | Recovery Strategy |
-|----------|-----|-----|-------------------|
-| API server crash | < 5 min | 0 | Auto-restart via health check |
-| Database corruption | < 1 hour | < 1 hour | Point-in-time restore from backup |
-| Region outage | < 4 hours | < 1 hour | Redeploy to alternate region |
-| Data breach | < 1 hour | — | Rotate secrets, revoke tokens, notify users |
+| Scenario | Recovery Path |
+|----------|---------------|
+| DB lost | Restore PIT snapshot to a new Flexible Server, repoint `DATABASE_URL`, redeploy |
+| Container App lost | `azd up` reprovisions; ACR holds image digests for rollback |
+| SWA lost | `azd deploy frontend` redeploys; deployment token stored in env |
+| Region outage | Single-region today; **planned**: active-passive multi-region (geo-replicate ACR + Postgres + SWA) |
+| Stripe webhook backlog | Stripe auto-retries 3 days with exp backoff; idempotent on our side |
+| Mistaken admin write | Restore from daily backup; cross-check `audit_logs` to identify scope |
+
+Backup posture: Azure-managed daily PG snapshots with PITR; quarterly
+restore drill recommended (see
+[09 Deployment & Operations](./09-deployment-and-operations.md)).
 
 ---
 
-*End of Architecture Document*
+*End of Architecture Document.*

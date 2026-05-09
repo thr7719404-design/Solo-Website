@@ -6,10 +6,11 @@ import {
   HttpStatus,
   UseGuards,
   Get,
+  Req,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -35,8 +36,15 @@ export class AuthController {
   @Post('login')
   @Throttle({ default: { ttl: 900000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto, @Req() req: any) {
+    const forwarded = req.headers?.['x-forwarded-for'];
+    const ipAddress = forwarded
+      ? String(forwarded).split(',')[0].trim()
+      : req.socket?.remoteAddress ?? req.ip;
+    return this.authService.login(loginDto, {
+      ipAddress,
+      userAgent: req.headers?.['user-agent'],
+    });
   }
 
   /**
@@ -44,8 +52,8 @@ export class AuthController {
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refreshTokens(refreshToken);
+  async refresh(@Body() dto: RefreshTokenDto) {
+    return this.authService.refreshTokens(dto.refreshToken);
   }
 
   /**
@@ -54,8 +62,8 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async logout(@Body('refreshToken') refreshToken: string) {
-    return this.authService.logout(refreshToken);
+  async logout(@Body() dto: RefreshTokenDto) {
+    return this.authService.logout(dto.refreshToken);
   }
 
   /**

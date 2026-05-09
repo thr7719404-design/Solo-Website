@@ -49,12 +49,17 @@ Solo is a full-featured B2C e-commerce platform designed for a premium home and 
 ### 2.2 Frontend
 | Technology | Purpose | Version |
 |------------|---------|---------|
-| **Flutter** | UI Framework | ^3.x |
-| **Dart** | Programming Language | ^3.x |
-| **Provider** | State Management | - |
-| **HTTP** | API Communication | - |
-| **url_launcher** | External Links | - |
-| **flutter_svg** | SVG Support | - |
+| **React** | UI Framework | ^19.x |
+| **TypeScript** | Programming Language | ^5.x |
+| **Vite** | Build Tool / Dev Server | ^6.x |
+| **react-router-dom** | Client-side Routing | ^7.x |
+| **Zustand** | Global State Management | ^5.x |
+| **React Context** | UI State (theme, toasts) | - |
+| **React Hook Form** | Form Validation | - |
+| **Recharts** | Admin Dashboard Charts | - |
+| **Lucide React** | Icon Set | - |
+| **Vitest** | Unit Testing | ^3.x |
+| **Playwright** | End-to-End Testing | - |
 
 ### 2.3 Infrastructure
 | Technology | Purpose |
@@ -73,11 +78,11 @@ Solo is a full-featured B2C e-commerce platform designed for a premium home and 
 ┌─────────────────────────────────────────────────────────────────┐
 │                      CLIENT LAYER                                │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │                  Flutter Web App                          │   │
-│  │  ├── Screens (26 screens)                                │   │
-│  │  ├── Providers (11 state managers)                       │   │
-│  │  ├── Widgets (reusable components)                       │   │
-│  │  └── Services (API clients)                              │   │
+│  │                  React SPA (Vite + TypeScript)            │   │
+│  │  ├── Pages / Routes (lazy-loaded admin chunk)            │   │
+│  │  ├── Zustand stores (auth, cart, favorites, home)        │   │
+│  │  ├── Components (CSS Modules + design tokens)            │   │
+│  │  └── API client (lib/apiClient.ts → fetch wrapper)       │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -445,61 +450,61 @@ The database uses PostgreSQL with Prisma's multi-schema feature, separating data
 
 | Screen | File | Description |
 |--------|------|-------------|
-| Home | `home_screen.dart` | Main landing page with CMS sections |
-| Product List | `product_list_screen.dart` | Product listing with filters |
-| Product Detail | `product_detail_screen.dart` | Individual product view |
-| Category | `category_screen.dart` | Category browse page |
-| Category Landing | `category_landing_screen.dart` | Category CMS page |
-| Search | `search_screen.dart` | Product search |
-| Cart | `cart_screen.dart` | Shopping cart |
-| Checkout | `checkout_screen.dart` | Checkout flow |
-| Order Confirmation | `order_confirmation_screen.dart` | Post-order success |
-| Favorites | `favorites_screen.dart` | Wishlist |
-| Login | `login_screen.dart` | User login |
-| Signup | `signup_screen.dart` | User registration |
-| Account Shell | `account/account_shell.dart` | Account management |
-| About Us | `about_us_screen.dart` | About page |
-| Loyalty Program | `loyalty_program_screen.dart` | Rewards program |
-| Blog | `blog_screen.dart` | Blog listing |
-| Blog Post | `blog_post_screen.dart` | Individual blog post |
-| Bulk Order | `bulk_order_screen.dart` | Bulk ordering |
+| Home | `HomePage.tsx` | Main landing page with CMS sections |
+| Product List | `ProductListPage.tsx` | Product listing with filters |
+| Product Detail | `ProductDetailPage.tsx` | Individual product view |
+| Category | `CategoryPage.tsx` | Category browse page |
+| Category Landing | `CategoryLandingPage.tsx` | Category CMS page |
+| Search | `SearchPage.tsx` | Product search |
+| Cart | `CartPage.tsx` | Shopping cart |
+| Checkout | `CheckoutPage.tsx` | Checkout flow |
+| Order Confirmation | `OrderConfirmationPage.tsx` | Post-order success |
+| Favorites | `FavoritesPage.tsx` | Wishlist |
+| Login | `LoginPage.tsx` | User login |
+| Signup | `SignupPage.tsx` | User registration |
+| Account Shell | `Account/accountShell.tsx` | Account management |
+| About Us | `AboutUsPage.tsx` | About page |
+| Loyalty Program | `LoyaltyProgramPage.tsx` | Rewards program |
+| Blog | `BlogPage.tsx` | Blog listing |
+| Blog Post | `BlogPostPage.tsx` | Individual blog post |
+| Bulk Order | `BulkOrderPage.tsx` | Bulk ordering |
 
 #### Admin Screens (16 Screens)
 
 | Screen | File | Description |
 |--------|------|-------------|
-| Admin Dashboard | `admin_dashboard_screen.dart` | Dashboard with stats |
-| Admin Login | `admin_login_screen.dart` | Admin authentication |
-| Products Management | `admin_products_screen.dart` | Product listing |
-| Product Form | `admin_product_form_screen.dart` | Create/edit product |
-| Categories Management | `admin_categories_screen.dart` | Category listing |
-| Category Form | `admin_category_form_screen.dart` | Create/edit category |
-| Brands Management | `admin_brands_screen.dart` | Brand listing |
-| Departments | `admin_departments_screen.dart` | Department management |
-| Orders Management | `admin_orders_screen.dart` | Order listing |
-| Order Details | `admin_order_details_screen.dart` | Order view |
-| Customers | `admin_customers_screen.dart` | Customer listing |
-| Customer Details | `admin_customer_details_screen.dart` | Customer view |
-| Banners | `admin_banners_screen.dart` | Banner management |
-| Landing Pages | `admin_landing_pages_screen.dart` | CMS pages |
-| Section Editor | `section_editor_shell.dart` | Section editing |
-| Generic List | `admin_generic_list_screen.dart` | Reusable list |
+| Admin Dashboard | `AdminDashboardPage.tsx` | Dashboard with stats |
+| Admin Login | `AdminLoginPage.tsx` | Admin authentication |
+| Products Management | `AdminProductsPage.tsx` | Product listing |
+| Product Form | `AdminProductFormPage.tsx` | Create/edit product |
+| Categories Management | `AdminCategoriesPage.tsx` | Category listing |
+| Category Form | `AdminCategoryFormPage.tsx` | Create/edit category |
+| Brands Management | `AdminBrandsPage.tsx` | Brand listing |
+| Departments | `AdminDepartmentsPage.tsx` | Department management |
+| Orders Management | `AdminOrdersPage.tsx` | Order listing |
+| Order Details | `AdminOrderDetailsPage.tsx` | Order view |
+| Customers | `AdminCustomersPage.tsx` | Customer listing |
+| Customer Details | `AdminCustomerDetailsPage.tsx` | Customer view |
+| Banners | `AdminBannersPage.tsx` | Banner management |
+| Landing Pages | `AdminLandingPagesPage.tsx` | CMS pages |
+| Section Editor | `SectionEditorShell.tsx` | Section editing |
+| Generic List | `AdminGenericListPage.tsx` | Reusable list |
 
 ### 6.2 State Management (Providers)
 
 | Provider | File | Purpose |
 |----------|------|---------|
-| AuthProvider | `auth_provider.dart` | Authentication state |
-| AccountProvider | `account_provider.dart` | User account data |
-| CartProvider | `cart_provider.dart` | Shopping cart state |
-| CatalogProvider | `catalog_provider.dart` | Categories & brands |
-| ContentProvider | `content_provider.dart` | CMS content |
-| FavoritesProvider | `favorites_provider.dart` | Wishlist |
-| HomeProvider | `home_provider.dart` | Home page sections |
-| HomeCmsProvider | `home_cms_provider.dart` | CMS home data |
-| ProductDetailsProvider | `product_details_provider.dart` | Product details |
-| ProductListProvider | `product_list_provider.dart` | Product listing |
-| SearchProvider | `search_provider.dart` | Search functionality |
+| AuthProvider | `AuthProvider.tsx` | Authentication state |
+| AccountProvider | `AccountProvider.tsx` | User account data |
+| CartProvider | `CartProvider.tsx` | Shopping cart state |
+| CatalogProvider | `CatalogProvider.tsx` | Categories & brands |
+| ContentProvider | `ContentProvider.tsx` | CMS content |
+| FavoritesProvider | `FavoritesProvider.tsx` | Wishlist |
+| HomeProvider | `HomeProvider.tsx` | Home page sections |
+| HomeCmsProvider | `HomeCmsProvider.tsx` | CMS home data |
+| ProductDetailsProvider | `ProductDetailsProvider.tsx` | Product details |
+| ProductListProvider | `ProductListProvider.tsx` | Product listing |
+| SearchProvider | `SearchProvider.tsx` | Search functionality |
 
 ### 6.3 API Client Architecture
 
@@ -696,9 +701,9 @@ npm run start:dev
 
 **Frontend:**
 ```bash
-cd frontend
-flutter pub get
-flutter run -d chrome --web-port=5000
+cd frontend-react
+npm ci
+npm run dev          # Vite dev server on http://localhost:5173
 ```
 
 ### 9.3 Database Migrations

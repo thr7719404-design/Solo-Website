@@ -143,7 +143,7 @@ resource postgresFirewall 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRul
 
 // ─── Storage Account (Media / Uploads) ────────────────────────────
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: 'stsolowebsite'
+  name: 'stmedia${resourceToken}'
   location: location
   sku: {
     name: 'Standard_LRS'
@@ -256,7 +256,7 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
             { name: 'JWT_REFRESH_SECRET', secretRef: 'jwt-refresh-secret' }
             { name: 'NODE_ENV', value: 'production' }
             { name: 'PORT', value: '3000' }
-            { name: 'FRONTEND_URL', value: 'https://${staticWebApp.properties.defaultHostname},https://www.solotestsite.site' }
+            { name: 'FRONTEND_URL', value: 'https://${staticWebApp.properties.defaultHostname},https://www.yournewdomain.com' }
             { name: 'STORAGE_TYPE', value: 'azure' }
             { name: 'AZURE_STORAGE_CONNECTION_STRING', secretRef: 'azure-storage-connection-string' }
             { name: 'AZURE_STORAGE_CONTAINER', value: 'media' }
@@ -297,6 +297,6 @@ output AZURE_CONTAINER_REGISTRY_NAME string = acr.name
 output BACKEND_URI string = 'https://${containerApp.properties.configuration.ingress.fqdn}'
 output UPLOAD_BASE_URL string = 'https://${storageAccount.name}.blob.core.windows.net/media'
 output POSTGRES_FQDN string = postgres.properties.fullyQualifiedDomainName
-output STATIC_WEB_APP_URL string = 'https://www.solotestsite.site'
+output STATIC_WEB_APP_URL string = 'https://www.yournewdomain.com'
 output STATIC_WEB_APP_DEFAULT_HOSTNAME string = staticWebApp.properties.defaultHostname
 output STATIC_WEB_APP_NAME string = staticWebApp.name

@@ -1149,6 +1149,27 @@ enum CartItemType {
   PRODUCT
 }
 
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  userEmail    String?
+  action       String
+  entityType   String?
+  entityId     String?
+  description  String?
+  requestData  Json?
+  responseData Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}
+
 enum OrderStatus {
   PENDING
   PAYMENT_PENDING

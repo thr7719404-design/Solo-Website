@@ -28,6 +28,24 @@ export const adminApi = {
 
   getReports: (days = 30) =>
     api.get<FullReportDto>(`/admin/reports?days=${days}`).then(r => r.data),
+
+  getAuditLogs: (params?: {
+    page?: number;
+    limit?: number;
+    userEmail?: string;
+    action?: string;
+    entityType?: string;
+    from?: string;
+    to?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== '') query.set(k, String(v));
+      });
+    }
+    return api.get(`/admin/audit-logs?${query}`).then(r => r.data);
+  },
 };
 
 export const mediaApi = {

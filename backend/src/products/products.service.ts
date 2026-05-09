@@ -343,6 +343,7 @@ export class ProductsService {
       listPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       compareAtPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       oldPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      costPrice: product.pricing?.cost_price_aed ? Number.parseFloat(product.pricing.cost_price_aed.toString()) : null,
       currency: 'AED',
       imageUrl: product.images?.[0]?.media_asset_id || null,
       images: product.images?.map((img: any) => ({
@@ -703,6 +704,7 @@ export class ProductsService {
       listPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       compareAtPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       oldPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      costPrice: product.pricing?.cost_price_aed ? Number.parseFloat(product.pricing.cost_price_aed.toString()) : null,
       currency: 'AED',
       imageUrl: product.images?.[0]?.media_asset_id || null,
       images: product.images?.map((img: any) => ({
@@ -843,8 +845,18 @@ export class ProductsService {
             material: createProductDto.material,
             colour: createProductDto.colour,
             size: createProductDto.size,
-            isActive: createProductDto.isActive ?? true,
-            isDiscontinued: createProductDto.isDiscontinued ?? false,
+            isActive: (() => {
+              // Frontend admin form sends `status` ('active' | 'draft' | 'archived').
+              // Mirror UPDATE behaviour so newly created products honour the chosen status.
+              const status = (createProductDto as any).status;
+              if (typeof status === 'string') return status === 'active';
+              return createProductDto.isActive ?? true;
+            })(),
+            isDiscontinued: (() => {
+              const status = (createProductDto as any).status;
+              if (status === 'archived') return true;
+              return createProductDto.isDiscontinued ?? false;
+            })(),
             isFeatured: createProductDto.isFeatured ?? false,
             isNew: createProductDto.isNew ?? false,
             isBestSeller: createProductDto.isBestSeller ?? false,
@@ -859,38 +871,73 @@ export class ProductsService {
             metaTitle: createProductDto.metaTitle,
             metaDescription: createProductDto.metaDescription,
             // ==== END: Product Page Fields v1 ====
-            stockQty: createProductDto.stock ?? 0,
+            // Accept either `stock` or `stockQuantity` (frontend admin form sends the latter).
+            stockQty:
+              createProductDto.stock ??
+              (createProductDto as any).stockQuantity ??
+              0,
+            lowStockAlert:
+              (createProductDto as any).lowStockThreshold ??
+              (createProductDto as any).lowStockAlert ??
+              undefined,
           },
         });
 
         // Create pricing if provided
         if (createProductDto.price !== undefined) {
-          await tx.productPricing.create({
-            data: {
+          // price_excl_vat_aed is NOT NULL in the schema.
+          // If compareAtPrice is omitted, derive excl-VAT from the selling price (VAT=5%).
+          const priceInclVat = createProductDto.price;
+          const priceExclVat =
+            createProductDto.compareAtPrice !== undefined
+              ? createProductDto.compareAtPrice
+              : Math.round((priceInclVat / 1.05) * 100) / 100;
+          await tx.productPricing.upsert({
+            where: { productId: newProduct.id },
+            create: {
               productId: newProduct.id,
-              price_incl_vat_aed: createProductDto.price,
-              price_excl_vat_aed: createProductDto.compareAtPrice,
+              price_incl_vat_aed: priceInclVat,
+              price_excl_vat_aed: priceExclVat,
+              cost_price_aed: createProductDto.costPrice ?? null,
+            },
+            update: {
+              price_incl_vat_aed: priceInclVat,
+              price_excl_vat_aed: priceExclVat,
+              cost_price_aed: createProductDto.costPrice ?? null,
             },
           });
         }
 
-        // Create product images (multi-image support, up to 5)
-        let imageUrls: string[];
-        if (createProductDto.images?.length) {
-          imageUrls = createProductDto.images.slice(0, 5);
+        // Create product images (multi-image support, up to 5).
+        // The admin form sends `images: [{ url, displayOrder, altText }, ...]`,
+        // but legacy callers may send plain string URLs or `imageUrl`. Normalise here
+        // (mirrors the helper used by update()).
+        const parsedImages: Array<{ url: string; displayOrder?: number; altText?: string }> = [];
+        if (Array.isArray(createProductDto.images) && createProductDto.images.length) {
+          for (const [idx, raw] of createProductDto.images.slice(0, 5).entries()) {
+            if (!raw) continue;
+            if (typeof raw === 'string') {
+              parsedImages.push({ url: raw, displayOrder: idx });
+            } else if (typeof raw === 'object' && typeof (raw as any).url === 'string') {
+              parsedImages.push({
+                url: (raw as any).url,
+                displayOrder: (raw as any).displayOrder ?? idx,
+                altText: (raw as any).altText,
+              });
+            }
+          }
         } else if (createProductDto.imageUrl) {
-          imageUrls = [createProductDto.imageUrl];
-        } else {
-          imageUrls = [];
+          parsedImages.push({ url: createProductDto.imageUrl, displayOrder: 0 });
         }
 
-        if (imageUrls.length > 0) {
+        if (parsedImages.length > 0) {
           await tx.productImage.createMany({
-            data: imageUrls.map((url, idx) => ({
+            data: parsedImages.map((img, idx) => ({
               productId: newProduct.id,
-              media_asset_id: url,
-              displayOrder: idx,
+              media_asset_id: img.url,
+              displayOrder: img.displayOrder ?? idx,
               isPrimary: idx === 0,
+              altText: img.altText,
             })),
           });
         }
@@ -984,18 +1031,22 @@ export class ProductsService {
   }
 
   private async upsertProductPricing(tx: any, productId: number, dto: any, hasExisting: boolean): Promise<void> {
-    if (dto.price === undefined && dto.compareAtPrice === undefined) return;
+    if (dto.price === undefined && dto.compareAtPrice === undefined && dto.costPrice === undefined) return;
     const pricingData: any = {};
     if (dto.price !== undefined) pricingData.price_incl_vat_aed = dto.price;
     if (dto.compareAtPrice !== undefined) pricingData.price_excl_vat_aed = dto.compareAtPrice;
+    // Allow explicitly clearing cost price by passing null, or saving it when provided.
+    if (dto.costPrice !== undefined) pricingData.cost_price_aed = dto.costPrice ?? null;
     if (hasExisting) {
       await tx.productPricing.update({ where: { productId }, data: pricingData });
     } else {
+      const priceExcl = dto.compareAtPrice !== undefined ? dto.compareAtPrice : Math.round((dto.price / 1.05) * 100) / 100;
       await tx.productPricing.create({
         data: {
           productId,
           price_incl_vat_aed: dto.price ?? 0,
-          price_excl_vat_aed: dto.compareAtPrice ?? 0,
+          price_excl_vat_aed: priceExcl,
+          cost_price_aed: dto.costPrice ?? null,
         },
       });
     }
