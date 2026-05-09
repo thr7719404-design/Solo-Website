@@ -18,7 +18,7 @@ PC 1
  │
  ├─── git push ──────────────────► GitHub (Solo-Final-Website)
  │
- ├─── pg_dump ──► local .dump ──► pg_restore ──► New Azure PostgreSQL
+ ├─── pg_dump ──► (RAM pipe) ──► psql ──────────► New Azure PostgreSQL
  │
  ├─── azcopy copy (server-to-server) ──────────► New Azure Blob Storage
  │
@@ -99,30 +99,28 @@ git push new-origin main
 
 ---
 
-## PHASE 2 — Export the Database (from Old Azure, same PC)
+## PHASE 2 — Capture Old Database Connection Details
+
+No dump file is written to disk. In Phase 7, the data will be piped directly from the old PostgreSQL to the new one using a single command.
 
 ```powershell
 # Confirm you are on the old subscription
 az account show --query "{sub:id, name:name}" -o table
 
-# If needed, switch to it
+# If needed, switch back to old subscription
 az account set --subscription "<OLD_SUBSCRIPTION_ID>"
 
-# Get the old PostgreSQL hostname automatically
-$PG_HOST = az postgres flexible-server list `
+# Get the old PostgreSQL hostname
+$OLD_PG_HOST = az postgres flexible-server list `
     --query "[0].fullyQualifiedDomainName" -o tsv
-Write-Host "Old DB host: $PG_HOST"
+Write-Host "Old DB host: $OLD_PG_HOST"
 
-# Dump the full database to a local file
-$env:PGPASSWORD = "<YOUR_OLD_POSTGRES_PASSWORD>"
-pg_dump --host=$PG_HOST --port=5432 --username=soloadmin `
-        --dbname=solo_ecommerce `
-        --format=custom --no-owner --no-acl `
-        --file="D:\solo_ecommerce_migration.dump"
-
-Write-Host "Dump complete: D:\solo_ecommerce_migration.dump"
-Get-Item "D:\solo_ecommerce_migration.dump" | Select-Object Name, Length
+# Store old password — you will need it in Phase 7
+# (Do not commit this to git)
+$OLD_PG_PASS = "<YOUR_OLD_POSTGRES_PASSWORD>"
 ```
+
+> **Why no dump file?** PostgreSQL data can be piped directly between two servers using `pg_dump | psql`. The data streams through local RAM only — never written to disk — the same principle as AzCopy server-to-server but for Postgres.
 
 ---
 
@@ -235,23 +233,34 @@ azd env get-values
 
 ---
 
-## PHASE 7 — Restore the Database
+## PHASE 7 — Stream Database Directly Old → New (No Local File)
+
+This pipes `pg_dump` output directly into `psql` on the new server. No file is written to disk — the data goes through RAM only, just like AzCopy does for blobs.
 
 ```powershell
-# Get the new DB connection details from azd environment
+# Get the new DB details from azd
 $NEW_PG_HOST = azd env get-value POSTGRES_FQDN
 $NEW_PG_PASS = azd env get-value POSTGRES_PASSWORD
 
-# Restore the dump
+# $OLD_PG_HOST and $OLD_PG_PASS were set in Phase 2
+# If the terminal was closed, regenerate:
+#   $OLD_PG_HOST = az postgres flexible-server list --query "[0].fullyQualifiedDomainName" -o tsv
+#   $OLD_PG_PASS = "<your old password>"
+
+# Pipe old → new (plain SQL format — psql consumes it as it arrives)
+$env:PGPASSWORD = $OLD_PG_PASS
+pg_dump --host=$OLD_PG_HOST --port=5432 --username=soloadmin `
+        --dbname=solo_ecommerce `
+        --no-owner --no-acl `
+        --format=plain | `
+    & { $env:PGPASSWORD = $NEW_PG_PASS; psql `
+        --host=$NEW_PG_HOST --port=5432 --username=soloadmin `
+        --dbname=solo_ecommerce }
+
+Write-Host "Database migration complete — no local file was created"
+
+# Verify row counts on the new server
 $env:PGPASSWORD = $NEW_PG_PASS
-pg_restore --host=$NEW_PG_HOST --port=5432 --username=soloadmin `
-           --dbname=solo_ecommerce `
-           --no-owner --no-acl `
-           --verbose "D:\solo_ecommerce_migration.dump"
-
-Write-Host "Database restore complete"
-
-# Verify row counts
 psql --host=$NEW_PG_HOST --port=5432 --username=soloadmin `
      --dbname=solo_ecommerce `
      -c "SELECT tablename, n_live_tup FROM pg_stat_user_tables ORDER BY n_live_tup DESC LIMIT 20;"
@@ -458,12 +467,12 @@ Write-Host "Old resources scheduled for deletion"
 |---|-------|------|-----|-----------|
 | 0 | Verify / install pg_dump + AzCopy if missing | winget | PC 1 | 5 min |
 | 1 | Source code already on GitHub ✅ (set real domain if known) | git | PC 1 | 2 min |
-| 2 | `pg_dump` from old PostgreSQL | pg_dump | PC 1 | 2–5 min |
+| 2 | Capture old DB host + credentials (no dump file) | az CLI | PC 1 | 1 min |
 | 3 | Prepare old Blob SAS token for server-to-server copy | az CLI | PC 1 | 1 min |
 | 4 | _(skipped — no second PC needed)_ | — | — | — |
 | 5 | `azd env new`, login to new sub, set secrets | azd | PC 1 | 5 min |
 | 6 | `azd provision` — create all Azure resources | azd | PC 1 | 10–15 min |
-| 7 | `pg_restore` to new PostgreSQL | pg_restore | PC 1 | 5–15 min |
+| 7 | `pg_dump \| psql` pipe old → new (RAM only, no disk) | pg_dump + psql | PC 1 | 5–15 min |
 | 8 | AzCopy server-to-server blob copy | azcopy | PC 1 | varies |
 | 9 | `azd deploy` — build + push Docker image + deploy SWA | azd | PC 1 | 8–12 min |
 | 10 | Custom domain DNS + CORS update | az CLI + registrar | PC 1 | 5–30 min |
