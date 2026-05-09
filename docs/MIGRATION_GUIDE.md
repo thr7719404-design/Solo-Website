@@ -1,6 +1,6 @@
 # Solo Website — Full Migration to New Domain + New Azure Subscription
 
-**Document Version:** 1.0
+**Document Version:** 2.0
 **Date:** 09 May 2026
 **Author:** Solo Engineering Team
 **Status:** Final
@@ -9,144 +9,111 @@
 
 ## Overview
 
-This guide covers the complete migration of the Solo e-commerce platform — source code, database, media assets, and Azure infrastructure — from one Azure subscription and domain to a new Azure subscription and new domain on a second PC.
+This guide covers the complete migration of the Solo e-commerce platform — source code, database, media assets, and Azure infrastructure — from one Azure subscription and domain to a new Azure subscription and new domain.
+
+**Everything is done from a single PC (PC 1).** The source code is already on GitHub. AzCopy copies media blobs directly between the two Azure storage accounts (server-to-server — no local download). The database is dumped and restored over the network. A second azd environment targets the new subscription alongside the old one.
+
+```
+PC 1
+ │
+ ├─── git push ──────────────────► GitHub (Solo-Final-Website)
+ │
+ ├─── pg_dump ──► local .dump ──► pg_restore ──► New Azure PostgreSQL
+ │
+ ├─── azcopy copy (server-to-server) ──────────► New Azure Blob Storage
+ │
+ ├─── azd provision ────────────────────────────► New Azure subscription
+ │
+ └─── azd deploy ────────────────────────────────► New Container App + SWA
+```
 
 ---
 
 ## Prerequisites Checklist
 
-Before you begin, have the following ready:
+All of these are already satisfied on PC 1:
 
-| Item | Where to Find It |
-|------|-----------------|
-| Old PostgreSQL password | `.azure/Solo-Website/` env or Azure Portal → PostgreSQL → Connection strings |
-| New Azure subscription ID | Azure Portal → Subscriptions |
+| Item | Status |
+|------|--------|
+| Source code pushed to GitHub | ✅ `https://github.com/thr7719404-design/Solo-Final-Website` |
+| `infra/main.bicep` fixes (storage name + domain) | ✅ Already committed and pushed |
+| Azure CLI installed | ✅ Already installed |
+| Azure Developer CLI (`azd`) installed | ✅ Already installed |
+| Docker Desktop installed | ✅ Already installed |
+| Node.js 20 installed | ✅ Already installed |
+| New Azure subscription ID | Get from Azure Portal → Subscriptions |
 | New domain name | Your DNS registrar |
-| DNS registrar access | GoDaddy / Namecheap / Cloudflare etc. |
-| GitHub account access | https://github.com/thr7719404-design |
-| `pg_dump` / `pg_restore` binaries | Installed with PostgreSQL client tools |
+| Old PostgreSQL password | Azure Portal → old PostgreSQL → Connection strings |
+| `pg_dump` / `pg_restore` | https://www.postgresql.org/download/windows/ (Command Line Tools only) |
 | AzCopy v10 | https://aka.ms/downloadazcopy-v10-windows |
 
 ---
 
-## PHASE 0 — Set Up the Second PC
+## PHASE 0 — Install Missing Tools (if not already present)
 
-Install all required tools in order:
+Only install what you don't have. On PC 1, verify first:
 
 ```powershell
-# 1. Node.js 20 LTS
-winget install OpenJS.NodeJS.LTS
-
-# 2. Azure CLI
-winget install Microsoft.AzureCLI
-
-# 3. Azure Developer CLI (azd)
-winget install Microsoft.Azd
-
-# 4. Docker Desktop
-winget install Docker.DockerDesktop
-
-# 5. Git
-winget install Git.Git
-
-# 6. Python 3.11+
-winget install Python.Python.3.11
-
-# Restart terminal after installs, then verify:
 node -v; az --version; azd version; docker --version; git --version
 ```
 
-Also download and install PostgreSQL client tools (for `pg_dump` / `pg_restore`):
-- https://www.postgresql.org/download/windows/
-- During installation, select only "Command Line Tools" if you don't need the full server.
+If `pg_dump` is missing:
+- Download PostgreSQL client tools: https://www.postgresql.org/download/windows/
+- Select only "Command Line Tools" during install.
 
-Download AzCopy v10:
-- https://aka.ms/downloadazcopy-v10-windows
-- Extract and add to `PATH`, or run directly with its full path.
+If AzCopy is missing:
+- Download: https://aka.ms/downloadazcopy-v10-windows
+- Extract and add the folder to `PATH`, or note the full path for later commands.
 
 ---
 
-## PHASE 1 — Fix Infra Code and Push to GitHub (Run on the FIRST PC)
+## PHASE 1 — Source Code ✅ Already Done
 
-Do this before anything else. Fix the two hardcoded values in `infra/main.bicep`, then commit everything and push to the new GitHub repository.
+The source code is already committed and pushed to the new repo:
 
-### 1a. Fix the Storage Account Name in main.bicep
-
-The current name `stsolowebsite` is globally unique to the old subscription and will fail in a new one. Open `infra/main.bicep` and change:
-
-```bicep
-// BEFORE
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: 'stsolowebsite'
-
-// AFTER
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: 'stmedia${resourceToken}'
+```
+https://github.com/thr7719404-design/Solo-Final-Website
 ```
 
-### 1b. Update the Custom Domain in main.bicep
+The following fixes are already applied in `infra/main.bicep`:
+- Storage account name: `stsolowebsite` → `stmedia${resourceToken}` (unique per subscription)
+- Domain references: `solotestsite.site` → `yournewdomain.com` (update to your actual new domain — see Phase 1b below)
 
-In `infra/main.bicep`, change both occurrences of the old domain:
+### 1b. Set your actual new domain (do this now if you know it)
 
-```bicep
-// In containerApp env vars — BEFORE
-{ name: 'FRONTEND_URL', value: 'https://${staticWebApp.properties.defaultHostname},https://www.solotestsite.site' }
+Open `infra/main.bicep` and replace `yournewdomain.com` with your real domain in both places:
 
-// AFTER
-{ name: 'FRONTEND_URL', value: 'https://${staticWebApp.properties.defaultHostname},https://www.yournewdomain.com' }
+```powershell
+# Quick check — find the placeholder lines
+Select-String -Path "infra\main.bicep" -Pattern "yournewdomain"
 ```
 
-```bicep
-// In outputs — BEFORE
-output STATIC_WEB_APP_URL string = 'https://www.solotestsite.site'
-
-// AFTER
-output STATIC_WEB_APP_URL string = 'https://www.yournewdomain.com'
-```
-
-### 1c. Update Admin Email (optional)
-
-```bicep
-{ name: 'ADMIN_EMAIL', value: 'admin@yournewdomain.com' }
-```
-
-### 1d. Commit all changes and push to the new GitHub repo
+Then commit and push the update:
 
 ```powershell
 cd "D:\Solo Website"
-
-# Stage everything (node_modules, .azure, .env files are already git-ignored)
-git add -A
-git commit -m "chore: migrate to new subscription — fix storage name, update domain"
-
-# Add the new GitHub repo as a remote and push
-git remote add new-origin https://github.com/thr7719404-design/Solo-Final-Website.git
+git add infra/main.bicep
+git commit -m "chore: set real new domain in infra"
 git push new-origin main
-
-# Verify it's there
-Write-Host "Push complete — https://github.com/thr7719404-design/Solo-Final-Website"
 ```
-
-> **What IS pushed:** all source code, `infra/main.bicep`, `docs/`, `azure.yaml`, `docker-compose.yml`, `frontend-react/`, `backend/` (excluding `dist/`, `node_modules/`).  
-> **What is NOT pushed (git-ignored):** `.azure/` (azd env + secrets), `.env` files, `node_modules/`, `dist/`, `build/`. You will recreate these on PC 2.
 
 ---
 
-## PHASE 2 — Export the Database (Run on the FIRST PC)
-
-Do this while still connected to the OLD Azure subscription.
+## PHASE 2 — Export the Database (from Old Azure, same PC)
 
 ```powershell
-# Login and select the old subscription
-az login
+# Confirm you are on the old subscription
+az account show --query "{sub:id, name:name}" -o table
+
+# If needed, switch to it
 az account set --subscription "<OLD_SUBSCRIPTION_ID>"
 
-# Get the old PostgreSQL hostname
+# Get the old PostgreSQL hostname automatically
 $PG_HOST = az postgres flexible-server list `
     --query "[0].fullyQualifiedDomainName" -o tsv
 Write-Host "Old DB host: $PG_HOST"
 
-# Dump the full database
+# Dump the full database to a local file
 $env:PGPASSWORD = "<YOUR_OLD_POSTGRES_PASSWORD>"
 pg_dump --host=$PG_HOST --port=5432 --username=soloadmin `
         --dbname=solo_ecommerce `
@@ -154,73 +121,62 @@ pg_dump --host=$PG_HOST --port=5432 --username=soloadmin `
         --file="D:\solo_ecommerce_migration.dump"
 
 Write-Host "Dump complete: D:\solo_ecommerce_migration.dump"
+Get-Item "D:\solo_ecommerce_migration.dump" | Select-Object Name, Length
 ```
 
 ---
 
-## PHASE 3 — Export Media Files from Blob Storage (Run on the FIRST PC)
+## PHASE 3 — Copy Media Blobs Directly to New Storage (Server-to-Server)
+
+No local download needed. AzCopy copies directly between two Azure storage accounts over the network.
 
 ```powershell
-# Get the old storage account connection string
+# Still on OLD subscription — get old storage connection string
 $OLD_CONN = az storage account show-connection-string `
     --name stsolowebsite `
     --resource-group rg-Solo-Website `
     --query connectionString -o tsv
 
-# Generate a short-lived SAS token for AzCopy
-$SAS = az storage container generate-sas `
+# Generate a read SAS token on the OLD container (7-day window)
+$SRC_SAS = az storage container generate-sas `
     --connection-string $OLD_CONN `
-    --name media `
-    --permissions rl `
+    --name media --permissions rl `
     --expiry (Get-Date).AddDays(7).ToString("yyyy-MM-dd") -o tsv
 
-# Download all media blobs to a local folder
-azcopy copy "https://stsolowebsite.blob.core.windows.net/media/*?$SAS" `
-             "D:\media-backup\" --recursive
-
-Write-Host "Media export complete: D:\media-backup\"
+# Build the source URL
+$SRC_URL = "https://stsolowebsite.blob.core.windows.net/media?$SRC_SAS"
+Write-Host "Source ready: $SRC_URL"
 ```
 
-Transfer both `D:\solo_ecommerce_migration.dump` and `D:\media-backup\` to the second PC (USB drive, network share, or OneDrive).
+> **Leave this terminal open** — you'll need `$SRC_URL` in Phase 8 after the new storage account is provisioned.
 
 ---
 
-## PHASE 4 — Clone the Repo on the Second PC
+## PHASE 4 — Skip (No Second PC Needed)
 
-The source code is already fixed and pushed to GitHub in Phase 1. On the second PC:
-
-```powershell
-# Clone the new repo
-git clone https://github.com/thr7719404-design/Solo-Final-Website.git "D:\Solo Website"
-cd "D:\Solo Website"
-
-# Install all npm dependencies
-cd backend;        npm ci; cd ..
-cd frontend-react; npm ci; cd ..
-npm ci              # root workspace (Playwright, etc.)
-
-Write-Host "Source code ready"
-```
-
-Verify the infra changes from Phase 1 are present:
-
-```powershell
-Select-String -Path "infra\main.bicep" -Pattern "stmedia"
-Select-String -Path "infra\main.bicep" -Pattern "yournewdomain"
-# Both should return matches
-```
+Source code transfer via GitHub (Phase 1) replaces this phase entirely.
 
 ---
 
-## PHASE 5 — Initialize azd for the New Subscription
+## PHASE 5 — Initialize azd for the New Subscription (same PC)
+
+`azd` supports multiple named environments on the same machine. You will create a new one pointing at the new subscription, without touching the existing `Solo-Website` environment.
 
 ```powershell
 cd "D:\Solo Website"
 
-# Login to the new Azure account
+# Login / add the new Azure account (opens browser — sign in with new account credentials)
+az login
+# List all cached subscriptions to find the new one
+az account list --query "[].{name:name, id:id}" -o table
+
+# Switch CLI to the new subscription
+az account set --subscription "<NEW_SUBSCRIPTION_ID>"
+
+# Log azd into the new account
 azd auth login
 
-# Create a new named environment — do NOT reuse "Solo-Website"
+# Create a new azd environment — do NOT reuse "Solo-Website"
 azd env new solo-prod-new
 
 # Point it at the new subscription and region
@@ -228,7 +184,7 @@ azd env set AZURE_SUBSCRIPTION_ID "<NEW_SUBSCRIPTION_ID>"
 azd env set AZURE_LOCATION "eastus2"
 azd env set AZURE_ENV_NAME "solo-prod-new"
 
-# Set all secrets
+# Set all required secrets
 azd env set POSTGRES_PASSWORD "<STRONG_NEW_PASSWORD>"
 azd env set JWT_ACCESS_SECRET "<64_CHAR_RANDOM_STRING>"
 azd env set JWT_REFRESH_SECRET "<64_CHAR_RANDOM_STRING>"
@@ -238,7 +194,7 @@ azd env set ADMIN_PASSWORD "AdminPassword123!"
 Generate strong JWT secrets with PowerShell:
 
 ```powershell
-# Generate a 64-character alphanumeric secret
+# Generate a 64-character alphanumeric secret (run twice — once per secret)
 -join ((65..90)+(97..122)+(48..57) | Get-Random -Count 64 | ForEach-Object {[char]$_})
 ```
 
@@ -305,35 +261,39 @@ psql --host=$NEW_PG_HOST --port=5432 --username=soloadmin `
 
 ---
 
-## PHASE 8 — Upload Media Files to New Blob Storage
+## PHASE 8 — Copy Media Blobs to New Storage (Server-to-Server)
+
+No files are downloaded to your PC. AzCopy copies directly between the two Azure storage accounts over Microsoft's backbone network — fast and free of egress charges.
 
 ```powershell
-# Get the new storage account name (it's now dynamic)
+# Get the new storage account name (dynamic token — query it)
 $NEW_STORAGE = az storage account list `
     --resource-group rg-Solo-Website-New `
     --query "[0].name" -o tsv
-
 Write-Host "New storage account: $NEW_STORAGE"
 
-# Get the connection string
+# Get connection string for the new account
 $NEW_CONN = az storage account show-connection-string `
-    --name $NEW_STORAGE `
-    --resource-group rg-Solo-Website-New `
+    --name $NEW_STORAGE --resource-group rg-Solo-Website-New `
     --query connectionString -o tsv
 
-# Generate a SAS token for upload
-$UPLOAD_SAS = az storage container generate-sas `
+# Generate a write SAS token on the new (destination) container
+$DST_SAS = az storage container generate-sas `
     --connection-string $NEW_CONN `
-    --name media `
-    --permissions aclrw `
-    --expiry (Get-Date).AddDays(1).ToString("yyyy-MM-dd") -o tsv
+    --name media --permissions aclrw `
+    --expiry (Get-Date).AddHours(4).ToString("yyyy-MM-ddTHH:mmZ") -o tsv
 
-# Upload all media files from backup
-azcopy copy "D:\media-backup\*" `
-    "https://$NEW_STORAGE.blob.core.windows.net/media/?$UPLOAD_SAS" `
-    --recursive --overwrite=true
+$DST_URL = "https://$NEW_STORAGE.blob.core.windows.net/media?$DST_SAS"
 
-# Verify blob count
+# Server-to-server copy — no local download
+# $SRC_URL was set in Phase 3; if the terminal was closed, regenerate it:
+#   $OLD_CONN = az storage account show-connection-string --name stsolowebsite --resource-group rg-Solo-Website --query connectionString -o tsv
+#   $SRC_SAS  = az storage container generate-sas --connection-string $OLD_CONN --name media --permissions rl --expiry (Get-Date).AddDays(1).ToString("yyyy-MM-dd") -o tsv
+#   $SRC_URL  = "https://stsolowebsite.blob.core.windows.net/media?$SRC_SAS"
+
+azcopy copy $SRC_URL $DST_URL --recursive --overwrite=true
+
+# Verify blob count in new account
 az storage blob list --connection-string $NEW_CONN `
     --container-name media --query "length(@)"
 ```
@@ -494,21 +454,21 @@ Write-Host "Old resources scheduled for deletion"
 
 ## Full Phase Summary
 
-| # | Phase | Tool | Est. Time |
-|---|-------|------|-----------|
-| 0 | Install tools on PC 2 | winget | 10 min |
-| 1 | Fix `main.bicep`, commit + push to new GitHub repo | git | 5 min |
-| 2 | `pg_dump` from old PostgreSQL | pg_dump | 2–5 min |
-| 3 | AzCopy media blobs to local | azcopy | varies |
-| 4 | `git clone` new repo on PC 2, `npm ci` | git | 5 min |
-| 5 | `azd env new`, set secrets | azd | 3 min |
-| 6 | `azd provision` — create all Azure resources | azd | 10–15 min |
-| 7 | `pg_restore` to new PostgreSQL | pg_restore | 5–15 min |
-| 8 | AzCopy media files to new Blob Storage | azcopy | varies |
-| 9 | `azd deploy` — build + push + deploy | azd | 8–12 min |
-| 10 | Custom domain DNS + CORS update | az CLI + registrar | 5–30 min |
-| 11 | Smoke test all endpoints + UI | browser | 5 min |
-| 12 | Delete old resource group | az CLI | async |
+| # | Phase | Tool | PC | Est. Time |
+|---|-------|------|-----|-----------|
+| 0 | Verify / install pg_dump + AzCopy if missing | winget | PC 1 | 5 min |
+| 1 | Source code already on GitHub ✅ (set real domain if known) | git | PC 1 | 2 min |
+| 2 | `pg_dump` from old PostgreSQL | pg_dump | PC 1 | 2–5 min |
+| 3 | Prepare old Blob SAS token for server-to-server copy | az CLI | PC 1 | 1 min |
+| 4 | _(skipped — no second PC needed)_ | — | — | — |
+| 5 | `azd env new`, login to new sub, set secrets | azd | PC 1 | 5 min |
+| 6 | `azd provision` — create all Azure resources | azd | PC 1 | 10–15 min |
+| 7 | `pg_restore` to new PostgreSQL | pg_restore | PC 1 | 5–15 min |
+| 8 | AzCopy server-to-server blob copy | azcopy | PC 1 | varies |
+| 9 | `azd deploy` — build + push Docker image + deploy SWA | azd | PC 1 | 8–12 min |
+| 10 | Custom domain DNS + CORS update | az CLI + registrar | PC 1 | 5–30 min |
+| 11 | Smoke test all endpoints + UI | browser | PC 1 | 5 min |
+| 12 | Delete old resource group | az CLI | PC 1 | async |
 
 ---
 
