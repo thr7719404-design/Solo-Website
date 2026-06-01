@@ -67,21 +67,21 @@ export default function AdminLoyaltyPage() {
                   <strong>Enable Loyalty Program</strong>
                   <span>Allow customers to earn and redeem points</span>
                 </div>
-                <button type="button" role="switch" aria-checked={isEnabled} className={`${styles['switch']} ${isEnabled ? styles['switch-on'] : ''}`} onClick={() => setIsEnabled(!isEnabled)}>
+                <div className={`${styles['switch']} ${isEnabled ? styles['switch-on'] : ''}`} onClick={() => setIsEnabled(!isEnabled)}>
                   <div className={styles['switch-dot']} />
-                </button>
+                </div>
               </div>
             </div>
 
             <div className={styles['settings-card']}>
               <div className={styles['field']}>
-                <label htmlFor="earn-percentage">Earn Percentage</label>
-                <input id="earn-percentage" type="number" min={0} max={100} step={0.5} value={earnPercent} onChange={e => setEarnPercent(Number(e.target.value))} />
+                <label>Earn Percentage</label>
+                <input type="number" min={0} max={100} step={0.5} value={earnPercent} onChange={e => setEarnPercent(Number(e.target.value))} />
                 <span className={styles['field-hint']}>Percentage of order total earned as points</span>
               </div>
               <div className={styles['field']}>
-                <label htmlFor="max-redeem-percentage">Max Redeem Percentage</label>
-                <input id="max-redeem-percentage" type="number" min={0} max={100} step={1} value={maxRedeemPercent} onChange={e => setMaxRedeemPercent(Number(e.target.value))} />
+                <label>Max Redeem Percentage</label>
+                <input type="number" min={0} max={100} step={1} value={maxRedeemPercent} onChange={e => setMaxRedeemPercent(Number(e.target.value))} />
                 <span className={styles['field-hint']}>Maximum percentage of order payable with points</span>
               </div>
               <button className={styles['btn-primary']} disabled={saving} onClick={save} style={{ marginTop: 8 }}>

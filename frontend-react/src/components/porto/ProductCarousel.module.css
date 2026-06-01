@@ -57,8 +57,8 @@
 }
 
 .carousel-item {
-  flex: 0 0 calc(25% - 15px);
-  min-width: 240px;
+  flex: 0 0 calc(16.667% - 17px);
+  min-width: 160px;
   scroll-snap-align: start;
 }
 
@@ -124,7 +124,7 @@
 }
 
 @media (max-width: 1024px) {
-  .carousel-item { flex: 0 0 calc(33.333% - 14px); min-width: 220px; }
+  .carousel-item { flex: 0 0 calc(25% - 15px); min-width: 200px; }
 }
 @media (max-width: 768px) {
   .carousel-item { flex: 0 0 calc(50% - 10px); min-width: 200px; }

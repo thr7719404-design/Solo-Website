@@ -111,7 +111,7 @@ export default function Header() {
           />
         </div>
         <div className={styles['header-logo']}>
-          <Link to="/">SOLO</Link>
+          <Link to="/" aria-label="Collation Foundation Curation — Home"><img src="/cfc-logo.jpeg" alt="Collation Foundation Curation" /></Link>
         </div>
         <form className={styles['header-search']} onSubmit={handleSearch}>
           <input

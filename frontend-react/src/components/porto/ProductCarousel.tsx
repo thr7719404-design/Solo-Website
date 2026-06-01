@@ -62,7 +62,7 @@ export default function ProductCarousel({ title, products, viewAllLink }: Readon
           </button>
         )}
         <div className={styles['carousel-track']} ref={trackRef}>
-          {products.slice(0, 8).map(product => (
+          {products.slice(0, 12).map(product => (
             <div className={styles['carousel-item']} key={product.id}>
               <ProductCard product={product} />
             </div>

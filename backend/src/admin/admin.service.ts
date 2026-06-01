@@ -7,9 +7,9 @@ import { DashboardStatsDto, TopProductDto, LowStockProductDto, RecentOrderDto, O
 @Injectable()
 export class AdminService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly loyaltyService: LoyaltyService,
+    private prisma: PrismaService,
+    private configService: ConfigService,
+    private loyaltyService: LoyaltyService,
   ) {}
 
   /**
@@ -90,20 +90,9 @@ export class AdminService {
       // Low stock products (placeholder - would need inventory integration)
       this.getLowStockProducts(5),
 
-      // Banner stats: "active" must mean LIVE RIGHT NOW, not just isActive=true.
-      // Mirror getActiveBanners() filter so the dashboard tile matches reality.
+      // Banner stats
       Promise.all([
-        this.prisma.banner.count({
-          where: {
-            isActive: true,
-            OR: [
-              { startAt: null, endAt: null },
-              { startAt: { lte: now }, endAt: { gte: now } },
-              { startAt: { lte: now }, endAt: null },
-              { startAt: null, endAt: { gte: now } },
-            ],
-          },
-        }),
+        this.prisma.banner.count({ where: { isActive: true } }),
         this.prisma.banner.count(),
       ]),
 
@@ -145,15 +134,7 @@ export class AdminService {
    * Uses inventory schema tables (Category, Brand, Product)
    */
   private async getCatalogSummary(): Promise<CatalogSummaryDto> {
-    // Compute low-stock from real product data, honouring per-product
-    // `lowStockAlert` thresholds instead of a hard-coded number.
-    const productsForStock = await this.prisma.product.findMany({
-      where: { isActive: true, isDiscontinued: false },
-      select: { stockQty: true, lowStockAlert: true },
-    });
-    const lowStockCount = productsForStock.filter(
-      (p) => p.stockQty > 0 && p.stockQty <= (p.lowStockAlert ?? 5),
-    ).length;
+    const lowStockThreshold = 10;
 
     const [
       totalCategories,
@@ -161,14 +142,18 @@ export class AdminService {
       totalProducts,
       activeProducts,
       featuredProducts,
+      lowStockCountResult,
     ] = await Promise.all([
       this.prisma.category.count(),
       this.prisma.brand.count(),
       this.prisma.product.count(),
-      // "Active" means truly sellable: admin-active AND not discontinued.
-      this.prisma.product.count({ where: { isActive: true, isDiscontinued: false } }),
-      this.prisma.product.count({ where: { isFeatured: true, isActive: true, isDiscontinued: false } }),
+      this.prisma.product.count({ where: { isActive: true } }),
+      this.prisma.product.count({ where: { isFeatured: true } }),
+      // Low stock count placeholder - inventory tracking not yet implemented
+      Promise.resolve(0),
     ]);
+
+    const lowStockCount = Number(lowStockCountResult ?? 0);
 
     return {
       totalCategories,
@@ -245,8 +230,8 @@ export class AdminService {
       });
     }
 
-    // Sort by timestamp and limit (toSorted to avoid in-place mutation)
-    return [...activities]
+    // Sort by timestamp and limit
+    return activities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, limit);
   }
@@ -304,32 +289,11 @@ export class AdminService {
   }
 
   /**
-   * Get low stock products based on per-product `lowStockAlert` threshold.
+   * Get low stock products based on product stock_quantity field
    */
   private async getLowStockProducts(limit: number): Promise<LowStockProductDto[]> {
-    const products = await this.prisma.product.findMany({
-      where: { isActive: true, isDiscontinued: false },
-      select: {
-        id: true,
-        productName: true,
-        sku: true,
-        stockQty: true,
-        lowStockAlert: true,
-        images: { orderBy: { displayOrder: 'asc' }, take: 1, select: { media_asset_id: true } },
-      },
-    });
-    return products
-      .filter((p) => p.stockQty <= (p.lowStockAlert ?? 5))
-      .sort((a, b) => a.stockQty - b.stockQty)
-      .slice(0, limit)
-      .map((p) => ({
-        id: p.id.toString(),
-        sku: p.sku,
-        name: p.productName,
-        imageUrl: p.images[0]?.media_asset_id || '',
-        stock: p.stockQty,
-        threshold: p.lowStockAlert ?? 5,
-      } as LowStockProductDto));
+    // Return empty list - inventory tracking not yet implemented
+    return [];
   }
 
   /**
@@ -456,7 +420,7 @@ export class AdminService {
    * Get order details by ID for admin
    */
   async getOrderById(orderId: string) {
-    const baseOrder = await this.prisma.order.findUnique({
+    const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
         user: {
@@ -468,6 +432,8 @@ export class AdminService {
             phone: true,
           },
         },
+        shippingAddress: true,
+        billingAddress: true,
         items: true,
         statusHistory: {
           orderBy: { createdAt: 'desc' },
@@ -475,25 +441,14 @@ export class AdminService {
       },
     });
 
-    if (!baseOrder) {
+    if (!order) {
       return null;
     }
 
-    // Fetch addresses separately so orphan FKs (deleted addresses) don't 500 the request.
-    const [shippingAddress, billingAddress] = await Promise.all([
-      baseOrder.shippingAddressId
-        ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
-        : null,
-      baseOrder.billingAddressId
-        ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
-        : null,
-    ]);
-    const order: any = { ...baseOrder, shippingAddress, billingAddress };
-
     // Fetch product details from inventory schema
-    const productIds = (order.items as any[])
-      .map((item: any) => item.productId)
-      .filter((id: any): id is number => id !== null);
+    const productIds = order.items
+      .map(item => item.productId)
+      .filter((id): id is number => id !== null);
 
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds } },
@@ -522,30 +477,6 @@ export class AdminService {
     const uploadBase = this.configService.get<string>('UPLOAD_BASE_URL') || 'http://localhost:3000/uploads';
     const mediaMap = new Map(mediaAssets.map((m: any) => [m.id, `${uploadBase}/${m.key}`]));
 
-    // Determine loyalty award status for this order
-    const earnedTxn = await this.prisma.loyaltyTransaction.findFirst({
-      where: { orderId: order.id, type: 'EARNED' },
-      select: { id: true, createdAt: true },
-    });
-    const reversalTxn = earnedTxn
-      ? await this.prisma.loyaltyTransaction.findFirst({
-          where: {
-            orderId: order.id,
-            type: 'ADJUSTMENT',
-            description: { contains: 'Reversed' },
-          },
-          select: { id: true, createdAt: true },
-        })
-      : null;
-    let loyaltyAwardStatus: 'REVERSED' | 'AWARDED' | 'PENDING';
-    if (reversalTxn) {
-      loyaltyAwardStatus = 'REVERSED';
-    } else if (earnedTxn) {
-      loyaltyAwardStatus = 'AWARDED';
-    } else {
-      loyaltyAwardStatus = 'PENDING';
-    }
-
     return {
       id: order.id,
       orderNumber: order.orderNumber,
@@ -563,9 +494,6 @@ export class AdminService {
       total: Number(order.total),
       loyaltyRedeemAed: order.loyaltyRedeemAed ? Number(order.loyaltyRedeemAed) : 0,
       loyaltyEarnAed: order.loyaltyEarnAed ? Number(order.loyaltyEarnAed) : 0,
-      loyaltyAwardStatus,
-      loyaltyAwardedAt: earnedTxn?.createdAt ?? null,
-      loyaltyReversedAt: reversalTxn?.createdAt ?? null,
       promoCode: order.promoCode,
       notes: order.notes,
       trackingNumber: order.trackingNumber,
@@ -585,7 +513,7 @@ export class AdminService {
       },
       shippingAddress: order.shippingAddress,
       billingAddress: order.billingAddress,
-      items: (order.items as any[]).map((item: any) => {
+      items: order.items.map(item => {
         const product = item.productId ? productMap.get(item.productId) : null;
         return {
           id: item.id,
@@ -657,8 +585,16 @@ export class AdminService {
       }),
     ]);
 
-    // Loyalty award / reversal based on status transition
-    await this.handleLoyaltyOnStatusChange(order, data.status);
+    // Apply loyalty side-effects after DB update (non-fatal)
+    try {
+      if (data.status === 'DELIVERED') {
+        await this.loyaltyService.confirmPendingLoyaltyCash(orderId);
+      } else if ((data.status === 'CANCELLED' || data.status === 'REFUNDED') && order.status !== 'DELIVERED') {
+        await this.loyaltyService.reversePendingLoyaltyCash(orderId, `order ${data.status.toLowerCase()} by admin`);
+      }
+    } catch (err: any) {
+      // Loyalty failure must not break the status update response
+    }
 
     return {
       id: updatedOrder.id,
@@ -668,51 +604,5 @@ export class AdminService {
       trackingNumber: updatedOrder.trackingNumber,
       updatedAt: updatedOrder.updatedAt,
     };
-  }
-
-  /**
-   * Award loyalty cash when order becomes DELIVERED (once per order).
-   * Reverse previously-awarded loyalty when order becomes CANCELLED or REFUNDED.
-   */
-  private async handleLoyaltyOnStatusChange(order: any, newStatus: string) {
-    const earnAmount = Number(order.loyaltyEarnAed ?? 0);
-    if (earnAmount <= 0 || !order.userId) return;
-
-    // Has this order already had loyalty awarded?
-    const existingEarned = await this.prisma.loyaltyTransaction.findFirst({
-      where: { orderId: order.id, type: 'EARNED' },
-    });
-
-    if (newStatus === 'DELIVERED' && !existingEarned) {
-      await this.loyaltyService.addLoyaltyCash(
-        order.userId,
-        earnAmount,
-        order.id,
-        `Earned from Order #${order.orderNumber}`,
-      );
-      return;
-    }
-
-    if ((newStatus === 'CANCELLED' || newStatus === 'REFUNDED') && existingEarned) {
-      // Has it already been reversed?
-      const existingReversal = await this.prisma.loyaltyTransaction.findFirst({
-        where: {
-          orderId: order.id,
-          type: 'ADJUSTMENT',
-          description: { contains: 'Reversed' },
-        },
-      });
-      if (existingReversal) return;
-
-      try {
-        await this.loyaltyService.adjustLoyalty(
-          order.userId,
-          -earnAmount,
-          `Reversed: Order #${order.orderNumber} ${newStatus.toLowerCase()}`,
-        );
-      } catch {
-        // If user has already spent the points, skip silent fail.
-      }
-    }
   }
 }

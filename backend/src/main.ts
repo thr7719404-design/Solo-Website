@@ -129,8 +129,8 @@ async function bootstrap() {
 
   // 4c. OpenAPI / Swagger documentation (production-safe — no secrets exposed)
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Solo Ecommerce API')
-    .setDescription('REST API for Solo Ecommerce backend')
+    .setTitle('Collation Foundation Curation Ecommerce API')
+    .setDescription('REST API for Collation Foundation Curation Ecommerce backend')
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('health')
@@ -163,7 +163,7 @@ async function bootstrap() {
   console.log(`
   ╔════════════════════════════════════════════════════════════╗
   ║                                                            ║
-  ║   🛍️  Solo Ecommerce Backend API                          ║
+  ║   🛍️  Collation Foundation Curation Ecommerce Backend API                          ║
   ║                                                            ║
   ║   Environment: ${configService.get('NODE_ENV') || 'development'}                                   ║
   ║   Port: ${port}                                              ║

@@ -340,9 +340,9 @@ export class ProductsService {
         name: product.brand.name,
       } : null,
       price: product.pricing?.price_incl_vat_aed ? Number.parseFloat(product.pricing.price_incl_vat_aed.toString()) : 0,
-      listPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
-      compareAtPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
-      oldPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      listPrice: (product.pricing?.price_excl_vat_aed && Number(product.pricing.price_excl_vat_aed) > 0) ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      compareAtPrice: (product.pricing?.price_excl_vat_aed && Number(product.pricing.price_excl_vat_aed) > 0) ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      oldPrice: (product.pricing?.price_excl_vat_aed && Number(product.pricing.price_excl_vat_aed) > 0) ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       costPrice: product.pricing?.cost_price_aed ? Number.parseFloat(product.pricing.cost_price_aed.toString()) : null,
       currency: 'AED',
       imageUrl: product.images?.[0]?.media_asset_id || null,
@@ -353,7 +353,9 @@ export class ProductsService {
         displayOrder: img.displayOrder,
       })) || [],
       stock: product.stockQty ?? 0,
-      inStock: (product.stockQty ?? 0) > 0,
+      reservedQty: product.reservedQty ?? 0,
+      availableQty: Math.max(0, (product.stockQty ?? 0) - (product.reservedQty ?? 0)),
+      inStock: ((product.stockQty ?? 0) - (product.reservedQty ?? 0)) > 0,
       stockQuantity: product.stockQty ?? 0,
       material: product.material,
       color: product.colour,
@@ -362,18 +364,19 @@ export class ProductsService {
       isBestSeller: product.isBestSeller,
       isActive: product.isActive,
       isDiscontinued: product.isDiscontinued ?? false,
-      // Effective availability/status — single source of truth so the admin
-      // list badge reflects reality (not the raw isActive boolean alone).
+      // Effective availability/status — single source of truth based on
+      // available stock (stockQty - reservedQty), so items reserved by
+      // pending paid orders correctly show as out-of-stock on the storefront.
       availability: (() => {
         if (product.isActive === false) return 'INACTIVE';
         if (product.isDiscontinued === true) return 'DISCONTINUED';
-        if ((product.stockQty ?? 0) <= 0) return 'OUT_OF_STOCK';
+        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'OUT_OF_STOCK';
         return 'AVAILABLE';
       })(),
       status: (() => {
         if (product.isActive === false) return 'draft';
         if (product.isDiscontinued === true) return 'archived';
-        if ((product.stockQty ?? 0) <= 0) return 'out-of-stock';
+        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'out-of-stock';
         return 'active';
       })(),
       createdAt: product.createdAt,
@@ -639,7 +642,7 @@ export class ProductsService {
     let variants: any[] = [];
     if (product.productGroupId) {
       const siblings = await this.prisma.product.findMany({
-        where: { productGroupId: product.productGroupId, isActive: true },
+        where: { productGroupId: product.productGroupId, isActive: true, deletedAt: null },
         include: {
           pricing: true,
           images: {
@@ -650,18 +653,29 @@ export class ProductsService {
         orderBy: [{ variantSortOrder: 'asc' }, { id: 'asc' }],
       }) as any[];
       await this.resolveProductImageUrls(siblings);
-      variants = siblings.map((s: any) => ({
-        id: s.id.toString(),
-        sku: s.sku,
-        slug: s.slug,
-        name: s.productName,
-        attributes: s.variantAttributes || {},
-        price: s.pricing?.price_incl_vat_aed ? Number.parseFloat(s.pricing.price_incl_vat_aed.toString()) : 0,
-        stockQty: s.stockQty ?? 0,
-        inStock: (s.stockQty ?? 0) > 0,
-        primaryImage: s.images?.[0]?.media_asset_id || null,
-        isCurrent: s.id === product.id,
-      }));
+      const axes: string[] = (product.productGroup?.variantAxes as string[]) || ['color'];
+      variants = siblings.map((s: any) => {
+        // Normalise variantAttributes: lowercase legacy keys → camelCase, and fall back
+        // to Product.colour / Product.size when axes call for them but the JSON cache
+        // is missing the value. Keeps the UI working even when seed data is incomplete.
+        const raw: any = s.variantAttributes && typeof s.variantAttributes === 'object' ? { ...s.variantAttributes } : {};
+        if (raw.colorname && !raw.colorName) { raw.colorName = raw.colorname; delete raw.colorname; }
+        if (raw.colorhex && !raw.colorHex) { raw.colorHex = raw.colorhex; delete raw.colorhex; }
+        if (axes.includes('color') && !raw.color && !raw.colorName && s.colour) raw.colorName = s.colour;
+        if (axes.includes('size') && !raw.size && s.size) raw.size = s.size;
+        return {
+          id: s.id.toString(),
+          sku: s.sku,
+          slug: s.slug,
+          name: s.productName,
+          attributes: raw,
+          price: s.pricing?.price_incl_vat_aed ? Number.parseFloat(s.pricing.price_incl_vat_aed.toString()) : 0,
+          stockQty: s.stockQty ?? 0,
+          inStock: ((s.stockQty ?? 0) - (s.reservedQty ?? 0)) > 0,
+          primaryImage: s.images?.[0]?.media_asset_id || null,
+          isCurrent: s.id === product.id,
+        };
+      });
     }
 
     const transformed = this.transformProduct(product, true);
@@ -701,9 +715,9 @@ export class ProductsService {
         name: product.brand.name,
       } : null,
       price: product.pricing?.price_incl_vat_aed ? Number.parseFloat(product.pricing.price_incl_vat_aed.toString()) : 0,
-      listPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
-      compareAtPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
-      oldPrice: product.pricing?.price_excl_vat_aed ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      listPrice: (product.pricing?.price_excl_vat_aed && Number(product.pricing.price_excl_vat_aed) > 0) ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      compareAtPrice: (product.pricing?.price_excl_vat_aed && Number(product.pricing.price_excl_vat_aed) > 0) ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
+      oldPrice: (product.pricing?.price_excl_vat_aed && Number(product.pricing.price_excl_vat_aed) > 0) ? Number.parseFloat(product.pricing.price_excl_vat_aed.toString()) : null,
       costPrice: product.pricing?.cost_price_aed ? Number.parseFloat(product.pricing.cost_price_aed.toString()) : null,
       currency: 'AED',
       imageUrl: product.images?.[0]?.media_asset_id || null,
@@ -714,7 +728,9 @@ export class ProductsService {
         displayOrder: img.displayOrder,
       })) || [],
       stockQty: product.stockQty ?? 0,
-      inStock: (product.stockQty ?? 0) > 0,
+      reservedQty: product.reservedQty ?? 0,
+      availableQty: Math.max(0, (product.stockQty ?? 0) - (product.reservedQty ?? 0)),
+      inStock: ((product.stockQty ?? 0) - (product.reservedQty ?? 0)) > 0,
       lowStockAlert: product.lowStockAlert ?? 5,
       material: product.material,
       color: product.colour,
@@ -724,20 +740,20 @@ export class ProductsService {
       isActive: product.isActive,
       isDiscontinued: product.isDiscontinued ?? false,
       // Single source of truth for the catalog/admin UI. Combines isActive,
-      // isDiscontinued and stockQty into one of: AVAILABLE, OUT_OF_STOCK,
-      // DISCONTINUED, INACTIVE.
+      // isDiscontinued and available stock (stockQty - reservedQty) into one
+      // of: AVAILABLE, OUT_OF_STOCK, DISCONTINUED, INACTIVE.
       availability: (() => {
         if (product.isActive === false) return 'INACTIVE';
         if (product.isDiscontinued === true) return 'DISCONTINUED';
-        if ((product.stockQty ?? 0) <= 0) return 'OUT_OF_STOCK';
+        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'OUT_OF_STOCK';
         return 'AVAILABLE';
       })(),
       // Legacy admin status string (kept for compatibility with the products
-      // page which renders by `status`). Now derived from the same logic.
+      // page which renders by `status`). Derived from same logic.
       status: (() => {
         if (product.isActive === false) return 'draft';
         if (product.isDiscontinued === true) return 'archived';
-        if ((product.stockQty ?? 0) <= 0) return 'out-of-stock';
+        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'out-of-stock';
         return 'active';
       })(),
       createdAt: product.createdAt,
@@ -1032,19 +1048,34 @@ export class ProductsService {
 
   private async upsertProductPricing(tx: any, productId: number, dto: any, hasExisting: boolean): Promise<void> {
     if (dto.price === undefined && dto.compareAtPrice === undefined && dto.costPrice === undefined) return;
+    const VAT_RATE = 0.05;
     const pricingData: any = {};
-    if (dto.price !== undefined) pricingData.price_incl_vat_aed = dto.price;
-    if (dto.compareAtPrice !== undefined) pricingData.price_excl_vat_aed = dto.compareAtPrice;
+    if (dto.price !== undefined) {
+      pricingData.price_incl_vat_aed = dto.price;
+    }
+    // compareAtPrice (stored as price_excl_vat_aed) takes priority.
+    // 0 means "no compare-at price". When not provided, fall back to deriving
+    // excl-VAT from the selling price so the field always has a value.
+    if (dto.compareAtPrice !== undefined) {
+      pricingData.price_excl_vat_aed = Number(dto.compareAtPrice) > 0 ? Number(dto.compareAtPrice) : 0;
+    } else if (dto.price !== undefined) {
+      pricingData.price_excl_vat_aed = Number(dto.price) > 0
+        ? Math.round((Number(dto.price) / (1 + VAT_RATE)) * 100) / 100
+        : 0;
+    }
     // Allow explicitly clearing cost price by passing null, or saving it when provided.
     if (dto.costPrice !== undefined) pricingData.cost_price_aed = dto.costPrice ?? null;
     if (hasExisting) {
       await tx.productPricing.update({ where: { productId }, data: pricingData });
     } else {
-      const priceExcl = dto.compareAtPrice !== undefined ? dto.compareAtPrice : Math.round((dto.price / 1.05) * 100) / 100;
+      const priceIncl = dto.price ?? 0;
+      const priceExcl = Number(dto.compareAtPrice) > 0
+        ? Number(dto.compareAtPrice)
+        : (priceIncl ? Math.round((Number(priceIncl) / (1 + VAT_RATE)) * 100) / 100 : 0);
       await tx.productPricing.create({
         data: {
           productId,
-          price_incl_vat_aed: dto.price ?? 0,
+          price_incl_vat_aed: priceIncl,
           price_excl_vat_aed: priceExcl,
           cost_price_aed: dto.costPrice ?? null,
         },

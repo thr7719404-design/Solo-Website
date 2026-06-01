@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 export interface CreateSubcategoryInput {
   categoryId: number | string;
@@ -45,6 +46,28 @@ function toNumericId(id: string | number, label = 'id'): number {
 export class SubcategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Computes accurate active-product counts that mirror the /products listing
+  // filter (direct subcategory_id FK OR product_subcategories m2m link).
+  private async hydrateCounts(rows: any[]): Promise<any[]> {
+    if (rows.length === 0) return rows;
+    const ids = rows.map((r) => r.id);
+    const counts = await this.prisma.$queryRaw<{ subcategory_id: number; cnt: bigint }[]>`
+      SELECT s.id AS subcategory_id, COUNT(DISTINCT p.id)::bigint AS cnt
+      FROM subcategories s
+      LEFT JOIN products p
+        ON (p.subcategory_id = s.id
+            OR p.id IN (SELECT product_id FROM product_subcategories WHERE subcategory_id = s.id))
+       AND p.is_active = true
+      WHERE s.id IN (${Prisma.join(ids)})
+      GROUP BY s.id
+    `;
+    const map = new Map<number, number>(counts.map((c) => [c.subcategory_id, Number(c.cnt)]));
+    for (const r of rows) {
+      r._productCount = map.get(r.id) ?? 0;
+    }
+    return rows;
+  }
+
   async list(categoryId?: string | number | null) {
     const where: any = {};
     if (categoryId !== undefined && categoryId !== null && categoryId !== '') {
@@ -53,10 +76,8 @@ export class SubcategoriesService {
     const rows = await this.prisma.subcategory.findMany({
       where,
       orderBy: [{ categoryId: 'asc' }, { sort_order: 'asc' }, { name: 'asc' }],
-      include: {
-        _count: { select: { products: { where: { isActive: true } } } },
-      },
     });
+    await this.hydrateCounts(rows);
     return rows.map((r) => this.toDto(r));
   }
 
@@ -65,12 +86,8 @@ export class SubcategoriesService {
     const rows = await this.prisma.subcategory.findMany({
       where: { categoryId: cid },
       orderBy: [{ sort_order: 'asc' }, { name: 'asc' }],
-      include: {
-        _count: {
-          select: { products: { where: { isActive: true } } },
-        },
-      },
     });
+    await this.hydrateCounts(rows);
     return rows.map((r) => this.toDto(r));
   }
 
@@ -78,11 +95,9 @@ export class SubcategoriesService {
     const sid = toNumericId(id, 'subcategoryId');
     const row = await this.prisma.subcategory.findUnique({
       where: { id: sid },
-      include: {
-        _count: { select: { products: { where: { isActive: true } } } },
-      },
     });
     if (!row) throw new NotFoundException('Subcategory not found');
+    await this.hydrateCounts([row]);
     return this.toDto(row);
   }
 
@@ -232,7 +247,7 @@ export class SubcategoriesService {
       image: row.imageUrl,
       sort_order: row.sort_order,
       isActive: row.isActive,
-      productCount: row._count?.products ?? 0,
+      productCount: row._productCount ?? row._count?.products ?? 0,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

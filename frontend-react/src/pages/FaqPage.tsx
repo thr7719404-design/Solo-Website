@@ -136,7 +136,7 @@ const FAQS: QA[] = [
           +971 55 713 3051
         </a>
         , or by email at{' '}
-        <a href="mailto:info@solotestsite.site">info@solotestsite.site</a>.
+        <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a>.
       </>
     ),
   },

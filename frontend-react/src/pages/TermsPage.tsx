@@ -9,13 +9,13 @@ export default function TermsPage() {
         <>
           <p>
             By accessing, registering, browsing, purchasing from, or continuing to use{' '}
-            <strong>solotestsite.site</strong>, including our website, mobile application,
+            <strong>cfcgcc.com</strong>, including our website, mobile application,
             or any related online services, you agree to be bound by these Terms &amp;
             Conditions and any other policies or legal documents published on our website.
           </p>
           <p>
             Please read these Terms &amp; Conditions carefully before placing an order
-            through our website. By submitting an order on Solo, you agree to be bound by
+            through our website. By submitting an order on Collation Foundation Curation, you agree to be bound by
             these Terms &amp; Conditions with immediate effect.
           </p>
           <p>
@@ -31,18 +31,18 @@ export default function TermsPage() {
           body: [
             <ul key="defs">
               <li><strong>Applicable Laws:</strong> means the applicable rules, regulations, and laws of the United Arab Emirates.</li>
-              <li><strong>Solo Services:</strong> means the use of any services, information, product details, features, content, or retail services available on our website.</li>
+              <li><strong>Collation Foundation Curation Services:</strong> means the use of any services, information, product details, features, content, or retail services available on our website.</li>
               <li><strong>Goods or Products:</strong> means any goods, products, or items available for sale on our website.</li>
               <li><strong>Customer, you, or your:</strong> means any person who browses, registers, places an order, or purchases products from our website.</li>
-              <li><strong>Website, Platform, or Solo:</strong> means our retail website, solotestsite.site, including any mobile application or related digital platform operated by us.</li>
-              <li><strong>we, us, or our:</strong> means Solo, operating the retail website solotestsite.site, including its employees, representatives, contractors, agents, and service providers.</li>
+              <li><strong>Website, Platform, or Collation Foundation Curation:</strong> means our retail website, cfcgcc.com, including any mobile application or related digital platform operated by us.</li>
+              <li><strong>we, us, or our:</strong> means Collation Foundation Curation, operating the retail website cfcgcc.com, including its employees, representatives, contractors, agents, and service providers.</li>
             </ul>,
           ],
         },
         {
           heading: '2. Online Retail Website',
           body: [
-            'Solo is an online retail website. We sell products directly to customers through our website. When you place an order on our website, the contract of sale is between you and Solo.',
+            'Collation Foundation Curation is an online retail website. We sell products directly to customers through our website. When you place an order on our website, the contract of sale is between you and Collation Foundation Curation.',
             'We are responsible for processing your order, arranging delivery, handling customer service, and managing returns, refunds, or replacements in accordance with these Terms & Conditions and our applicable policies.',
           ],
         },
@@ -56,7 +56,7 @@ export default function TermsPage() {
         {
           heading: '4. No Misuse or False Representation',
           body: [
-            'You may not publicly represent or imply that Solo, or any of its employees, representatives, or partners has sponsored, approved, endorsed, or authorised any use of our name, website, products, services, content, or materials without our prior written approval.',
+            'You may not publicly represent or imply that Collation Foundation Curation, or any of its employees, representatives, or partners has sponsored, approved, endorsed, or authorised any use of our name, website, products, services, content, or materials without our prior written approval.',
             'We reserve the right to take legal action against any unauthorised use, false representation, misuse, or fraudulent use of our website, brand, content, or services.',
           ],
         },
@@ -81,10 +81,10 @@ export default function TermsPage() {
         {
           heading: '7. Intellectual Property Rights',
           body: [
-            'The website and all of its content, features, and functionality, including but not limited to text, product descriptions, images, graphics, videos, logos, icons, designs, layouts, software, and other materials, are owned by or licensed to Solo.',
+            'The website and all of its content, features, and functionality, including but not limited to text, product descriptions, images, graphics, videos, logos, icons, designs, layouts, software, and other materials, are owned by or licensed to Collation Foundation Curation.',
             'All such content is protected by copyright, trademark, trade secret, and other intellectual property laws.',
             'You may not copy, reproduce, distribute, modify, display, publish, sell, or exploit any part of our website or content without our prior written approval.',
-            <>If you believe that your intellectual property rights have been infringed on our website, please contact us immediately at: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a>.</>,
+            <>If you believe that your intellectual property rights have been infringed on our website, please contact us immediately at: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a>.</>,
           ],
         },
         {
@@ -105,11 +105,11 @@ export default function TermsPage() {
             </ul>,
             'You represent and warrant that any content, feedback, review, or comment you submit is accurate, lawful, and does not violate the rights of any third party.',
             'We reserve the right to review, reject, edit, or remove any content posted by you at any time, with or without notice.',
-            'You agree to indemnify and hold Solo harmless from any claims, damages, losses, or expenses arising from content, comments, reviews, or materials submitted by you.',
+            'You agree to indemnify and hold Collation Foundation Curation harmless from any claims, damages, losses, or expenses arising from content, comments, reviews, or materials submitted by you.',
           ],
         },
         {
-          heading: '9. Solo Liability',
+          heading: '9. Collation Foundation Curation Liability',
           body: [
             'We will make reasonable efforts to provide a reliable and uninterrupted retail service to our customers.',
             'However, we do not guarantee that the website will always be available, uninterrupted, error-free, or free from technical issues.',
@@ -171,7 +171,7 @@ export default function TermsPage() {
             <strong key="14b">14.2 Return, Refund, or Replacement</strong>,
             'We aim to provide a smooth customer experience and may accept returns, refunds, or replacements in accordance with our return policy. Return eligibility may depend on the product type, condition, reason for return, packaging, and the time passed since delivery.',
             <strong key="14c">14.3 Return Procedure</strong>,
-            <>To request a return, please contact us through email at <a href="mailto:info@solotestsite.site">info@solotestsite.site</a> or phone <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
+            <>To request a return, please contact us through email at <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a> or phone <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
             'When submitting a return request, please provide: order number, product name, reason for return, photos or videos (if the product is damaged, defective, incorrect, or incomplete), and your contact details. If your return request is approved, we will provide instructions for collection, drop-off, or return shipment.',
             <strong key="14d">14.4 Return Policy</strong>,
             'All returns are subject to prior approval. Unauthorised returns may be refused or returned to the customer at the customer\'s expense.',
@@ -212,7 +212,7 @@ export default function TermsPage() {
         {
           heading: '17. Defect or Damage to Ordered Goods',
           body: [
-            <>If you receive a damaged, defective, incorrect, or incomplete product, you must notify us as soon as possible at: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a> or <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
+            <>If you receive a damaged, defective, incorrect, or incomplete product, you must notify us as soon as possible at: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a> or <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
             'We may request photos, videos, order details, packaging images, or other evidence to review the issue.',
             'If the defect or damage is confirmed, we may offer a replacement, repair, refund, store credit, or another suitable remedy in accordance with applicable law and our return policy.',
             'We are not responsible for damage caused by misuse, improper installation, unauthorised repair, alteration, negligence, or failure to follow product instructions.',
@@ -231,7 +231,7 @@ export default function TermsPage() {
         {
           heading: '19. Liability',
           body: [
-            'To the fullest extent permitted by applicable law, Solo, including its employees, representatives, contractors, service providers, directors, officers, suppliers, subcontractors, or licensors, shall not be liable for:',
+            'To the fullest extent permitted by applicable law, Collation Foundation Curation, including its employees, representatives, contractors, service providers, directors, officers, suppliers, subcontractors, or licensors, shall not be liable for:',
             <ul key="liab">
               <li>Loss of profits, loss of data, loss of business, loss of goodwill, or failure to realise anticipated savings.</li>
               <li>Indirect, incidental, special, consequential, exemplary, or punitive damages.</li>
@@ -262,7 +262,7 @@ export default function TermsPage() {
           body: [
             'To contact us regarding these Terms & Conditions, orders, returns, complaints, or customer service matters, please use the details below:',
             <ul key="notices">
-              <li>Email: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a></li>
+              <li>Email: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a></li>
               <li>Phone / WhatsApp: <a href="tel:+971557133051">+971 55 713 3051</a></li>
             </ul>,
           ],
@@ -289,7 +289,7 @@ export default function TermsPage() {
         {
           heading: '26. Entire Agreement',
           body: [
-            'These Terms & Conditions, together with our Privacy Policy and any other policies published on our website, form the entire agreement between you and Solo regarding your use of solotestsite.site and your purchase of products from us.',
+            'These Terms & Conditions, together with our Privacy Policy and any other policies published on our website, form the entire agreement between you and Collation Foundation Curation regarding your use of cfcgcc.com and your purchase of products from us.',
             'They replace any previous agreements, understandings, communications, or representations, whether written or verbal.',
           ],
         },
@@ -304,8 +304,8 @@ export default function TermsPage() {
           body: [
             'For any questions, concerns, complaints, order support, returns, or notices, you may contact us at:',
             <ul key="contact">
-              <li>Website: solotestsite.site</li>
-              <li>Email: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a></li>
+              <li>Website: cfcgcc.com</li>
+              <li>Email: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a></li>
               <li>Phone / WhatsApp: <a href="tel:+971557133051">+971 55 713 3051</a></li>
               <li>Address: VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, United Arab Emirates</li>
             </ul>,

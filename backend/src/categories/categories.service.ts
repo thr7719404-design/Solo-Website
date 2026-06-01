@@ -5,11 +5,11 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
     // Check if category slug already exists
-    const slug = createCategoryDto.name.toLowerCase().replaceAll(/\s+/g, '-');
+    const slug = createCategoryDto.name.toLowerCase().replace(/\s+/g, '-');
     const existing = await this.prisma.category.findUnique({
       where: { slug },
     });
@@ -23,10 +23,9 @@ export class CategoriesService {
         name: createCategoryDto.name,
         slug,
         description: createCategoryDto.description,
-        imageUrl: createCategoryDto.imageUrl ?? null,
         sort_order: createCategoryDto.displayOrder ?? 0,
         isActive: createCategoryDto.isActive ?? true,
-        parent_id: createCategoryDto.parentId ? Number.parseInt(String(createCategoryDto.parentId), 10) : null,
+        parent_id: createCategoryDto.parentId ? parseInt(String(createCategoryDto.parentId), 10) : null,
       },
     });
   }
@@ -39,51 +38,49 @@ export class CategoriesService {
         subcategories: {
           where: { isActive: true },
           orderBy: [{ sort_order: 'asc' }, { name: 'asc' }],
-          include: {
-            _count: { select: { products: { where: { isActive: true } } } },
-          },
         },
-        _count: { select: { products: { where: { isActive: true } } } },
       },
     });
 
-    // Compute accurate counts that include both the legacy primary FK and the
-    // many-to-many join tables (mirrors the OR clauses used by the products filter).
-    const categoryCounts = await this.prisma.$queryRawUnsafe<Array<{ id: number; cnt: bigint }>>(
-      `SELECT c.id AS id, COUNT(DISTINCT pid) AS cnt FROM (
-         SELECT c.id, p.id AS pid
-           FROM categories c
-           LEFT JOIN products p ON p.category_id = c.id AND p.is_active = true
-         UNION
-         SELECT c.id, p.id AS pid
-           FROM categories c
-           LEFT JOIN product_categories pc ON pc.category_id = c.id
-           LEFT JOIN products p ON p.id = pc.product_id AND p.is_active = true
-       ) c
-       WHERE pid IS NOT NULL
-       GROUP BY c.id`
-    );
-    const subcategoryCounts = await this.prisma.$queryRawUnsafe<Array<{ id: number; cnt: bigint }>>(
-      `SELECT s.id AS id, COUNT(DISTINCT pid) AS cnt FROM (
-         SELECT s.id, p.id AS pid
-           FROM subcategories s
-           LEFT JOIN products p ON p.subcategory_id = s.id AND p.is_active = true
-         UNION
-         SELECT s.id, p.id AS pid
-           FROM subcategories s
-           LEFT JOIN product_subcategories ps ON ps.subcategory_id = s.id
-           LEFT JOIN products p ON p.id = ps.product_id AND p.is_active = true
-       ) s
-       WHERE pid IS NOT NULL
-       GROUP BY s.id`
-    );
-    const catCountMap = new Map(categoryCounts.map(r => [r.id, Number(r.cnt)]));
-    const subCountMap = new Map(subcategoryCounts.map(r => [r.id, Number(r.cnt)]));
+    // Compute accurate product counts that mirror the /products listing
+    // filter logic (direct FK OR many-to-many link table), counted as
+    // DISTINCT products. The Prisma `_count.products` relation only counts
+    // the direct FK, which under-reports when products are linked via
+    // product_subcategories or product_categories.
+    const [subCounts, catCounts] = await Promise.all([
+      this.prisma.$queryRaw<{ subcategory_id: number; cnt: bigint }[]>`
+        SELECT s.id AS subcategory_id, COUNT(DISTINCT p.id)::bigint AS cnt
+        FROM subcategories s
+        LEFT JOIN products p
+          ON (p.subcategory_id = s.id
+              OR p.id IN (SELECT product_id FROM product_subcategories WHERE subcategory_id = s.id))
+         AND p.is_active = true
+        WHERE s.is_active = true
+        GROUP BY s.id
+      `,
+      this.prisma.$queryRaw<{ category_id: number; cnt: bigint }[]>`
+        SELECT c.id AS category_id, COUNT(DISTINCT p.id)::bigint AS cnt
+        FROM categories c
+        LEFT JOIN products p
+          ON (p.category_id = c.id
+              OR p.id IN (SELECT product_id FROM product_categories WHERE category_id = c.id))
+         AND p.is_active = true
+        WHERE c.is_active = true
+        GROUP BY c.id
+      `,
+    ]);
 
-    for (const row of rows) {
-      (row as any)._accurateCount = catCountMap.get(row.id) ?? 0;
+    const subCountMap = new Map<number, number>(
+      subCounts.map((r) => [r.subcategory_id, Number(r.cnt)]),
+    );
+    const catCountMap = new Map<number, number>(
+      catCounts.map((r) => [r.category_id, Number(r.cnt)]),
+    );
+
+    for (const row of rows as any[]) {
+      row._productCount = catCountMap.get(row.id) ?? 0;
       for (const sub of row.subcategories || []) {
-        (sub as any)._accurateCount = subCountMap.get(sub.id) ?? 0;
+        sub._productCount = subCountMap.get(sub.id) ?? 0;
       }
     }
 
@@ -125,8 +122,6 @@ export class CategoriesService {
       slug: category.slug,
       description: category.description,
       image_id: category.image_id,
-      imageUrl: category.imageUrl,
-      image: category.imageUrl,
       sort_order: category.sort_order,
       isActive: category.isActive,
       children: category.other_categories?.map(sub => ({
@@ -143,7 +138,7 @@ export class CategoriesService {
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {
-    const numericId = Number.parseInt(id, 10);
+    const numericId = parseInt(id, 10);
     if (isNaN(numericId)) {
       throw new BadRequestException('Invalid category ID');
     }
@@ -158,7 +153,7 @@ export class CategoriesService {
 
     // Check slug uniqueness if name is being updated
     if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
-      const newSlug = updateCategoryDto.name.toLowerCase().replaceAll(/\s+/g, '-');
+      const newSlug = updateCategoryDto.name.toLowerCase().replace(/\s+/g, '-');
       const existing = await this.prisma.category.findUnique({
         where: { slug: newSlug },
       });
@@ -173,10 +168,9 @@ export class CategoriesService {
       data: {
         ...(updateCategoryDto.name && { 
           name: updateCategoryDto.name,
-          slug: updateCategoryDto.name.toLowerCase().replaceAll(/\s+/g, '-'),
+          slug: updateCategoryDto.name.toLowerCase().replace(/\s+/g, '-'),
         }),
         ...(updateCategoryDto.description !== undefined && { description: updateCategoryDto.description }),
-        ...(updateCategoryDto.imageUrl !== undefined && { imageUrl: updateCategoryDto.imageUrl || null }),
         ...(updateCategoryDto.displayOrder !== undefined && { sort_order: updateCategoryDto.displayOrder }),
         ...(updateCategoryDto.isActive !== undefined && { isActive: updateCategoryDto.isActive }),
       },
@@ -190,8 +184,6 @@ export class CategoriesService {
       name: updated.name,
       slug: updated.slug,
       description: updated.description,
-      imageUrl: updated.imageUrl,
-      image: updated.imageUrl,
       sort_order: updated.sort_order,
       isActive: updated.isActive,
       childrenCount: updated.other_categories?.length || 0,
@@ -201,7 +193,7 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    const numericId = Number.parseInt(id, 10);
+    const numericId = parseInt(id, 10);
     if (isNaN(numericId)) {
       throw new BadRequestException('Invalid category ID');
     }
@@ -243,7 +235,7 @@ export class CategoriesService {
     await this.prisma.$transaction(
       orderedIds.map((id, index) =>
         this.prisma.category.update({
-          where: { id: typeof id === 'string' ? Number.parseInt(id, 10) : id },
+          where: { id: typeof id === 'string' ? parseInt(id, 10) : id },
           data: { sort_order: index },
         })
       )
@@ -264,12 +256,10 @@ export class CategoriesService {
         slug: r.slug,
         description: r.description,
         image_id: r.image_id,
-        imageUrl: r.imageUrl,
-        image: r.imageUrl,
         parent_id: r.parent_id,
         sort_order: r.sort_order,
         isActive: r.isActive,
-        productCount: r._accurateCount ?? r._count?.products ?? 0,
+        productCount: r._productCount ?? r._count?.products ?? 0,
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
         children: [],
@@ -279,12 +269,10 @@ export class CategoriesService {
           name_ar: sub.name_ar,
           slug: sub.slug,
           description: sub.description,
-          imageUrl: sub.imageUrl,
-          image: sub.imageUrl,
           categoryId: sub.categoryId,
           sort_order: sub.sort_order,
           isActive: sub.isActive,
-          productCount: sub._accurateCount ?? sub._count?.products ?? 0,
+          productCount: sub._productCount ?? sub._count?.products ?? 0,
         })),
       });
     }

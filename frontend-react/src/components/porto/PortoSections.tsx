@@ -36,7 +36,7 @@ export function HeroSection({ banners = [] }: Readonly<{ banners?: BannerDto[] }
       )}
       <div className={styles['hero-overlay']} />
       <div className={styles['hero-content']}>
-        <h1>{slide?.title || 'Welcome to Solo Ecommerce'}</h1>
+        <h1>{slide?.title || 'Welcome to Collation Foundation Curation'}</h1>
         <p>{slide?.subtitle || 'Discover premium products for your lifestyle'}</p>
         {slide?.ctaUrl ? (
           <Link to={slide.ctaUrl} className={styles['hero-cta']}>

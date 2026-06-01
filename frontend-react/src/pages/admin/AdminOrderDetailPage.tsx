@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/api/admin';
-import { downloadOrderInvoice } from '@/api/invoices';
 import styles from './Admin.module.css';
 
 /* ─── Status Pipeline ─── */
@@ -77,19 +76,23 @@ export default function AdminOrderDetailPage() {
             <Link to="/admin/orders" className={styles['btn-ghost']} style={{ fontSize: 12 }}>← Back to Orders</Link>
           </span>
         </div>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 12,
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
             type="button"
-            onClick={() => downloadOrderInvoice(order.id, order.orderNumber).catch(() => toast.error('Failed to download invoice'))}
+            onClick={() => {
+              toast.loading('Generating invoice…', { id: 'invoice-dl' });
+              adminApi.downloadInvoice(id!, order.orderNumber)
+                .then(() => toast.success('Invoice downloaded', { id: 'invoice-dl' }))
+                .catch(() => toast.error('Failed to download invoice', { id: 'invoice-dl' }));
+            }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-              color: '#fff', background: '#B8860B', border: 'none', cursor: 'pointer',
+              padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              color: '#fff', background: 'linear-gradient(135deg, #D4A843, #B8860B)',
+              border: 'none', cursor: 'pointer',
             }}
           >
-            ⬇ Invoice PDF
+            📄 Download Invoice
           </button>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -123,7 +126,7 @@ export default function AdminOrderDetailPage() {
               {pipelineIdx > 0 && (
                 <div style={{
                   position: 'absolute', top: 22, left: 28, height: 3, borderRadius: 2,
-                  width: `calc((100% - 56px) * ${pipelineIdx / (PIPELINE.length - 1)})`,
+                  width: `calc(${(pipelineIdx / (PIPELINE.length - 1)) * 100}% - 56px)`,
                   background: STATUS_META[currentStatus]?.color || '#888',
                   transition: 'width 0.4s ease',
                 }} />
@@ -136,21 +139,6 @@ export default function AdminOrderDetailPage() {
                   const isPast = pipelineIdx > i;
                   const isClickable = !isTerminal && !isActive;
                   const isSelected = confirmTarget === step;
-                  let nodeBg: string;
-                  if (isActive) nodeBg = `linear-gradient(135deg, ${meta.color}, ${meta.color}dd)`;
-                  else if (isPast) nodeBg = meta.bg;
-                  else nodeBg = 'var(--admin-surface-2, var(--admin-surface))';
-                  let nodeColor: string;
-                  if (isActive) nodeColor = '#fff';
-                  else if (isPast) nodeColor = meta.color;
-                  else nodeColor = 'var(--admin-text-muted)';
-                  let nodeShadow: string;
-                  if (isActive) nodeShadow = `0 0 16px ${meta.color}44, 0 4px 10px ${meta.color}33`;
-                  else if (isSelected) nodeShadow = `0 0 12px ${meta.color}44`;
-                  else nodeShadow = 'none';
-                  let labelColor: string;
-                  if (isActive || isPast) labelColor = meta.color;
-                  else labelColor = 'var(--admin-text-dim)';
 
                   return (
                     <div key={step} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 56 }}>
@@ -164,9 +152,15 @@ export default function AdminOrderDetailPage() {
                           fontSize: isActive ? 20 : 16,
                           cursor: isClickable ? 'pointer' : 'default',
                           transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
-                          background: nodeBg,
-                          color: nodeColor,
-                          boxShadow: nodeShadow,
+                          background: isActive
+                            ? `linear-gradient(135deg, ${meta.color}, ${meta.color}dd)`
+                            : isPast
+                              ? meta.bg
+                              : 'var(--admin-surface-2, var(--admin-surface))',
+                          color: isActive ? '#fff' : isPast ? meta.color : 'var(--admin-text-muted)',
+                          boxShadow: isActive
+                            ? `0 0 16px ${meta.color}44, 0 4px 10px ${meta.color}33`
+                            : isSelected ? `0 0 12px ${meta.color}44` : 'none',
                           outline: isSelected ? `2px solid ${meta.color}` : 'none',
                           outlineOffset: 3,
                           transform: isSelected ? 'scale(1.1)' : 'scale(1)',
@@ -179,7 +173,7 @@ export default function AdminOrderDetailPage() {
                       <span style={{
                         marginTop: 6, fontSize: 11, fontWeight: isActive ? 700 : 500,
                         whiteSpace: 'nowrap',
-                        color: labelColor,
+                        color: isActive ? meta.color : isPast ? meta.color : 'var(--admin-text-dim)',
                       }}>
                         {meta.label}
                       </span>
@@ -189,8 +183,8 @@ export default function AdminOrderDetailPage() {
               </div>
             </div>
 
-            {/* Tracking number input — only when moving to SHIPPED (mandatory there) */}
-            {confirmTarget === 'SHIPPED' && (
+            {/* Tracking number input (shows when SHIPPED is the target or order is PROCESSING) */}
+            {(confirmTarget === 'SHIPPED' || (currentStatus === 'PROCESSING' && !confirmTarget)) && (
               <div style={{
                 background: 'var(--admin-surface-2, var(--admin-surface))', borderRadius: 12, padding: 16, marginBottom: 16,
                 border: trackingError ? '1px solid #ef4444' : '1px solid var(--admin-border)',
@@ -208,7 +202,7 @@ export default function AdminOrderDetailPage() {
                     width: '100%', padding: '10px 14px', fontSize: 14,
                     border: trackingError ? '1px solid #ef4444' : '1px solid var(--admin-border)',
                     borderRadius: 8, background: 'var(--admin-surface)', color: 'var(--admin-text)',
-                    outline: 'none', fontFamily: 'inherit', letterSpacing: '0.02em',
+                    outline: 'none', fontFamily: 'monospace', letterSpacing: '0.02em',
                   }}
                 />
                 {trackingError && <p style={{ color: '#ef4444', fontSize: 12, marginTop: 6 }}>Tracking number is required to ship this order</p>}
@@ -257,28 +251,7 @@ export default function AdminOrderDetailPage() {
 
             {/* Cancel / Refund actions */}
             {!isTerminal && !confirmTarget && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 8, alignItems: 'center' }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text-muted)', marginRight: 4 }}>
-                  Update status:
-                </span>
-                {PIPELINE.filter(s => s !== currentStatus).map(s => {
-                  const meta = STATUS_META[s];
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => setConfirmTarget(s)}
-                      style={{
-                        padding: '8px 14px', fontSize: 13, fontWeight: 600, borderRadius: 8,
-                        border: `1px solid ${meta.color}55`,
-                        background: meta.bg, color: meta.color, cursor: 'pointer',
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                      }}
-                    >
-                      <span>{meta.icon}</span> Mark as {meta.label}
-                    </button>
-                  );
-                })}
-                <span style={{ flex: 1 }} />
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 <button
                   onClick={() => setConfirmTarget('CANCELLED')}
                   style={{
@@ -380,9 +353,7 @@ export default function AdminOrderDetailPage() {
               )}
               {Number(order.discount ?? 0) > 0 && (
                 <div className={styles['detail-row']}>
-                  <span className={styles['detail-row-label']}>
-                    Discount{order.promoCode ? <> <span style={{ fontFamily: 'inherit', fontSize: 11, background: 'rgba(16,185,129,0.12)', color: 'var(--admin-emerald)', borderRadius: 4, padding: '1px 5px' }}>{order.promoCode}</span></> : ''}
-                  </span>
+                  <span className={styles['detail-row-label']}>Discount</span>
                   <span style={{ color: 'var(--admin-emerald)' }}>- AED {Number(order.discount).toFixed(2)}</span>
                 </div>
               )}
@@ -396,30 +367,6 @@ export default function AdminOrderDetailPage() {
                 <span className={styles['detail-row-label']}>Total</span>
                 <span style={{ color: 'var(--admin-accent)' }}>AED {Number(order.total).toFixed(2)}</span>
               </div>
-              {Number(order.loyaltyEarnAed ?? 0) > 0 && (() => {
-                const status = order.loyaltyAwardStatus || (order.status === 'DELIVERED' ? 'AWARDED' : 'PENDING');
-                let meta: { label: string; color: string; bg: string };
-                if (status === 'AWARDED') {
-                  meta = { label: 'Awarded', color: 'var(--admin-emerald)', bg: 'rgba(16,185,129,0.12)' };
-                } else if (status === 'REVERSED') {
-                  meta = { label: 'Reversed', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' };
-                } else {
-                  meta = { label: 'Pending', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' };
-                }
-                return (
-                  <div className={styles['detail-row']} style={{ marginTop: 6 }}>
-                    <span className={styles['detail-row-label']}>
-                      Loyalty Points{' '}
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 10, background: meta.bg, color: meta.color, marginLeft: 4 }}>
-                        {meta.label}
-                      </span>
-                    </span>
-                    <span style={{ color: meta.color, fontWeight: 600 }}>
-                      {status === 'REVERSED' ? '-' : '+'} AED {Number(order.loyaltyEarnAed).toFixed(2)}
-                    </span>
-                  </div>
-                );
-              })()}
             </div>
 
             {/* Customer */}
@@ -454,7 +401,7 @@ export default function AdminOrderDetailPage() {
                 <h4 style={{ marginBottom: 12, color: 'var(--admin-text)' }}>Tracking</h4>
                 <div className={styles['detail-row']}>
                   <span className={styles['detail-row-label']}>Number</span>
-                  <span style={{ fontFamily: 'inherit', color: 'var(--admin-cyan)' }}>{order.trackingNumber}</span>
+                  <span style={{ fontFamily: 'monospace', color: 'var(--admin-cyan)' }}>{order.trackingNumber}</span>
                 </div>
               </div>
             )}

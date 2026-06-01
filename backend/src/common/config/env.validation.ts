@@ -64,6 +64,6 @@ export const envValidationSchema = Joi.object({
   ADMIN_PASSWORD: Joi.string().min(8).optional(),
 
   // App metadata
-  APP_NAME: Joi.string().default('Solo Ecommerce'),
+  APP_NAME: Joi.string().default('Collation Foundation Curation Ecommerce'),
   APP_URL: Joi.string().optional(),
 }).unknown(true); // allow other vars (Azure injects many)

@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
       intro={
         <>
           <p>
-            Solo, operating on <strong>solotestsite.site</strong>, is strongly committed to
+            Collation Foundation Curation, operating on <strong>cfcgcc.com</strong>, is strongly committed to
             respecting the privacy of all individuals using our website, mobile application,
             and online retail services.
           </p>
@@ -201,7 +201,7 @@ export default function PrivacyPolicyPage() {
         {
           heading: 'Limitation of Liability',
           body: [
-            'To the maximum extent permitted by applicable law, Solo, its affiliates, partners, employees, officers, directors, service providers, or insurers shall not be liable for any indirect, incidental, special, exemplary, consequential, or punitive damages arising from the collection, use, transfer, processing, or storage of personal information, or from your access to and use of our website, mobile application, products, or services.',
+            'To the maximum extent permitted by applicable law, Collation Foundation Curation, its affiliates, partners, employees, officers, directors, service providers, or insurers shall not be liable for any indirect, incidental, special, exemplary, consequential, or punitive damages arising from the collection, use, transfer, processing, or storage of personal information, or from your access to and use of our website, mobile application, products, or services.',
           ],
         },
         {
@@ -216,7 +216,7 @@ export default function PrivacyPolicyPage() {
           body: [
             'We welcome your questions, comments, and concerns about privacy. You may contact our Customer Care team using the details below:',
             <ul key="contact">
-              <li>Email: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a></li>
+              <li>Email: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a></li>
               <li>WhatsApp / Phone: <a href="tel:+971557133051">+971 55 713 3051</a></li>
               <li>Address: VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, United Arab Emirates</li>
             </ul>,

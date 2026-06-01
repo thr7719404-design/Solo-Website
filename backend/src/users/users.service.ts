@@ -8,8 +8,8 @@ export class UsersService {
   private readonly uploadsBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private prisma: PrismaService,
+    private configService: ConfigService,
   ) {
     this.uploadsBaseUrl =
       this.configService.get<string>('UPLOAD_BASE_URL') ||
@@ -37,16 +37,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return {
-      ...user,
-      // Effective lifecycle status (single source of truth for the UI).
-      status:
-        user.isActive === false
-          ? 'INACTIVE'
-          : !user.emailVerified
-            ? 'UNVERIFIED'
-            : 'ACTIVE',
-    };
+    return user;
   }
 
   async findByEmail(email: string) {
@@ -83,21 +74,11 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
       include: {
         items: true,
+        shippingAddress: true,
       },
     });
 
-    // Fetch shipping addresses separately so orphan FKs don't break the listing.
-    const shippingIds = Array.from(
-      new Set(orders.map((o) => o.shippingAddressId).filter(Boolean) as string[]),
-    );
-    const shippingAddresses = shippingIds.length
-      ? await this.prisma.address.findMany({ where: { id: { in: shippingIds } } })
-      : [];
-    const addrMap = new Map(shippingAddresses.map((a) => [a.id, a]));
-
-    return orders.map((order) => {
-      const ship = order.shippingAddressId ? addrMap.get(order.shippingAddressId) : null;
-      return {
+    return orders.map((order) => ({
       id: order.id,
       orderNumber: order.orderNumber,
       status: order.status,
@@ -114,41 +95,32 @@ export class UsersService {
       itemsCount: order.items.length,
       createdAt: order.createdAt,
       shippingAddress: {
-        city: ship?.city ?? '',
+        city: order.shippingAddress?.city ?? '',
       },
-      };
-    });
+    }));
   }
 
   async getUserOrder(userId: string, orderId: string) {
-    const baseOrder = await this.prisma.order.findFirst({
+    const order = await this.prisma.order.findFirst({
       where: { id: orderId, userId },
       include: {
         items: true,
+        shippingAddress: true,
+        billingAddress: true,
         statusHistory: {
           orderBy: { createdAt: 'desc' },
         },
       },
     });
 
-    if (!baseOrder) {
+    if (!order) {
       throw new NotFoundException('Order not found');
     }
 
-    const [shippingAddress, billingAddress] = await Promise.all([
-      baseOrder.shippingAddressId
-        ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
-        : null,
-      baseOrder.billingAddressId
-        ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
-        : null,
-    ]);
-    const order: any = { ...baseOrder, shippingAddress, billingAddress };
-
     // Resolve product images for order items
-    const productIds = (order.items as any[])
-      .map((item: any) => item.productId)
-      .filter((id: any): id is number => id !== null);
+    const productIds = order.items
+      .map((item) => item.productId)
+      .filter((id): id is number => id !== null);
 
     if (productIds.length > 0) {
       const products = await this.prisma.product.findMany({
@@ -184,7 +156,7 @@ export class UsersService {
       }
 
       // Attach imageUrl to each order item
-      const enrichedItems = (order.items as any[]).map((item: any) => ({
+      const enrichedItems = order.items.map((item) => ({
         ...item,
         imageUrl: item.productId ? imageMap.get(item.productId) || null : null,
       }));
@@ -226,9 +198,10 @@ export class UsersService {
       });
     }
 
+    const { country: _country, ...cleanData } = addressData ?? {};
     return this.prisma.address.create({
       data: {
-        ...addressData,
+        ...cleanData,
         userId,
         isDefault,
       },
@@ -253,9 +226,10 @@ export class UsersService {
       });
     }
 
+    const { country: _country, ...cleanData } = addressData ?? {};
     return this.prisma.address.update({
       where: { id: addressId },
-      data: addressData,
+      data: cleanData,
     });
   }
 

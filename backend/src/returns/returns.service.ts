@@ -72,15 +72,37 @@ export class ReturnsService {
       throw new BadRequestException('At least one item must be included in the return');
     }
 
+    // Sum previously-returned quantities per orderItemId (across all non-rejected/non-cancelled returns)
+    const priorReturnItems = await this.prisma.returnItem.findMany({
+      where: {
+        return: {
+          orderId: dto.orderId,
+          status: { notIn: ['REJECTED', 'CANCELLED'] },
+        },
+      },
+      select: { orderItemId: true, quantity: true },
+    });
+    const alreadyReturned: Record<string, number> = {};
+    for (const it of priorReturnItems) {
+      alreadyReturned[it.orderItemId] = (alreadyReturned[it.orderItemId] ?? 0) + it.quantity;
+    }
+
     let totalRefundAmount = 0;
     const returnItems = dto.items.map((item) => {
       const orderItem = order.items.find((oi) => oi.id === item.orderItemId);
       if (!orderItem) {
         throw new BadRequestException(`Order item ${item.orderItemId} not found`);
       }
-      if (item.quantity > orderItem.quantity) {
+      const priorQty = alreadyReturned[orderItem.id] ?? 0;
+      const remaining = orderItem.quantity - priorQty;
+      if (remaining <= 0) {
         throw new BadRequestException(
-          `Cannot return ${item.quantity} of "${orderItem.name}" — only ${orderItem.quantity} were ordered`,
+          `"${orderItem.name}" has already been fully returned`,
+        );
+      }
+      if (item.quantity > remaining) {
+        throw new BadRequestException(
+          `Cannot return ${item.quantity} of "${orderItem.name}" — only ${remaining} remaining (${priorQty} of ${orderItem.quantity} already returned)`,
         );
       }
       const unitPrice = Number(orderItem.price);
@@ -275,19 +297,37 @@ export class ReturnsService {
         updateData.completedAt = new Date();
         // Restore stock if QC step was skipped
         if (!returnReq.stockRestored) {
-          await this.restoreReturnStock(returnReq);
-          updateData.stockRestored = true;
+          try {
+            await this.restoreReturnStock(returnReq);
+            updateData.stockRestored = true;
+          } catch (err: any) {
+            this.logger.warn(`Stock restore skipped for return ${returnReq.returnNumber}: ${err?.message ?? err}`);
+          }
         }
         // Process refund
-        await this.processRefund(returnReq, dto.refundMethod ?? returnReq.refundMethod, dto.refundAmount ?? Number(returnReq.refundAmount));
-        // Reverse loyalty earned on the original order (proportional)
-        await this.reverseLoyaltyEarned(returnReq);
+        try {
+          await this.processRefund(returnReq, dto.refundMethod ?? returnReq.refundMethod, dto.refundAmount ?? Number(returnReq.refundAmount));
+        } catch (err: any) {
+          this.logger.warn(`Refund processing failed for return ${returnReq.returnNumber}: ${err?.message ?? err}`);
+        }
+        // Reverse loyalty earned on the original order (proportional). Non-fatal — if the
+        // customer's wallet has insufficient balance (e.g. they redeemed it already) we just
+        // clamp to what's available and log, rather than failing the entire close.
+        try {
+          await this.reverseLoyaltyEarned(returnReq);
+        } catch (err: any) {
+          this.logger.warn(`Loyalty reversal skipped for return ${returnReq.returnNumber}: ${err?.message ?? err}`);
+        }
         // Mark the order itself as RETURNED so no further returns can be submitted
-        await this.prisma.order.update({
-          where: { id: returnReq.orderId },
-          data: { status: 'RETURNED' as any },
-        });
-        this.logger.log(`Order ${returnReq.order.orderNumber} marked as RETURNED`);
+        try {
+          await this.prisma.order.update({
+            where: { id: returnReq.orderId },
+            data: { status: 'RETURNED' as any },
+          });
+          this.logger.log(`Order ${returnReq.order.orderNumber} marked as RETURNED`);
+        } catch (err: any) {
+          this.logger.warn(`Order status update failed for return ${returnReq.returnNumber}: ${err?.message ?? err}`);
+        }
         break;
 
       case 'REJECTED':
@@ -368,20 +408,28 @@ export class ReturnsService {
     const loyaltyToDeduct = Math.round(loyaltyEarned * proportion * 100) / 100;
 
     if (loyaltyToDeduct > 0) {
+      // Clamp to current balance so this never throws "Insufficient balance" on close.
+      const wallet = await this.prisma.loyaltyWallet.findUnique({ where: { userId: returnReq.userId } });
+      const currentBalance = Number(wallet?.balanceAed ?? 0);
+      const actualDeduction = Math.min(loyaltyToDeduct, currentBalance);
+      if (actualDeduction <= 0) {
+        this.logger.log(`No loyalty to reverse for return ${returnReq.returnNumber} (wallet balance 0)`);
+        return;
+      }
       await this.loyaltyService.adjustLoyalty(
         returnReq.userId,
-        -loyaltyToDeduct,
+        -actualDeduction,
         `Loyalty reversal for return ${returnReq.returnNumber}`,
       );
 
       // Update the return record
       await this.prisma.return.update({
         where: { id: returnReq.id },
-        data: { loyaltyDeducted: loyaltyToDeduct },
+        data: { loyaltyDeducted: actualDeduction },
       });
 
       this.logger.log(
-        `Reversed AED ${loyaltyToDeduct} loyalty for return ${returnReq.returnNumber} (${(proportion * 100).toFixed(0)}% of order)`,
+        `Reversed AED ${actualDeduction} loyalty for return ${returnReq.returnNumber} (${(proportion * 100).toFixed(0)}% of order)`,
       );
     }
   }

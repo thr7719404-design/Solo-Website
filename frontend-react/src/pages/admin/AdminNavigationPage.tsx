@@ -262,7 +262,61 @@ export default function AdminNavigationPage() {
                 </div>
                 <div className={styles['field']}>
                   <label htmlFor="item-badge-color">Badge Color</label>
-                  <input id="item-badge-color" value={itemForm.badgeColor ?? ''} onChange={(e) => fi('badgeColor', e.target.value)} placeholder="#ef4444" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {[
+                      { name: 'Red',    value: '#ef4444' },
+                      { name: 'Orange', value: '#f97316' },
+                      { name: 'Amber',  value: '#f59e0b' },
+                      { name: 'Green',  value: '#22c55e' },
+                      { name: 'Teal',   value: '#14b8a6' },
+                      { name: 'Blue',   value: '#3b82f6' },
+                      { name: 'Indigo', value: '#6366f1' },
+                      { name: 'Purple', value: '#8b5cf6' },
+                      { name: 'Pink',   value: '#ec4899' },
+                      { name: 'Gray',   value: '#6b7280' },
+                      { name: 'Black',  value: '#111827' },
+                    ].map((c) => {
+                      const selected = (itemForm.badgeColor ?? '').toLowerCase() === c.value.toLowerCase();
+                      return (
+                        <button
+                          key={c.value}
+                          type="button"
+                          title={`${c.name} (${c.value})`}
+                          aria-label={`Set badge color to ${c.name}`}
+                          onClick={() => fi('badgeColor', c.value)}
+                          style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            background: c.value,
+                            border: selected ? '2px solid var(--admin-accent, #111)' : '1px solid rgba(0,0,0,0.2)',
+                            boxShadow: selected ? '0 0 0 2px #fff inset' : 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                        />
+                      );
+                    })}
+                    <input
+                      type="color"
+                      aria-label="Custom badge color"
+                      title="Pick a custom color"
+                      value={/^#[0-9a-fA-F]{6}$/.test(itemForm.badgeColor ?? '') ? (itemForm.badgeColor as string) : '#ef4444'}
+                      onChange={(e) => fi('badgeColor', e.target.value)}
+                      style={{ width: 28, height: 28, padding: 0, border: '1px solid rgba(0,0,0,0.2)', borderRadius: 4, background: 'transparent', cursor: 'pointer' }}
+                    />
+                    {itemForm.badgeColor && (
+                      <button
+                        type="button"
+                        onClick={() => fi('badgeColor', '')}
+                        title="Clear badge color"
+                        aria-label="Clear badge color"
+                        style={{ fontSize: 12, padding: '2px 8px', border: '1px solid rgba(0,0,0,0.2)', borderRadius: 4, background: '#fff', cursor: 'pointer' }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className={styles['field']}>

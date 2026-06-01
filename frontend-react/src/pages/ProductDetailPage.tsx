@@ -174,7 +174,7 @@ export default function ProductDetailPage() {
           </div>
 
           <div className={`${styles['stock-info']} ${product.inStock !== false ? styles['in-stock'] : styles['out-of-stock']}`}>
-            {product.inStock !== false ? '● In Stock' : '○ Out of Stock'}
+            {product.inStock !== false ? '● In Stock' : '○ Available on Request'}
             {product.stock != null && product.inStock !== false && ` (${product.stock} available)`}
           </div>
 
@@ -201,7 +201,7 @@ export default function ProductDetailPage() {
 
           {isOutOfStock && (
             <div className={styles['oos-notice']}>
-              This item is currently out of stock. You can still chat with us on WhatsApp to arrange a special order.
+              This item is available on request. Chat with us on WhatsApp to arrange a special order.
             </div>
           )}
 

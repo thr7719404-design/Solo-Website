@@ -28,7 +28,7 @@ from azure.storage.blob import BlobServiceClient, ContentSettings
 # ── CONFIG ─────────────────────────────────────────────────────────
 
 DB_CONFIG = {
-    'host': 'pg-qlyb5greec2io.postgres.database.azure.com',
+    'host': os.environ.get('PG_HOST', 'pg-zuicxoppffzie.postgres.database.azure.com'),
     'port': 5432,
     'dbname': 'solo_ecommerce',
     'user': 'soloadmin',

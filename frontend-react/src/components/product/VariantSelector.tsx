@@ -67,7 +67,7 @@ export default function VariantSelector({ variants, axes }: Props) {
                   onClick={() => handleClick(v)}
                   aria-label={`Select color: ${label}`}
                   aria-pressed={isActive}
-                  title={!v.inStock ? `${label} (Out of stock — tap to view)` : label}
+                  title={!v.inStock ? `${label} (Available on request — tap to view)` : label}
                 >
                   {v.primaryImage ? (
                     <img src={v.primaryImage} alt={label} loading="lazy" width={48} height={48} />
@@ -77,7 +77,7 @@ export default function VariantSelector({ variants, axes }: Props) {
                       style={{ background: String(v.attributes?.colorHex ?? '#ddd') }}
                     />
                   )}
-                  {!v.inStock && <span className={styles.oosOverlay}>Out</span>}
+                  {!v.inStock && <span className={styles.oosOverlay} title="Available on Request">Ask</span>}
                 </button>
               );
             })}
@@ -117,7 +117,7 @@ export default function VariantSelector({ variants, axes }: Props) {
                   className={`${styles.size} ${isActive ? styles.active : ''} ${!target.inStock ? styles.oos : ''}`}
                   onClick={() => handleClick(target)}
                   aria-pressed={isActive}
-                  title={!target.inStock ? `${label} (Out of stock — tap to view)` : label}
+                  title={!target.inStock ? `${label} (Available on request — tap to view)` : label}
                 >
                   {label}
                 </button>

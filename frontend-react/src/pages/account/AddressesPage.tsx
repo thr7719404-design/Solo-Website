@@ -132,7 +132,20 @@ export default function AddressesPage() {
                   <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">{label}</label>
                   <input
                     value={String(form[key] ?? '')}
-                    onChange={(e) => update(key, e.target.value)}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (key === 'phone') {
+                        // Allow only digits with optional leading +
+                        const hasPlus = raw.trimStart().startsWith('+');
+                        const digits = raw.replace(/[^0-9]/g, '');
+                        update(key, (hasPlus ? '+' : '') + digits);
+                      } else {
+                        update(key, raw);
+                      }
+                    }}
+                    inputMode={key === 'phone' ? 'tel' : undefined}
+                    type={key === 'phone' ? 'tel' : 'text'}
+                    pattern={key === 'phone' ? '\\+?[0-9]*' : undefined}
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B8860B]/20 focus:border-[#B8860B] transition-all"
                   />
                 </div>

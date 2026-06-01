@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { customersApi } from '@/api/customers';
+import type { CustomerDetailsDto } from '@/types';
 import styles from './Admin.module.css';
 
 export default function AdminCustomersPage() {
@@ -11,6 +12,8 @@ export default function AdminCustomersPage() {
   const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
   const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '', phone: '' });
   const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<CustomerDetailsDto | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const limit = 15;
 
   const load = () => {
@@ -53,6 +56,23 @@ export default function AdminCustomersPage() {
       alert(e?.response?.data?.message ?? 'Failed to reactivate');
     }
   };
+
+  const openProfile = async (id: string) => {
+    setProfileLoading(true);
+    setProfile({ id } as any);
+    try {
+      const detail = await customersApi.getCustomer(id);
+      setProfile(detail);
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? 'Failed to load customer profile');
+      setProfile(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const formatAed = (n?: number | null) =>
+    `AED ${Number(n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <>
@@ -102,11 +122,11 @@ export default function AdminCustomersPage() {
         <div className={styles['table-v2-wrap']}>
           <table className={styles['table-v2']}>
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Actions</th></tr>
+              <tr><th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Orders</th><th>Loyalty</th><th>Joined</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {customers.length === 0 ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No customers found</td></tr>
+                <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No customers found</td></tr>
               ) : (
                 customers.map(c => {
                   // Backend returns computed `status` (ACTIVE/UNVERIFIED/INACTIVE).
@@ -119,11 +139,28 @@ export default function AdminCustomersPage() {
                     status === 'INACTIVE' ? { bg: '#fde2e2', fg: '#a02020', label: 'INACTIVE' } :
                     status === 'UNVERIFIED' ? { bg: '#fef3c7', fg: '#92400e', label: 'UNVERIFIED' } :
                     null;
+                  const loyaltyAmount = Number(c.loyaltyBalanceAed ?? 0);
                   return (
                   <tr key={c.id} style={status !== 'ACTIVE' ? { opacity: 0.7 } : undefined}>
                     <td>
                       <div className={styles['table-name']}>
-                        {c.firstName} {c.lastName}
+                        <button
+                          type="button"
+                          onClick={() => openProfile(c.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            font: 'inherit',
+                            color: 'var(--admin-accent, #2563eb)',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            textUnderlineOffset: 2,
+                          }}
+                          title="View full profile"
+                        >
+                          {c.firstName} {c.lastName}
+                        </button>
                         {badge && (
                           <span style={{ marginLeft: 8, fontSize: 11, padding: '2px 6px', borderRadius: 4, background: badge.bg, color: badge.fg, fontWeight: 600 }}>{badge.label}</span>
                         )}
@@ -132,6 +169,11 @@ export default function AdminCustomersPage() {
                     </td>
                     <td style={{ color: 'var(--admin-cyan)' }}>{c.email}</td>
                     <td>{c.phone ?? '—'}</td>
+                    <td>{c.defaultCity ?? '—'}</td>
+                    <td style={{ textAlign: 'center' }}>{c.orderCount ?? 0}</td>
+                    <td style={{ fontWeight: 600, color: loyaltyAmount > 0 ? '#B8860B' : 'var(--admin-text-muted)' }}>
+                      {formatAed(loyaltyAmount)}
+                    </td>
                     <td style={{ color: 'var(--admin-text-dim)' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
                     <td>
                       <div className={styles['table-actions']} style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -239,6 +281,170 @@ export default function AdminCustomersPage() {
                   {saving ? 'Creating...' : 'Create Customer'}
                 </button>
               </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Profile Modal */}
+      {profile && (
+        <>
+          <button type="button" aria-label="Close" className={styles['modal-backdrop']} onClick={() => setProfile(null)} />
+          <div
+            className={styles['modal']}
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1001,
+              maxWidth: 720,
+              width: '92%',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div className={styles['modal-header']}>
+              <h2>
+                {profileLoading
+                  ? 'Loading…'
+                  : `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || profile.email || 'Customer'}
+              </h2>
+              <button className={styles['modal-close']} onClick={() => setProfile(null)}>✕</button>
+            </div>
+            <div style={{ padding: 20, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+              {profileLoading ? (
+                <div style={{ padding: 30, textAlign: 'center', color: 'var(--admin-text-muted)' }}>
+                  Loading profile…
+                </div>
+              ) : (
+                <>
+                  {/* Contact */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 20 }}>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: 2 }}>Email</div>
+                      <div style={{ color: 'var(--admin-cyan)' }}>{profile.email}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: 2 }}>Phone</div>
+                      <div>{profile.phone ?? '—'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: 2 }}>Status</div>
+                      <div>{profile.status ?? (profile.isActive ? 'ACTIVE' : 'INACTIVE')}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: 2 }}>Joined</div>
+                      <div>{profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}</div>
+                    </div>
+                  </div>
+
+                  {/* Loyalty card */}
+                  <div style={{
+                    border: '1px solid var(--admin-border, #e5e7eb)',
+                    borderRadius: 8,
+                    padding: 14,
+                    marginBottom: 20,
+                    background: 'linear-gradient(135deg, #fffbe6 0%, #fff 100%)',
+                  }}>
+                    <div style={{ fontSize: 12, textTransform: 'uppercase', color: '#92400e', marginBottom: 8, fontWeight: 600 }}>
+                      Loyalty Wallet
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Available</div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: '#B8860B' }}>
+                          {formatAed(profile.loyalty?.balanceAed)}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Pending</div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: '#c27c0e' }}>
+                          {formatAed(profile.loyalty?.pendingBalanceAed)}
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--admin-text-muted)', marginTop: 2 }}>awaiting delivery</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Total earned</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{formatAed(profile.loyalty?.totalEarnedAed)}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>Total redeemed</div>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{formatAed(profile.loyalty?.totalRedeemedAed)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Addresses */}
+                  <div style={{ marginBottom: 20 }}>
+                    <h3 style={{ fontSize: 14, textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: 8 }}>
+                      Shipping Addresses ({profile.addresses?.length ?? 0})
+                    </h3>
+                    {!profile.addresses?.length ? (
+                      <div style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>No saved addresses.</div>
+                    ) : (
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        {profile.addresses.map(a => (
+                          <div key={a.id} style={{
+                            border: '1px solid var(--admin-border, #e5e7eb)',
+                            borderRadius: 6,
+                            padding: 10,
+                            background: a.isDefault ? '#f0f9ff' : 'transparent',
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                              <strong>{a.label ?? 'Address'}</strong>
+                              {a.isDefault && (
+                                <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#0369a1', color: '#fff', fontWeight: 600 }}>DEFAULT</span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 13 }}>
+                              {a.firstName} {a.lastName}
+                            </div>
+                            <div style={{ fontSize: 13, color: 'var(--admin-text-dim)' }}>
+                              {a.addressLine1}
+                              {a.addressLine2 ? `, ${a.addressLine2}` : ''}
+                            </div>
+                            <div style={{ fontSize: 13, color: 'var(--admin-text-dim)' }}>
+                              {[a.city, a.state, a.postalCode, a.country].filter(Boolean).join(', ')}
+                            </div>
+                            {a.phone && <div style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>📞 {a.phone}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recent orders */}
+                  <div>
+                    <h3 style={{ fontSize: 14, textTransform: 'uppercase', color: 'var(--admin-text-muted)', marginBottom: 8 }}>
+                      Recent Orders ({profile.orders?.length ?? 0})
+                    </h3>
+                    {!profile.orders?.length ? (
+                      <div style={{ color: 'var(--admin-text-muted)', fontSize: 13 }}>No orders yet.</div>
+                    ) : (
+                      <table className={styles['admin-table']} style={{ fontSize: 13 }}>
+                        <thead>
+                          <tr><th>Order</th><th>Status</th><th>Total</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                          {profile.orders.slice(0, 10).map(o => (
+                            <tr key={o.id}>
+                              <td>{o.orderNumber}</td>
+                              <td>{o.status}</td>
+                              <td>{formatAed(o.total)}</td>
+                              <td style={{ color: 'var(--admin-text-dim)' }}>
+                                {new Date(o.createdAt).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>

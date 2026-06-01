@@ -7,11 +7,10 @@ import { UpdateLandingPageDto } from './dto/update-landing-page.dto';
 import { CreateLandingSectionDto } from './dto/create-landing-section.dto';
 import { UpdateLandingSectionDto } from './dto/update-landing-section.dto';
 import { UpdateLoyaltyConfigDto, LoyaltyConfigResponseDto } from './dto/loyalty-config.dto';
-import { computeBannerStatus } from './banner-status.util';
 
 @Injectable()
 export class ContentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
   // ============================================================================
   // HOME PAGE METHODS
@@ -167,12 +166,9 @@ export class ContentService {
   }
 
   async getAllBanners() {
-    const banners = await this.prisma.banner.findMany({
+    return this.prisma.banner.findMany({
       orderBy: { displayOrder: 'asc' },
     });
-    // Attach computed lifecycle status so the admin UI never shows an expired
-    // or scheduled banner as plain "Active".
-    return banners.map((b) => ({ ...b, status: computeBannerStatus(b) }));
   }
 
   async getBanner(id: string) {
@@ -420,15 +416,6 @@ export class ContentService {
     });
   }
 
-  private validateJsonField(value: string | undefined, fieldName: string): void {
-    if (!value) return;
-    try {
-      JSON.parse(value);
-    } catch {
-      throw new ConflictException(`Invalid JSON format for ${fieldName} field`);
-    }
-  }
-
   async updateSection(id: string, dto: UpdateLandingSectionDto) {
     await this.getSection(id);
 
@@ -442,8 +429,23 @@ export class ContentService {
       }
     }
 
-    this.validateJsonField(dto.data, 'data');
-    this.validateJsonField(dto.config, 'config');
+    // Validate JSON data if provided
+    if (dto.data) {
+      try {
+        JSON.parse(dto.data);
+      } catch (error) {
+        throw new ConflictException('Invalid JSON format for data field');
+      }
+    }
+
+    // Validate JSON config if provided
+    if (dto.config) {
+      try {
+        JSON.parse(dto.config);
+      } catch (error) {
+        throw new ConflictException('Invalid JSON format for config field');
+      }
+    }
 
     return this.prisma.landingSection.update({
       where: { id },
@@ -500,7 +502,8 @@ export class ContentService {
     });
 
     // Auto-seed if no config exists
-    config ??= await this.prisma.loyaltyPageConfig.create({
+    if (!config) {
+      config = await this.prisma.loyaltyPageConfig.create({
         data: {
           key: 'default',
           title: 'Join Our Loyalty Program',
@@ -560,6 +563,7 @@ export class ContentService {
           ],
         },
       });
+    }
 
     return {
       title: config.title,

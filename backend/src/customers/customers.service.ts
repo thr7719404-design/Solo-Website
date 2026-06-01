@@ -157,6 +157,19 @@ export class CustomersService {
               addresses: true,
             },
           },
+          loyaltyWallet: {
+            select: { balanceAed: true },
+          },
+          addresses: {
+            orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+            take: 1,
+            select: { city: true },
+          },
+          orders: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { createdAt: true },
+          },
         },
       }),
     ]);
@@ -174,6 +187,9 @@ export class CustomersService {
       createdAt: user.createdAt,
       ordersCount: user._count.orders,
       addressesCount: user._count.addresses,
+      loyaltyBalanceAed: user.loyaltyWallet ? Number(user.loyaltyWallet.balanceAed) : 0,
+      defaultCity: user.addresses[0]?.city ?? null,
+      lastOrderAt: user.orders[0]?.createdAt ?? null,
     } as CustomerItemDto));
 
     return {
@@ -278,6 +294,7 @@ export class CustomersService {
     const loyaltyData = await this.loyaltyService.getLoyalty(userId);
     return {
       balanceAed: Number(loyaltyData.balanceAed),
+      pendingBalanceAed: Number(loyaltyData.pendingBalanceAed),
       totalEarnedAed: Number(loyaltyData.totalEarnedAed),
       totalRedeemedAed: Number(loyaltyData.totalRedeemedAed),
     };

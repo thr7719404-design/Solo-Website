@@ -36,6 +36,10 @@ export const customersApi = {
           firstName: (c.firstName as string) ?? first,
           lastName: (c.lastName as string) ?? rest.join(' '),
           orderCount: (c.orderCount as number) ?? (c.ordersCount as number) ?? 0,
+          loyaltyBalanceAed: (c.loyaltyBalanceAed as number) ?? 0,
+          defaultCity: (c.defaultCity as string | null) ?? null,
+          lastOrderAt: (c.lastOrderAt as string | null) ?? null,
+          addressesCount: (c.addressesCount as number) ?? 0,
         } as CustomerDto;
       },
     );

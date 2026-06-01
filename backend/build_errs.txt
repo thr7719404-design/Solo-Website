@@ -1,0 +1,35 @@
+
+> solo-backend@1.0.0 build
+> nest build
+
+[1m[31mERROR[39m[22m in [1m./src/audit/audit.service.ts:25:25[39m[22m
+TS2339: Property 'auditLog' does not exist on type 'PrismaService'.
+  [0m [90m 23 |[39m   [36masync[39m log(entry[33m:[39m [33mAuditLogEntry[39m)[33m:[39m [33mPromise[39m[33m<[39m[36mvoid[39m[33m>[39m {
+   [90m 24 |[39m     [36mtry[39m {
+  [31m[1m>[22m[39m[90m 25 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mauditLog[33m.[39mcreate({
+   [90m    |[39m                         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 26 |[39m         data[33m:[39m {
+   [90m 27 |[39m           userId[33m:[39m entry[33m.[39muserId [33m?[39m[33m?[39m [36mnull[39m[33m,[39m
+   [90m 28 |[39m           userEmail[33m:[39m entry[33m.[39muserEmail [33m?[39m[33m?[39m [36mnull[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/audit/audit.service.ts:81:19[39m[22m
+TS2339: Property 'auditLog' does not exist on type 'PrismaService'.
+  [0m [90m 79 |[39m
+   [90m 80 |[39m     [36mconst[39m [rows[33m,[39m total] [33m=[39m [36mawait[39m [33mPromise[39m[33m.[39mall([
+  [31m[1m>[22m[39m[90m 81 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mauditLog[33m.[39mfindMany({
+   [90m    |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 82 |[39m         where[33m,[39m
+   [90m 83 |[39m         orderBy[33m:[39m { createdAt[33m:[39m [32m'desc'[39m }[33m,[39m
+   [90m 84 |[39m         skip[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/audit/audit.service.ts:87:19[39m[22m
+TS2339: Property 'auditLog' does not exist on type 'PrismaService'.
+  [0m [90m 85 |[39m         take[33m:[39m limit[33m,[39m
+   [90m 86 |[39m       })[33m,[39m
+  [31m[1m>[22m[39m[90m 87 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mauditLog[33m.[39mcount({ where })[33m,[39m
+   [90m    |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 88 |[39m     ])[33m;[39m
+   [90m 89 |[39m
+   [90m 90 |[39m     [36mreturn[39m {[0m
+
+webpack 5.97.1 compiled with [1m[31m3 errors[39m[22m in 5551 ms

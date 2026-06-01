@@ -118,11 +118,11 @@ export class BulkOrdersService {
 
       confirmationEmailSent = await this.emailService.sendEmail({
         to: dto.email,
-        subject: `Solo — Bulk Order ${orderNum} Received`,
+        subject: `Collation Foundation Curation — Bulk Order ${orderNum} Received`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;color:#1A1A1A">
             <div style="background:#1A1A1A;padding:24px;text-align:center">
-              <h1 style="color:#B8860B;margin:0;font-size:24px;letter-spacing:4px">SOLO</h1>
+              <h1 style="color:#B8860B;margin:0;font-size:24px;letter-spacing:4px">CFC</h1>
             </div>
             <div style="padding:28px 24px">
               <h2 style="margin-top:0">Thank you, ${bulkOrder.name}!</h2>
@@ -146,7 +146,7 @@ export class BulkOrdersService {
               <p style="color:#888;font-size:13px">Prices shown are indicative (incl. VAT) and subject to confirmation. If you have any questions, feel free to reach out to us via WhatsApp or email.</p>
             </div>
             <div style="background:#f8f8f6;padding:16px;text-align:center;font-size:12px;color:#888">
-              &copy; Solo — All rights reserved
+              &copy; Collation Foundation Curation — All rights reserved
             </div>
           </div>
         `,

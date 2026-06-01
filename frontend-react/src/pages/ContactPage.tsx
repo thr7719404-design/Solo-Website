@@ -2,11 +2,11 @@ import { useState } from 'react';
 import api from '@/api/client';
 
 /**
- * Contact form that lets the visitor submit an inquiry to Solo via either
+ * Contact form that lets the visitor submit an inquiry to Collation Foundation Curation via either
  * WhatsApp or Email. Both channels send to the same admin contact details.
  */
 const ADMIN_WHATSAPP = '971557133051';        // wa.me format (no '+')
-const ADMIN_EMAIL = 'info@solotestsite.site'; // change here to update destination
+const ADMIN_EMAIL = 'info@cfcgcc.com'; // change here to update destination
 
 interface FormState {
   name: string;

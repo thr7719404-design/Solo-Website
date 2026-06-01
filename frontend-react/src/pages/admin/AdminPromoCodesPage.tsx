@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { promoApi } from '@/api/promo';
 import styles from './Admin.module.css';
 
@@ -8,22 +9,15 @@ const TYPE_TAG: Record<string, string> = {
   FREE_SHIPPING: 'table-tag-violet',
 };
 
-const STATUS_TAG: Record<string, string> = {
-  PENDING: 'table-tag-amber',
-  PROCESSING: 'table-tag-cyan',
-  SHIPPED: 'table-tag-violet',
-  DELIVERED: 'table-tag-green',
-  CANCELLED: 'table-tag-red',
-  REFUNDED: 'table-tag-red',
-};
-
-/** Convert a UTC ISO string to local datetime-local format (YYYY-MM-DDTHH:MM) */
-const toLocalDT = (iso?: string) => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
+/** Compute the real, end-to-end status for a promo (matches backend validation rules). */
+function computePromoStatus(p: any): { label: string; tone: 'green' | 'amber' | 'red' | 'gray' } {
+  const now = new Date();
+  if (p.isActive === false) return { label: 'Inactive', tone: 'gray' };
+  if (p.startsAt && new Date(p.startsAt) > now) return { label: 'Scheduled', tone: 'amber' };
+  if (p.expiresAt && new Date(p.expiresAt) < now) return { label: 'Expired', tone: 'red' };
+  if (p.usageLimit && (p.usageCount ?? p.timesUsed ?? 0) >= p.usageLimit) return { label: 'Limit reached', tone: 'red' };
+  return { label: 'Active', tone: 'green' };
+}
 
 export default function AdminPromoCodesPage() {
   const [promos, setPromos] = useState<any[]>([]);
@@ -31,22 +25,16 @@ export default function AdminPromoCodesPage() {
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({
     code: '', description: '', type: 'PERCENTAGE', value: '', minOrderAmount: '', maxDiscount: '',
-    usageLimit: '', startsAt: '', expiresAt: '',
+    usageLimit: '', startsAt: '', expiresAt: '', isActive: true,
   });
   const [saving, setSaving] = useState(false);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-
-  // Usage modal state
-  const [usageModal, setUsageModal] = useState<{ open: boolean; promo: any | null; orders: any[]; loading: boolean; totalDiscount: number }>({
-    open: false, promo: null, orders: [], loading: false, totalDiscount: 0,
-  });
 
   const load = () => { promoApi.list().then(r => setPromos(r.data ?? [])).catch(() => {}); };
   useEffect(load, []);
 
   const openNew = () => {
     setEditing(null);
-    setForm({ code: '', description: '', type: 'PERCENTAGE', value: '', minOrderAmount: '', maxDiscount: '', usageLimit: '', startsAt: '', expiresAt: '' });
+    setForm({ code: '', description: '', type: 'PERCENTAGE', value: '', minOrderAmount: '', maxDiscount: '', usageLimit: '', startsAt: '', expiresAt: '', isActive: true });
     setDrawerOpen(true);
   };
 
@@ -56,31 +44,49 @@ export default function AdminPromoCodesPage() {
       code: p.code, description: p.description ?? '', type: p.type,
       value: String(p.value ?? ''), minOrderAmount: String(p.minOrderAmount ?? ''),
       maxDiscount: String(p.maxDiscount ?? ''), usageLimit: String(p.usageLimit ?? ''),
-      startsAt: toLocalDT(p.startsAt), expiresAt: toLocalDT(p.expiresAt),
+      startsAt: p.startsAt?.slice(0, 16) ?? '', expiresAt: p.expiresAt?.slice(0, 16) ?? '',
+      isActive: p.isActive !== false,
     });
     setDrawerOpen(true);
   };
 
+  const toggleActive = async (p: any) => {
+    try {
+      await promoApi.update(p.id, { isActive: !p.isActive } as any);
+      toast.success(p.isActive ? `${p.code} disabled` : `${p.code} enabled`);
+      load();
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
   const save = async () => {
     setSaving(true);
-    const payload = {
+    const payload: any = {
       ...form,
-      type: form.type as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING',
       value: Number(form.value) || 0,
       minOrderAmount: form.minOrderAmount ? Number(form.minOrderAmount) : undefined,
       maxDiscount: form.maxDiscount ? Number(form.maxDiscount) : undefined,
       usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
-      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : new Date().toISOString(),
-      expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
+      startsAt: form.startsAt || new Date().toISOString(),
+      expiresAt: form.expiresAt || undefined,
+      isActive: form.isActive,
     };
     try {
       if (editing) {
         const { code, ...updatePayload } = payload;
-        await promoApi.update(editing.id, updatePayload);
-      } else await promoApi.create(payload);
+        await promoApi.update(editing.id, updatePayload as any);
+        toast.success(`${form.code} updated`);
+      } else {
+        await promoApi.create(payload as any);
+        toast.success(`${form.code} created`);
+      }
       setDrawerOpen(false);
       load();
-    } catch { /* */ }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message;
+      toast.error(Array.isArray(msg) ? msg[0] : (msg || 'Failed to save promo code'));
+    }
     setSaving(false);
   };
 
@@ -90,29 +96,8 @@ export default function AdminPromoCodesPage() {
     load();
   };
 
-  const toggleActive = async (p: any) => {
-    setTogglingId(p.id);
-    try {
-      await promoApi.toggleActive(p.id, !p.isActive);
-      setPromos(prev => prev.map(x => x.id === p.id ? { ...x, isActive: !x.isActive } : x));
-    } catch { /* */ }
-    setTogglingId(null);
-  };
-
-  const openUsage = useCallback(async (p: any) => {
-    setUsageModal({ open: true, promo: p, orders: [], loading: true, totalDiscount: 0 });
-    try {
-      const res = await promoApi.getOrders(p.id);
-      const orders: any[] = res.orders ?? [];
-      const totalDiscount = orders.reduce((s: number, o: any) => s + (o.discount ?? 0), 0);
-      setUsageModal({ open: true, promo: p, orders, loading: false, totalDiscount });
-    } catch {
-      setUsageModal(prev => ({ ...prev, loading: false }));
-    }
-  }, []);
-
-  const activeCount = promos.filter(p => (p.status ?? (p.isActive ? 'ACTIVE' : 'INACTIVE')) === 'ACTIVE').length;
-  const totalUses = promos.reduce((s, p) => s + (p.usageCount ?? 0), 0);
+  const active = promos.filter(p => computePromoStatus(p).label === 'Active').length;
+  const totalDiscount = promos.reduce((s, p) => s + (p.timesUsed ?? p.usageCount ?? 0), 0);
 
   return (
     <>
@@ -133,11 +118,11 @@ export default function AdminPromoCodesPage() {
           </div>
           <div className={`${styles['stat-card']} ${styles['stat-card-emerald']}`}>
             <div className={styles['stat-label']}>Active</div>
-            <div className={styles['stat-value']}>{activeCount}</div>
+            <div className={styles['stat-value']}>{active}</div>
           </div>
           <div className={`${styles['stat-card']} ${styles['stat-card-cyan']}`}>
             <div className={styles['stat-label']}>Total Uses</div>
-            <div className={styles['stat-value']}>{totalUses}</div>
+            <div className={styles['stat-value']}>{totalDiscount}</div>
           </div>
         </div>
 
@@ -145,74 +130,43 @@ export default function AdminPromoCodesPage() {
         <div className={styles['table-v2-wrap']}>
           <table className={styles['table-v2']}>
             <thead>
-              <tr><th>Code</th><th>Type</th><th>Value</th><th>Min Order</th><th>Used</th><th>Expires</th><th>Active</th><th>Actions</th></tr>
+              <tr><th>Code</th><th>Type</th><th>Value</th><th>Min Order</th><th>Used</th><th>Status</th><th>Expires</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {promos.length === 0 ? (
                 <tr><td colSpan={8} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No promo codes yet</td></tr>
               ) : (
                 promos.map(p => {
-                  const status: string = p.status ?? (p.isActive ? 'ACTIVE' : 'INACTIVE');
-                  const expired = status === 'EXPIRED';
-                  const exhausted = status === 'EXHAUSTED';
+                  const status = computePromoStatus(p);
+                  const toneClass = `table-tag-${status.tone === 'gray' ? 'gray' : status.tone === 'amber' ? 'amber' : status.tone === 'red' ? 'red' : 'green'}`;
+                  const usedCount = p.timesUsed ?? p.usageCount ?? 0;
                   return (
-                    <tr key={p.id}>
+                    <tr key={p.id} style={p.isActive === false ? { opacity: 0.65 } : undefined}>
                       <td>
                         <div className={styles['table-name']}>{p.code}</div>
                         {p.description && <div className={styles['table-sub']}>{p.description}</div>}
                       </td>
                       <td><span className={`${styles['table-tag']} ${styles[TYPE_TAG[p.type] ?? 'table-tag-gray']}`}>{p.type?.replace('_', ' ')}</span></td>
-                      <td style={{ fontWeight: 600 }}>{(() => {
-                        if (p.type === 'PERCENTAGE') return `${p.value}%`;
-                        if (p.type === 'FREE_SHIPPING') return '—';
-                        return `AED ${p.value}`;
-                      })()}</td>
+                      <td style={{ fontWeight: 600 }}>{p.type === 'PERCENTAGE' ? `${p.value}%` : p.type === 'FREE_SHIPPING' ? '—' : `AED ${p.value}`}</td>
                       <td>{p.minOrderAmount ? `AED ${p.minOrderAmount}` : '—'}</td>
+                      <td>{usedCount}{p.usageLimit ? ` / ${p.usageLimit}` : ''}</td>
                       <td>
-                        <span style={{ color: exhausted ? 'var(--admin-rose)' : undefined, fontWeight: exhausted ? 600 : undefined }}>
-                          {p.usageCount ?? 0}{p.usageLimit ? ` / ${p.usageLimit}` : ''}
-                        </span>
-                        {exhausted && <span className={`${styles['table-tag']} ${styles['table-tag-red']}`} style={{ marginLeft: 6 }}>Used Up</span>}
+                        <span className={`${styles['table-tag']} ${styles[toneClass] ?? ''}`}>{status.label}</span>
                       </td>
                       <td>
-                        {p.expiresAt ? (
-                          <span className={`${styles['table-tag']} ${expired ? styles['table-tag-red'] : styles['table-tag-green']}`}>
-                            {expired ? 'Expired' : new Date(p.expiresAt).toLocaleDateString()}
-                          </span>
-                        ) : <span style={{ color: 'var(--admin-text-muted)' }}>No expiry</span>}
-                      </td>
-                      <td>
-                        {/* Active toggle */}
-                        <button
-                          onClick={() => toggleActive(p)}
-                          disabled={togglingId === p.id}
-                          title={p.isActive ? 'Click to deactivate' : 'Click to activate'}
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-                            padding: '4px 10px', borderRadius: 20, border: 'none', fontSize: 12, fontWeight: 600,
-                            background: p.isActive ? 'var(--admin-emerald, #10b981)' : 'var(--admin-surface-2, #374151)',
-                            color: p.isActive ? '#fff' : 'var(--admin-text-muted)',
-                            opacity: togglingId === p.id ? 0.6 : 1,
-                            transition: 'background 0.2s',
-                          }}
-                        >
-                          <span style={{
-                            width: 10, height: 10, borderRadius: '50%',
-                            background: p.isActive ? '#fff' : '#6b7280',
-                            display: 'inline-block',
-                          }} />
-                          {p.isActive ? 'ON' : 'OFF'}
-                        </button>
+                        {p.expiresAt
+                          ? <span style={{ fontSize: 12 }}>{new Date(p.expiresAt).toLocaleDateString()}</span>
+                          : <span style={{ color: 'var(--admin-text-muted)' }}>No expiry</span>}
                       </td>
                       <td>
                         <div className={styles['table-actions']}>
                           <button
                             className={styles['table-action-btn']}
-                            onClick={() => openUsage(p)}
-                            title="View orders using this code"
-                          >📊</button>
-                          <button className={styles['table-action-btn']} onClick={() => openEdit(p)}>✏️</button>
-                          <button className={styles['table-action-btn-danger']} onClick={() => remove(p.id)}>🗑</button>
+                            title={p.isActive ? 'Disable' : 'Enable'}
+                            onClick={() => toggleActive(p)}
+                          >{p.isActive ? '⏸' : '▶'}</button>
+                          <button className={styles['table-action-btn']} title="Edit" onClick={() => openEdit(p)}>✏️</button>
+                          <button className={styles['table-action-btn-danger']} title="Delete" onClick={() => remove(p.id)}>🗑</button>
                         </div>
                       </td>
                     </tr>
@@ -227,7 +181,7 @@ export default function AdminPromoCodesPage() {
       {/* Drawer */}
       {drawerOpen && (
         <>
-          <button type="button" aria-label="Close" className={styles['drawer-backdrop']} onClick={() => setDrawerOpen(false)} />
+          <div className={styles['drawer-backdrop']} onClick={() => setDrawerOpen(false)} />
           <div className={styles['drawer']} style={{ maxWidth: 520 }}>
             <div className={styles['drawer-header']}>
               <h2>{editing ? 'Edit Promo Code' : 'New Promo Code'}</h2>
@@ -236,12 +190,12 @@ export default function AdminPromoCodesPage() {
             <div className={styles['drawer-body']}>
               <div className={styles['field-row']}>
                 <div className={styles['field']}>
-                  <label htmlFor="code">Code</label>
-                  <input id="code" value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="e.g. SUMMER20" />
+                  <label>Code</label>
+                  <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="e.g. SUMMER20" />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="type">Type</label>
-                  <select id="type" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                  <label>Type</label>
+                  <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
                     <option value="PERCENTAGE">Percentage</option>
                     <option value="FIXED_AMOUNT">Fixed Amount</option>
                     <option value="FREE_SHIPPING">Free Shipping</option>
@@ -249,156 +203,55 @@ export default function AdminPromoCodesPage() {
                 </div>
               </div>
               <div className={styles['field']}>
-                <label htmlFor="description">Description</label>
-                <input id="description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                <label>Description</label>
+                <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               </div>
               <div className={styles['field-row-3']}>
                 <div className={styles['field']}>
-                  <label htmlFor="value">Value</label>
-                  <input id="value" type="number" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
+                  <label>Value</label>
+                  <input type="number" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="min-order">Min Order</label>
-                  <input id="min-order" type="number" value={form.minOrderAmount} onChange={e => setForm({ ...form, minOrderAmount: e.target.value })} />
+                  <label>Min Order</label>
+                  <input type="number" value={form.minOrderAmount} onChange={e => setForm({ ...form, minOrderAmount: e.target.value })} />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="max-discount">Max Discount</label>
-                  <input id="max-discount" type="number" value={form.maxDiscount} onChange={e => setForm({ ...form, maxDiscount: e.target.value })} />
+                  <label>Max Discount</label>
+                  <input type="number" value={form.maxDiscount} onChange={e => setForm({ ...form, maxDiscount: e.target.value })} />
                 </div>
               </div>
               <div className={styles['field']}>
-                <label htmlFor="usage-limit">Usage Limit</label>
-                <input id="usage-limit" type="number" value={form.usageLimit} onChange={e => setForm({ ...form, usageLimit: e.target.value })} placeholder="Leave empty for unlimited" />
+                <label>Usage Limit</label>
+                <input type="number" value={form.usageLimit} onChange={e => setForm({ ...form, usageLimit: e.target.value })} placeholder="Leave empty for unlimited" />
               </div>
               <div className={styles['field-row']}>
                 <div className={styles['field']}>
-                  <label htmlFor="starts-at">Starts At</label>
-                  <input id="starts-at" type="datetime-local" value={form.startsAt} onChange={e => setForm({ ...form, startsAt: e.target.value })} />
+                  <label>Starts At</label>
+                  <input type="datetime-local" value={form.startsAt} onChange={e => setForm({ ...form, startsAt: e.target.value })} />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="expires-at">Expires At</label>
-                  <input id="expires-at" type="datetime-local" value={form.expiresAt} onChange={e => setForm({ ...form, expiresAt: e.target.value })} />
+                  <label>Expires At</label>
+                  <input type="datetime-local" value={form.expiresAt} onChange={e => setForm({ ...form, expiresAt: e.target.value })} />
                 </div>
+              </div>
+              <div className={styles['field']}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={e => setForm({ ...form, isActive: e.target.checked })}
+                    style={{ width: 16, height: 16, accentColor: '#B8860B' }}
+                  />
+                  <span style={{ fontWeight: 600 }}>Active</span>
+                  <span style={{ fontSize: 12, color: 'var(--admin-text-muted)' }}>— uncheck to disable this code without deleting it</span>
+                </label>
               </div>
             </div>
             <div className={styles['drawer-footer']}>
               <button className={styles['btn-secondary']} onClick={() => setDrawerOpen(false)}>Cancel</button>
               <button className={styles['btn-primary']} disabled={saving || !form.code} onClick={save}>
-                {(() => {
-                  if (saving) return 'Saving...';
-                  return editing ? 'Update' : 'Create';
-                })()}
+                {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
               </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Usage / Orders Modal */}
-      {usageModal.open && (
-        <>
-          <button
-            type="button"
-            aria-label="Close"
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 900, border: 'none' }}
-            onClick={() => setUsageModal(s => ({ ...s, open: false }))}
-          />
-          <div style={{
-            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            background: 'var(--admin-surface, #1f2937)', borderRadius: 12, zIndex: 901,
-            width: 'min(96vw, 860px)', maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-            boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
-          }}>
-            {/* Modal header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--admin-border, #374151)' }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
-                  Orders using <span style={{ color: 'var(--admin-accent, #6366f1)' }}>{usageModal.promo?.code}</span>
-                </h2>
-                <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--admin-text-muted)' }}>
-                  {usageModal.promo?.description}
-                </p>
-              </div>
-              <button
-                onClick={() => setUsageModal(s => ({ ...s, open: false }))}
-                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--admin-text-muted)', lineHeight: 1 }}
-              >✕</button>
-            </div>
-
-            {/* Summary bar */}
-            {!usageModal.loading && (
-              <div style={{ display: 'flex', gap: 24, padding: '14px 24px', borderBottom: '1px solid var(--admin-border, #374151)', flexWrap: 'wrap' }}>
-                <div>
-                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Orders</div>
-                  <div style={{ fontSize: 20, fontWeight: 700 }}>{usageModal.orders.length}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Total Discount Given</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--admin-emerald, #10b981)' }}>AED {usageModal.totalDiscount.toFixed(2)}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Discount Type</div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{usageModal.promo?.type?.replace('_', ' ')}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Value</div>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>
-                    {usageModal.promo?.type === 'PERCENTAGE' ? `${usageModal.promo?.value}%` : `AED ${usageModal.promo?.value}`}
-                    {usageModal.promo?.maxDiscount ? ` (max AED ${usageModal.promo.maxDiscount})` : ''}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Body */}
-            <div style={{ overflowY: 'auto', flex: 1 }}>
-              {(() => {
-                if (usageModal.loading) {
-                  return <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-muted)' }}>Loading orders...</div>;
-                }
-                if (usageModal.orders.length === 0) {
-                  return <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-muted)' }}>No orders have used this promo code yet.</div>;
-                }
-                return (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--admin-border, #374151)' }}>
-                      {['Order #', 'Customer', 'Date', 'Order Total', 'Discount', 'Status'].map(h => (
-                        <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: 'var(--admin-text-muted)', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usageModal.orders.map((o: any) => (
-                      <tr key={o.id} style={{ borderBottom: '1px solid var(--admin-border, #374151)' }}>
-                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>#{o.orderNumber}</td>
-                        <td style={{ padding: '12px 16px' }}>
-                          {o.customer ? (
-                            <div>
-                              <div style={{ fontWeight: 500 }}>{[o.customer.firstName, o.customer.lastName].filter(Boolean).join(' ') || '—'}</div>
-                              <div style={{ fontSize: 11, color: 'var(--admin-text-muted)' }}>{o.customer.email}</div>
-                            </div>
-                          ) : '—'}
-                        </td>
-                        <td style={{ padding: '12px 16px', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
-                          {new Date(o.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          <div style={{ fontSize: 11 }}>{new Date(o.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
-                        </td>
-                        <td style={{ padding: '12px 16px', fontWeight: 600 }}>AED {Number(o.total).toFixed(2)}</td>
-                        <td style={{ padding: '12px 16px', color: 'var(--admin-emerald, #10b981)', fontWeight: 700 }}>
-                          − AED {Number(o.discount ?? 0).toFixed(2)}
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <span className={`${styles['table-tag']} ${styles[STATUS_TAG[o.status] ?? 'table-tag-gray']}`} style={{ fontSize: 11 }}>
-                            {o.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                );
-              })()}
             </div>
           </div>
         </>

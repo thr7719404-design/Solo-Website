@@ -36,6 +36,12 @@ export class CustomerItemDto {
   createdAt: Date;
   ordersCount: number;
   addressesCount: number;
+  /** Wallet balance (confirmed loyalty cash available to redeem) */
+  loyaltyBalanceAed?: number;
+  /** City from the customer's default address (fallback: most recent address) */
+  defaultCity?: string | null;
+  /** Date of the customer's most recent order, if any */
+  lastOrderAt?: Date | null;
 }
 
 export class CustomerListResponseDto {

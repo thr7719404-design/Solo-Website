@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { accountApi } from '@/api/account';
 import { returnsApi } from '@/api/returns';
-import { downloadOrderInvoice } from '@/api/invoices';
 import { config } from '@/config';
 import toast from 'react-hot-toast';
 import type { OrderDto } from '@/types';
@@ -25,7 +24,6 @@ const STATUS_COLORS: Record<string, string> = {
   SHIPPED: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600/10',
   CANCELLED: 'bg-red-50 text-red-700 ring-1 ring-red-600/10',
   REFUNDED: 'bg-orange-50 text-orange-700 ring-1 ring-orange-600/10',
-  RETURNED: 'bg-purple-50 text-purple-700 ring-1 ring-purple-600/10',
 };
 
 const PIPELINE = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const;
@@ -126,20 +124,23 @@ export default function OrderDetailPage() {
       </Link>
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Order #{order.orderNumber}</h1>
           <p className="text-sm text-gray-500 mt-1">Placed on {new Date(order.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => downloadOrderInvoice(order.id, order.orderNumber).catch(() => toast.error('Failed to download invoice'))}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md bg-[#B8860B] text-white hover:bg-[#9a7109] transition-colors"
+            onClick={() => {
+              toast.loading('Generating invoice…', { id: 'invoice-dl' });
+              accountApi.downloadInvoice(order.id, order.orderNumber)
+                .then(() => toast.success('Invoice downloaded', { id: 'invoice-dl' }))
+                .catch(() => toast.error('Failed to download invoice', { id: 'invoice-dl' }));
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-br from-[#D4A843] to-[#B8860B] hover:opacity-90 transition-opacity"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
-            </svg>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 10.5v6m0 0l-3-3m3 3l3-3M3 17.25V6.75A2.25 2.25 0 015.25 4.5h9A2.25 2.25 0 0116.5 6.75v10.5A2.25 2.25 0 0114.25 19.5h-9A2.25 2.25 0 013 17.25z" /></svg>
             Download Invoice
           </button>
           <span className={`text-xs px-3 py-1.5 rounded-full font-semibold ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-600'}`}>
@@ -153,42 +154,25 @@ export default function OrderDetailPage() {
         const currentStatus = order.status as string;
         const isCancelled = currentStatus === 'CANCELLED';
         const isRefunded = currentStatus === 'REFUNDED';
-        const isReturned = currentStatus === 'RETURNED';
-        const isTerminal = isCancelled || isRefunded || isReturned;
+        const isTerminal = isCancelled || isRefunded;
         const pipelineIdx = PIPELINE_IDX[currentStatus] ?? -1;
 
         if (isTerminal) {
-          let iconClass: string;
-          if (isCancelled) iconClass = 'bg-red-50 text-red-600';
-          else if (isReturned) iconClass = 'bg-purple-50 text-purple-600';
-          else iconClass = 'bg-orange-50 text-orange-600';
-          let titleClass: string;
-          if (isCancelled) titleClass = 'text-red-700';
-          else if (isReturned) titleClass = 'text-purple-700';
-          else titleClass = 'text-orange-700';
-          let titleWord: string;
-          if (isCancelled) titleWord = 'Cancelled';
-          else if (isReturned) titleWord = 'Returned';
-          else titleWord = 'Refunded';
-          let actionWord: string;
-          if (isCancelled) actionWord = 'cancelled';
-          else if (isReturned) actionWord = 'returned';
-          else actionWord = 'refunded';
           return (
             <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
               <div className="px-6 py-5 flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconClass}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isCancelled ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600'}`}>
                   {isCancelled
                     ? <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     : <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
                   }
                 </div>
                 <div>
-                  <p className={`text-sm font-semibold ${titleClass}`}>
-                    Order {titleWord}
+                  <p className={`text-sm font-semibold ${isCancelled ? 'text-red-700' : 'text-orange-700'}`}>
+                    Order {isCancelled ? 'Cancelled' : 'Refunded'}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    This order was {actionWord} on {new Date(order.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    This order was {isCancelled ? 'cancelled' : 'refunded'} on {new Date(order.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
               </div>
@@ -229,14 +213,13 @@ export default function OrderDetailPage() {
                     const isActive = pipelineIdx === i;
                     const isPast = pipelineIdx > i;
                     const isFuture = pipelineIdx < i;
-                    const nodeBg = (isPast || isActive) ? meta.color : '#f9fafb';
 
                     return (
                       <div key={step} className="flex flex-col items-center" style={{ width: 80 }}>
                         <div
                           className="relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500"
                           style={{
-                            background: nodeBg,
+                            background: isPast ? meta.color : isActive ? meta.color : '#f9fafb',
                             color: isPast || isActive ? '#fff' : '#d1d5db',
                             border: isFuture ? '2px solid #e5e7eb' : 'none',
                             boxShadow: isActive ? `0 0 0 4px ${meta.bg}, 0 2px 8px ${meta.color}33` : 'none',
@@ -416,7 +399,7 @@ export default function OrderDetailPage() {
       {/* Return Request Modal */}
       {showReturnModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowReturnModal(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowReturnModal(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white px-6 py-5 border-b border-gray-100 flex items-center justify-between rounded-t-2xl z-10">
@@ -438,17 +421,32 @@ export default function OrderDetailPage() {
                 <p className="text-xs text-gray-400 mb-3">Choose which items you'd like to return and adjust quantities</p>
                 <div className="space-y-2">
                   {order.items.map((item) => {
+                    const alreadyReturned = (item as any).returnedQuantity ?? 0;
+                    const remaining = item.quantity - alreadyReturned;
+                    if (remaining <= 0) {
+                      return (
+                        <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 opacity-60">
+                          <div className="w-5 h-5" />
+                          <img
+                            src={item.imageUrl || '/placeholder.png'}
+                            alt={item.name}
+                            className="w-12 h-12 rounded-lg object-cover bg-gray-50 border border-gray-100"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-500 truncate line-through">{item.name}</p>
+                            <p className="text-xs text-gray-400">Fully returned ({alreadyReturned} of {item.quantity})</p>
+                          </div>
+                        </div>
+                      );
+                    }
                     const isSelected = !!returnItems[item.id];
                     return (
                       <div
                         key={item.id}
-                          role="button"
-                          tabIndex={0}
-                          className={`flex items-center gap-3 p-3 rounded-xl border transition-colors cursor-pointer ${
-                            isSelected ? 'border-[#B8860B] bg-[#B8860B]/5' : 'border-gray-100 hover:border-gray-200'
-                          }`}
-                          onClick={() => toggleReturnItem(item.id, item.quantity)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleReturnItem(item.id, item.quantity); } }}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-colors cursor-pointer ${
+                          isSelected ? 'border-[#B8860B] bg-[#B8860B]/5' : 'border-gray-100 hover:border-gray-200'
+                        }`}
+                        onClick={() => toggleReturnItem(item.id, remaining)}
                       >
                         <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                           isSelected ? 'border-[#B8860B] bg-[#B8860B]' : 'border-gray-300'
@@ -467,22 +465,25 @@ export default function OrderDetailPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
                           {item.sku && <p className="text-xs text-gray-400">SKU: {item.sku}</p>}
+                          {alreadyReturned > 0 && (
+                            <p className="text-xs text-amber-600 mt-0.5">{alreadyReturned} of {item.quantity} already returned · {remaining} remaining</p>
+                          )}
                         </div>
-                        {isSelected && item.quantity > 1 && (
-                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()} role="presentation">
-                            <label htmlFor="qty" className="text-xs text-gray-500 mr-1">Qty:</label>
-                            <select id="qty"
+                        {isSelected && remaining > 1 && (
+                          <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                            <label className="text-xs text-gray-500 mr-1">Qty:</label>
+                            <select
                               value={returnItems[item.id]}
                               onChange={e => updateReturnQty(item.id, Number(e.target.value))}
                               className="text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#B8860B]/30"
                             >
-                              {Array.from({ length: item.quantity }, (_, i) => i + 1).map(q => (
+                              {Array.from({ length: remaining }, (_, i) => i + 1).map(q => (
                                 <option key={q} value={q}>{q}</option>
                               ))}
                             </select>
                           </div>
                         )}
-                        {isSelected && item.quantity === 1 && (
+                        {isSelected && remaining === 1 && (
                           <span className="text-xs text-gray-400">Qty: 1</span>
                         )}
                       </div>

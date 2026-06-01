@@ -9,14 +9,25 @@ const RETURN_STEP_LABELS: Record<string, string> = {
   APPROVED: 'Approved',
   PICKED_UP: 'Picked Up',
   QC: 'QC',
-  CLOSED: 'Closed',
+  CLOSED: 'Refunded',
 };
 
+// Forward pipeline transitions PLUS "CANCELLED" available at every non-terminal step,
+// so admin can close out a return as cancelled at any stage. "CLOSED" at any step
+// means refund processed and the return is finalized.
 const STATUS_FLOW: Record<string, string[]> = {
-  REQUESTED: ['APPROVED', 'REJECTED'],
-  APPROVED: ['PICKED_UP'],
-  PICKED_UP: ['QC'],
-  QC: ['CLOSED'],
+  REQUESTED: ['APPROVED', 'REJECTED', 'CANCELLED'],
+  APPROVED: ['PICKED_UP', 'CLOSED', 'CANCELLED'],
+  PICKED_UP: ['QC', 'CLOSED', 'CANCELLED'],
+  QC: ['CLOSED', 'CANCELLED'],
+};
+const STATUS_LABELS: Record<string, string> = {
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  CANCELLED: 'Cancel Return',
+  PICKED_UP: 'Picked Up',
+  QC: 'QC',
+  CLOSED: 'Refunded (Close)',
 };
 const REFUND_METHODS = ['ORIGINAL_PAYMENT', 'STORE_CREDIT', 'LOYALTY_CASH'];
 
@@ -279,7 +290,7 @@ export default function AdminReturnsPage() {
                         <label htmlFor="next-status">Next Status</label>
                         <select id="next-status" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
                           <option value="">Select status...</option>
-                          {nextStatuses.map(ns => <option key={ns} value={ns}>{ns}</option>)}
+                          {nextStatuses.map(ns => <option key={ns} value={ns}>{STATUS_LABELS[ns] ?? ns}</option>)}
                         </select>
                       </div>
                       <div className={styles['field']}>

@@ -26,6 +26,7 @@ export interface UpdateProfileRequest {
 
 export interface LoyaltyDto {
   balanceAed: number;
+  pendingBalanceAed?: number;
   totalEarnedAed: number;
   totalRedeemedAed: number;
   totalEarned?: number;
@@ -36,6 +37,7 @@ export interface LoyaltyDto {
 export interface LoyaltyTransactionDto {
   id: string;
   type: 'EARNED' | 'REDEEMED' | 'ADJUSTMENT';
+  status?: 'PENDING' | 'CONFIRMED' | 'REVERSED';
   amountAed: number;
   description?: string;
   orderId?: string;

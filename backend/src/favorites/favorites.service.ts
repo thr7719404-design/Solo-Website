@@ -7,8 +7,8 @@ export class FavoritesService {
   private readonly uploadsBaseUrl: string;
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private prisma: PrismaService,
+    private configService: ConfigService,
   ) {
     this.uploadsBaseUrl =
       this.configService.get<string>('UPLOAD_BASE_URL') ||

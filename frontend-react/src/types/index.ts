@@ -74,33 +74,6 @@ export interface ProductDto {
   metaDescription?: string;
   createdAt?: string;
   updatedAt?: string;
-  // Variants
-  productGroupId?: string | null;
-  productGroup?: {
-    id: string;
-    name: string;
-    slug?: string;
-    description?: string | null;
-    category?: string | null;
-    tags?: string[];
-    variantAxes: string[];
-  };
-  isDefaultVariant?: boolean;
-  variants?: ProductVariantDto[];
-  variantAttributes?: Record<string, any> | null;
-}
-
-export interface ProductVariantDto {
-  id: string;
-  sku: string;
-  slug?: string;
-  name: string;
-  attributes: Record<string, any>;
-  price: number;
-  stockQty: number;
-  inStock: boolean;
-  primaryImage: string | null;
-  isCurrent: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -152,7 +125,6 @@ export interface CartItemDto {
   color?: string;
   inStock?: boolean;
   stockQty?: number;
-  available?: number;
   product?: ProductDto;
 }
 
@@ -287,11 +259,28 @@ export interface HomePageDto {
 }
 
 // ── Admin ──
-// (DashboardStatsDto re-exported from ./admin below)
+export interface DashboardStatsDto {
+  ordersToday: number;
+  ordersThisWeek: number;
+  ordersThisMonth: number;
+  totalOrders?: number;
+  revenueToday: number;
+  revenueThisWeek: number;
+  revenueThisMonth: number;
+  totalRevenue?: number;
+  totalCustomers: number;
+  newCustomersToday: number;
+  totalProducts?: number;
+  topProducts: Array<{ id: string; name: string; count: number }>;
+  lowStockProducts: Array<{ id: string; name: string; stock: number }>;
+  recentOrders: OrderDto[];
+  ordersByStatus: Array<{ status: string; count: number }>;
+}
 
 // ── Account ──
 export interface LoyaltyDto {
   balanceAed: number;
+  pendingBalanceAed?: number;
   totalEarnedAed: number;
   totalRedeemedAed: number;
   // Aliases used by some pages
@@ -303,6 +292,7 @@ export interface LoyaltyDto {
 export interface LoyaltyTransactionDto {
   id: string;
   type: 'EARNED' | 'REDEEMED' | 'ADJUSTMENT';
+  status?: 'PENDING' | 'CONFIRMED' | 'REVERSED';
   amountAed: number;
   description?: string;
   orderId?: string;

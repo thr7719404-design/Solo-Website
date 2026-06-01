@@ -4,6 +4,7 @@ import {
   IsBoolean,
   MinLength,
   MaxLength,
+  Matches,
 } from 'class-validator';
 
 export class CreateAddressDto {
@@ -44,10 +45,17 @@ export class CreateAddressDto {
 
   @IsString()
   @MaxLength(20)
+  @Matches(/^\+?[0-9]*$/, { message: 'phone must contain only digits (with optional leading +)' })
   @IsOptional()
   phone?: string;
 
   @IsBoolean()
   @IsOptional()
   isDefault?: boolean = false;
+
+  // Accepted but not persisted (Address model has no country column)
+  @IsString()
+  @MaxLength(10)
+  @IsOptional()
+  country?: string;
 }

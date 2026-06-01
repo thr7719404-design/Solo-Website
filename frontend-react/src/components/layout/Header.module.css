@@ -119,6 +119,15 @@
   opacity: 0.8;
 }
 
+.header-logo a img {
+  display: block;
+  height: 36px;
+  max-height: 36px;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+}
+
 .header-search {
   flex: 1;
   max-width: 520px;

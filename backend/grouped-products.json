@@ -1,0 +1,4707 @@
+count: 286
+[
+  {
+    "id": 1060,
+    "sku": "591501",
+    "productName": "Silhouette Storage jar 0.7 l",
+    "colour": null,
+    "material": "Leather,Mouth-blown Glass,Oiled oak,Silicone",
+    "variantAttributes": {
+      "size": "0.7 l"
+    },
+    "productGroup": {
+      "name": "Silhouette Storage jar",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 948,
+    "sku": "568012",
+    "productName": "Fridge carafe 1.0 l Coconut",
+    "colour": "Coconut",
+    "material": "Borosilicate Glass,Neoprene,Stainless Steel",
+    "variantAttributes": {
+      "size": "1.0 l",
+      "colorname": "Coconut"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 827,
+    "sku": "541040",
+    "productName": "Tumbler 38 cl",
+    "colour": null,
+    "material": "Glass",
+    "variantAttributes": {
+      "size": "38 cl"
+    },
+    "productGroup": {
+      "name": "Tumbler",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 810,
+    "sku": "537793",
+    "productName": "Citadel Toilet brush Sand",
+    "colour": "Sand",
+    "material": "Plastic,Powder-coated steel,Stainless Steel",
+    "variantAttributes": {
+      "size": "40 cm"
+    },
+    "productGroup": {
+      "name": "Citadel Toilet brush",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 590,
+    "sku": "502910",
+    "productName": "Vacuum jug 1.0 l Black Glossy",
+    "colour": "Black",
+    "material": "Glass,Plastic,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 949,
+    "sku": "568015",
+    "productName": "Fridge carafe 1.4 l",
+    "colour": null,
+    "material": "Borosilicate Glass,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.4 l"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 806,
+    "sku": "537780",
+    "productName": "Citadel Pedal bin 5.0 l Black",
+    "colour": "Black",
+    "material": "Plastic,Powder-coated steel,Stainless Steel",
+    "variantAttributes": {
+      "size": "5.0 l"
+    },
+    "productGroup": {
+      "name": "Citadel Pedal bin",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 622,
+    "sku": "504001",
+    "productName": "RE-Hydrate Water bottle 0.5 l Clear",
+    "colour": "Clear",
+    "material": "100% Recycled post-consumer plastic (PET),Stainless Steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Water bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 945,
+    "sku": "567973",
+    "productName": "Fridge carafe 1.0 l Dark grey",
+    "colour": "Dark grey",
+    "material": "Borosilicate Glass,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 823,
+    "sku": "541015",
+    "productName": "Tumbler 21 cl",
+    "colour": null,
+    "material": "Mouth-blown Glass",
+    "variantAttributes": {
+      "size": "21 cl"
+    },
+    "productGroup": {
+      "name": "Tumbler",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 623,
+    "sku": "504002",
+    "productName": "RE-Hydrate Water bottle 0.5 l Smoke",
+    "colour": "Smoke",
+    "material": "100% Recycled post-consumer plastic (PET),Stainless Steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Water bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 627,
+    "sku": "505033",
+    "productName": "24/12 To Go thermo flask Chocolate",
+    "colour": "Chocolate",
+    "material": "nylon,plastic,stainless steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "24/12 To Go thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 944,
+    "sku": "567972",
+    "productName": "Fridge carafe 1.0 l Black",
+    "colour": "Black",
+    "material": "Borosilicate Glass,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 629,
+    "sku": "505050",
+    "productName": "Sip'n'Go Tumbler 0.9 L Black",
+    "colour": "Black",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.9 L"
+    },
+    "productGroup": {
+      "name": "Sip'n'Go Tumbler",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 963,
+    "sku": "568190",
+    "productName": "Self-watering herb organiser steel Black",
+    "colour": "Black",
+    "material": "Capillary mat,Plastic,Powder-coated steel",
+    "variantAttributes": {
+      "size": "31 cm"
+    },
+    "productGroup": {
+      "name": "Self watering herb organiser steel",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 964,
+    "sku": "568191",
+    "productName": "Self-watering herb organiser steel Sand",
+    "colour": "Sand",
+    "material": "Capillary mat,Plastic,Powder-coated steel",
+    "variantAttributes": {
+      "size": "31 cm"
+    },
+    "productGroup": {
+      "name": "Self watering herb organiser steel",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 630,
+    "sku": "505051",
+    "productName": "Sip'n'Go Tumbler 0.9 L Coconut",
+    "colour": "Coconut",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.9 L"
+    },
+    "productGroup": {
+      "name": "Sip'n'Go Tumbler",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 621,
+    "sku": "503104",
+    "productName": "RE-Hydrate Thermo flask 0.5 L Green goddess",
+    "colour": "Green goddess",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 745,
+    "sku": "530734",
+    "productName": "Magnetic trivets Stone",
+    "colour": "Stone",
+    "material": "Nylon,Silicone",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Magnetic trivets",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 611,
+    "sku": "503054",
+    "productName": "Drinking bottle 0.5 l Mocca",
+    "colour": "Mocca",
+    "material": "Polyester,Silicone,Stainless Steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1150,
+    "sku": "732010014",
+    "productName": "Tidy Basket 40x29x22cm Chestnut",
+    "colour": "Chestnut",
+    "material": "85% post-consumer recycled plastic",
+    "variantAttributes": {
+      "size": "40x29x22 cm"
+    },
+    "productGroup": {
+      "name": "Tidy Basket",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 741,
+    "sku": "530701",
+    "productName": "Dish brush oak nylon White",
+    "colour": "White",
+    "material": "Nylon,Oak,Plastic",
+    "variantAttributes": {
+      "size": "23 cm"
+    },
+    "productGroup": {
+      "name": "Dish brush oak nylon",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1151,
+    "sku": "732010015",
+    "productName": "Tidy Basket 48x35x26cm Chestnut",
+    "colour": "Chestnut",
+    "material": "85% post-consumer recycled plastic",
+    "variantAttributes": {
+      "size": "48x35x26 cm"
+    },
+    "productGroup": {
+      "name": "Tidy Basket 48x35x26cm",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 624,
+    "sku": "504003",
+    "productName": "RE-Hydrate Water bottle 0.5 l Green",
+    "colour": "Green",
+    "material": "100% Recycled post-consumer plastic (PET),Stainless Steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Water bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 957,
+    "sku": "568168",
+    "productName": "Self-watering herb organiser White",
+    "colour": "White",
+    "material": "Ceramic,Plastic",
+    "variantAttributes": {
+      "size": "31 cm"
+    },
+    "productGroup": {
+      "name": "Self watering herb organiser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 959,
+    "sku": "568170",
+    "productName": "Stone Flowerpot ├ÿ16 cm",
+    "colour": null,
+    "material": "Ceramic",
+    "variantAttributes": {
+      "size": "├ÿ16 cm"
+    },
+    "productGroup": {
+      "name": "Stone Flowerpot",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 739,
+    "sku": "530694",
+    "productName": "Dishwashing set Marble grey",
+    "colour": "Marble grey",
+    "material": "Plastic,Silicone,Stainless Steel",
+    "variantAttributes": {
+      "colorname": "Marble grey"
+    },
+    "productGroup": {
+      "name": "Dishwashing set",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 618,
+    "sku": "503101",
+    "productName": "RE-Hydrate Thermo flask 0.5 L Coconut",
+    "colour": "Coconut",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 970,
+    "sku": "570901",
+    "productName": "Saturn Bird feeder Black",
+    "colour": "Black",
+    "material": "Borosilicate Glass,Silicone,Stainless Steel,Steel wire",
+    "variantAttributes": {
+      "size": "├ÿ24 cm"
+    },
+    "productGroup": {
+      "name": "Saturn Bird feeder",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 607,
+    "sku": "503050",
+    "productName": "Drinking bottle 0.5 l Golden sand",
+    "colour": "Golden sand",
+    "material": "Polyester,Silicone,Stainless Steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1148,
+    "sku": "732010012",
+    "productName": "Tidy Basket 40x29x22cm Tin",
+    "colour": "Tin",
+    "material": "85% post-consumer recycled plastic",
+    "variantAttributes": {
+      "size": "40x29x22 cm"
+    },
+    "productGroup": {
+      "name": "Tidy Basket",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 950,
+    "sku": "568013",
+    "productName": "Fridge carafe 1.0 l Pistachio",
+    "colour": "Night sky",
+    "material": "Borosilicate Glass,Neoprene,Stainless Steel",
+    "variantAttributes": {
+      "size": "1.0 l",
+      "colorname": "Pistachio"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 951,
+    "sku": "568014",
+    "productName": "Fridge carafe 1.0 l Pistachio",
+    "colour": "Caramel Cream",
+    "material": "Borosilicate Glass,Neoprene,Stainless Steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 883,
+    "sku": "567043",
+    "productName": "City To Go Cup 0.35 l Golden sand",
+    "colour": "Golden sand",
+    "material": "90% recycled steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "City To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 740,
+    "sku": "530700",
+    "productName": "Dish brush oak nylon Black",
+    "colour": "Black",
+    "material": "Nylon,Oak,Plastic",
+    "variantAttributes": {
+      "size": "23 cm",
+      "colorname": "Black"
+    },
+    "productGroup": {
+      "name": "Dish brush oak nylon",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 593,
+    "sku": "502915",
+    "productName": "Vacuum jug 1.0 l grey",
+    "colour": "Grey",
+    "material": "90% recycled post-consumer stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0l"
+    },
+    "productGroup": {
+      "name": "Dallah Vacuum Jug",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 888,
+    "sku": "567101",
+    "productName": "Urban To Go Cup 0.35 l Marble grey",
+    "colour": "Marble grey",
+    "material": "90% recycled steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 574,
+    "sku": "502801",
+    "productName": "Vacuum jug 1.0 l Matt Black",
+    "colour": "Matt black",
+    "material": "90% recycled post-consumer stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 920,
+    "sku": "567510",
+    "productName": "Fridge carafe 1.0 l",
+    "colour": null,
+    "material": "Borosilicate Glass,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 414,
+    "sku": "202036",
+    "productName": "Professional roasting pan with rack 35x25 cm ceramic Slip-Let┬« coating",
+    "colour": "grey",
+    "material": "Aluminium,Ceramic coating,Stainless Steel",
+    "variantAttributes": {
+      "size": "35x25 cm",
+      "colorname": "grey"
+    },
+    "productGroup": {
+      "name": "Professional roasting pan with rack ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1097,
+    "sku": "887223",
+    "productName": "Legio Nova Deep plate 22 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "22 cm"
+    },
+    "productGroup": {
+      "name": "Legio Nova Deep plate",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 743,
+    "sku": "530711",
+    "productName": "Citadel Bath dispenser Sand",
+    "colour": "Sand",
+    "material": "Plastic,Silicone,Stainless Steel",
+    "variantAttributes": {
+      "size": "250 ml"
+    },
+    "productGroup": {
+      "name": "Citadel Bath dispenser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 900,
+    "sku": "567300",
+    "productName": "Mellow Candlestick 8 cm",
+    "colour": "Polished steel",
+    "material": "Stainless Steel",
+    "variantAttributes": {
+      "size": "8 cm"
+    },
+    "productGroup": {
+      "name": "Mellow Candlestick",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1094,
+    "sku": "886266",
+    "productName": "Legio Nova Jug 15 cl",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "15 cl"
+    },
+    "productGroup": {
+      "name": "Legio Nova Jug",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 705,
+    "sku": "530577",
+    "productName": "Salt & Pepper grinder 11 cm oak",
+    "colour": "Oak",
+    "material": "Oak",
+    "variantAttributes": {
+      "size": "11 cm",
+      "colorname": "Oak"
+    },
+    "productGroup": {
+      "name": "Salt & Pepper grinder",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 917,
+    "sku": "567487",
+    "productName": "Tea-maker 1.0 l Dark grey woven",
+    "colour": "Dark grey",
+    "material": "Borosilicate Glass,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Tea maker woven",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 412,
+    "sku": "202034",
+    "productName": "Professional roasting pan with rack 26x19 cm ceramic Slip-Let┬« coating",
+    "colour": "grey",
+    "material": "Aluminium,Ceramic coating,Stainless Steel",
+    "variantAttributes": {
+      "size": "26x19 cm",
+      "colorname": "grey"
+    },
+    "productGroup": {
+      "name": "Professional roasting pan with rack ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 918,
+    "sku": "567488",
+    "productName": "Tea-maker 1.0 l Light grey woven",
+    "colour": "Light grey",
+    "material": "Borosilicate Glass,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Tea maker woven",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 718,
+    "sku": "530664",
+    "productName": "Dishwashing set Black",
+    "colour": "Black",
+    "material": "Plastic,Silicone,Stainless Steel",
+    "variantAttributes": {
+      "colorname": "Black"
+    },
+    "productGroup": {
+      "name": "Dishwashing set",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 413,
+    "sku": "202035",
+    "productName": "Professional roasting pan with rack 30x22 cm ceramic Slip-Let┬« coating",
+    "colour": "grey",
+    "material": "Aluminium,Ceramic coating,Stainless Steel",
+    "variantAttributes": {
+      "size": "30x22 cm",
+      "colorname": "grey"
+    },
+    "productGroup": {
+      "name": "Professional roasting pan with rack ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 919,
+    "sku": "567489",
+    "productName": "Tea-maker 1.0 l Black woven",
+    "colour": "Black",
+    "material": "Borosilicate Glass,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Tea maker woven",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 742,
+    "sku": "530710",
+    "productName": "Citadel Bath dispenser Black",
+    "colour": "Black",
+    "material": "Plastic,Silicone,Stainless Steel",
+    "variantAttributes": {
+      "size": "250 ml"
+    },
+    "productGroup": {
+      "name": "Citadel Bath dispenser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1107,
+    "sku": "887238",
+    "productName": "Legio Nova Jug 0.7 l",
+    "colour": null,
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "0.7 l"
+    },
+    "productGroup": {
+      "name": "Legio Nova Jug",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1092,
+    "sku": "886262",
+    "productName": "Legio Nova Jug 1.0 l",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Legio Nova Jug",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 910,
+    "sku": "567434",
+    "productName": "4 Facet tumblers 34 cl",
+    "colour": null,
+    "material": "Glass",
+    "variantAttributes": {
+      "size": "34 cl"
+    },
+    "productGroup": {
+      "name": "4 Facet tumblers",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 722,
+    "sku": "530672",
+    "productName": "Soap dispenser Black",
+    "colour": "Black",
+    "material": "Nylon,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ8 cm"
+    },
+    "productGroup": {
+      "name": "Soap dispenser",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1036,
+    "sku": "575011",
+    "productName": "Urban thermo flask 0.5 l steel/black",
+    "colour": "Black, Steel",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask Steel/Black",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1038,
+    "sku": "575013",
+    "productName": "Urban thermo flask 0.5 l Vintage brown",
+    "colour": "Vintage brown",
+    "material": "90% post-consumer recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1056,
+    "sku": "575104",
+    "productName": "Urban Thermo flask 0.7 L Coconut",
+    "colour": "Coconut",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.7 L"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 688,
+    "sku": "530458",
+    "productName": "Nordic kitchen Serving spoon small",
+    "colour": "Black",
+    "material": "Oiled oak,Silicone",
+    "variantAttributes": {
+      "size": "27 cm",
+      "colorname": "Black"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Serving spoon small",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 927,
+    "sku": "567630",
+    "productName": "Garlic press",
+    "colour": "Brushed steel",
+    "material": "Stainless Steel",
+    "variantAttributes": {
+      "size": "16 cm"
+    },
+    "productGroup": {
+      "name": "Garlic press",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 695,
+    "sku": "530470",
+    "productName": "Nordic kitchen Spatula bamboo",
+    "colour": "Bamboo",
+    "material": "FSC┬«∩╕Å-certified carbonized bamboo",
+    "variantAttributes": {
+      "size": "31 cm",
+      "colorname": "Bamboo"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Spatula",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1040,
+    "sku": "575028",
+    "productName": "Urban thermo flask 0.5 l Chocolate",
+    "colour": "Chocolate",
+    "material": "Stainless steel,plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 458,
+    "sku": "301501",
+    "productName": "Green tools Mixing bowl lid 15.5 cm",
+    "colour": "Green",
+    "material": "Plastic",
+    "variantAttributes": {
+      "size": "15.5 cm"
+    },
+    "productGroup": {
+      "name": "tools Mixing bowl lid",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 880,
+    "sku": "567034",
+    "productName": "City To Go Cup 0.35 l Champagne",
+    "colour": "Champagne",
+    "material": "90% recycled steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l",
+      "colorname": "Champagne"
+    },
+    "productGroup": {
+      "name": "City To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1048,
+    "sku": "575047",
+    "productName": "Urban thermo flask 0.5 l Pistachio",
+    "colour": "Pistachio",
+    "material": "90% recycled post-consumer stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1033,
+    "sku": "575005",
+    "productName": "Urban thermo flask 0.5 l Emerald green",
+    "colour": "Emerald green",
+    "material": "Plastic,Stainless Steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1037,
+    "sku": "575012",
+    "productName": "Urban thermo flask 0.5 l Dusty blue",
+    "colour": "Dusty blue",
+    "material": "90% post-consumer recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 875,
+    "sku": "567013",
+    "productName": "To Go Cup 0.35 L Grey",
+    "colour": "Grey",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 L"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1035,
+    "sku": "575010",
+    "productName": "Urban thermo flask 0.5 l black",
+    "colour": "Black",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 696,
+    "sku": "530471",
+    "productName": "Nordic kitchen Serving spoon small bamboo",
+    "colour": "Bamboo",
+    "material": "FSC┬«∩╕Å-certified carbonized bamboo",
+    "variantAttributes": {
+      "size": "27 cm",
+      "colorname": "Bamboo"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Serving spoon small",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 697,
+    "sku": "530472",
+    "productName": "Nordic kitchen Serving spoon large bamboo",
+    "colour": "Bamboo",
+    "material": "FSC┬«∩╕Å-certified carbonized bamboo",
+    "variantAttributes": {
+      "size": "29 cm"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Serving spoon large",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 729,
+    "sku": "530682",
+    "productName": "Squeeze soap dispenser Elephant grey",
+    "colour": "Elephant grey",
+    "material": "Plastic,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "200 ml",
+      "colorname": "Elephant grey"
+    },
+    "productGroup": {
+      "name": "Squeeze soap dispenser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 447,
+    "sku": "266670",
+    "productName": "White Line Pot 7.0 l 24 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "7.0 l 24 cm"
+    },
+    "productGroup": {
+      "name": "Line Pot ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1049,
+    "sku": "575048",
+    "productName": "Urban Thermo flask 0.5 L Fig purple",
+    "colour": "Fig purple",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1053,
+    "sku": "575101",
+    "productName": "Urban thermo flask 0.7 L Black",
+    "colour": "Black",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.7 L"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 899,
+    "sku": "567204",
+    "productName": "Urban To Go Cup 0,35 L Green goddess",
+    "colour": "Green goddess",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 L"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup 0 35 L",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1057,
+    "sku": "575105",
+    "productName": "Urban Thermo flask 0.7 L Fig purple",
+    "colour": "Fig purple",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.7 L"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1050,
+    "sku": "575049",
+    "productName": "Urban Thermo flask 0.5 L Funky ballerina",
+    "colour": "Funky ballerina",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 901,
+    "sku": "567301",
+    "productName": "Mellow Candlestick 12 cm",
+    "colour": "Polished steel",
+    "material": "Stainless Steel",
+    "variantAttributes": {
+      "size": "12 cm"
+    },
+    "productGroup": {
+      "name": "Mellow Candlestick",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1041,
+    "sku": "575039",
+    "productName": "Urban thermo flask 0.5 l Coconut",
+    "colour": "Coconut",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 446,
+    "sku": "266648",
+    "productName": "White Line Pot 4.8 l 20 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "4.8 l 20 cm"
+    },
+    "productGroup": {
+      "name": "Line Pot ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1055,
+    "sku": "575103",
+    "productName": "Urban thermo flask 0.7 l Caramel cream",
+    "colour": "Caramel Cream",
+    "material": "90% recycled post-consumer stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.7 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 865,
+    "sku": "567001",
+    "productName": "To Go Cup 0.35 l Marble grey",
+    "colour": "Marble grey",
+    "material": "90% recycled steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1013,
+    "sku": "571373",
+    "productName": "2 Acorn tealight holder Clear",
+    "colour": "Clear",
+    "material": "UV-resistant glass",
+    "variantAttributes": {
+      "size": "H8 cm ├ÿ6.5 cm"
+    },
+    "productGroup": {
+      "name": "2 Acorn tealight holder",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 868,
+    "sku": "567004",
+    "productName": "To Go Cup 0.35 l Nordic rose",
+    "colour": "Nordic rose",
+    "material": "90% recycled steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1030,
+    "sku": "571623",
+    "productName": "RADIANT LED battery lamp 25 cm - Black",
+    "colour": "Black",
+    "material": "Plastic,Rubber",
+    "variantAttributes": {
+      "size": "25 cm"
+    },
+    "productGroup": {
+      "name": "RADIANT LED battery lamp",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 728,
+    "sku": "530681",
+    "productName": "Squeeze soap dispenser Black",
+    "colour": "black",
+    "material": "Plastic,Silicone,Stainless steel.",
+    "variantAttributes": {
+      "size": "200 ml"
+    },
+    "productGroup": {
+      "name": "Squeeze soap dispenser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 433,
+    "sku": "260325",
+    "productName": "Grey Line Pot 2.5 l 16 cm ceramic Slip-Let┬« coating",
+    "colour": "Grey",
+    "material": "Base: stainless steel,Body: 100% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "2.5 l ├ÿ16 cm"
+    },
+    "productGroup": {
+      "name": "Line Pot 2.5 l 16 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1016,
+    "sku": "571378",
+    "productName": "2 Acorn tealight holder Pine",
+    "colour": "Pine",
+    "material": "UV-resistant Glass",
+    "variantAttributes": {
+      "size": "H8 cm ├ÿ6.5\ncm"
+    },
+    "productGroup": {
+      "name": "2 Acorn tealight holder",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 876,
+    "sku": "567014",
+    "productName": "To Go Cup 0.35 L Fig purple",
+    "colour": "Fig purple",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 L"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1018,
+    "sku": "571381",
+    "productName": "RADIANT LED battery lamp - Oak",
+    "colour": "Oak",
+    "material": "Oak,Plastic",
+    "variantAttributes": {
+      "size": "28.5 cm"
+    },
+    "productGroup": {
+      "name": "RADIANT LED battery lamp",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 877,
+    "sku": "567015",
+    "productName": "To Go Cup 0.35 L Funky ballerina",
+    "colour": "Funky ballerina",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 L"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1019,
+    "sku": "571382",
+    "productName": "RADIANT LED battery lamp - Smoked oak",
+    "colour": "Smoked oak",
+    "material": "Oak,Plastic",
+    "variantAttributes": {
+      "size": "28.5 cm"
+    },
+    "productGroup": {
+      "name": "RADIANT LED battery lamp",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1021,
+    "sku": "571384",
+    "productName": "Radiant round LED lamp Smoked oak",
+    "colour": "Smoked oak",
+    "material": "Oak,Plastic",
+    "variantAttributes": {
+      "size": "15 cm"
+    },
+    "productGroup": {
+      "name": "Radiant round LED lamp",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 534,
+    "sku": "501044",
+    "productName": "2 Espresso tumblers Marble Grey",
+    "colour": "Marble grey",
+    "material": "Porcelain,Silicone",
+    "variantAttributes": {
+      "size": "8 cl"
+    },
+    "productGroup": {
+      "name": "2 Espresso tumblers",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 952,
+    "sku": "568054",
+    "productName": "Fridge carafe 1.0 l brass",
+    "colour": "brass",
+    "material": "Borosilicate Glass,PVD coated stainless steel,Silicone",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Fridge carafe",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 843,
+    "sku": "541240",
+    "productName": "Legio Nova tumblers 40 cl 6 pcs.",
+    "colour": null,
+    "material": "Crystal",
+    "variantAttributes": {
+      "size": "40 cl"
+    },
+    "productGroup": {
+      "name": "Legio Nova tumblers 6 pcs.",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 704,
+    "sku": "530573",
+    "productName": "Salt & Pepper grinder 7.5 cm oak",
+    "colour": "Oak",
+    "material": "Oak",
+    "variantAttributes": {
+      "size": "7.5 cm"
+    },
+    "productGroup": {
+      "name": "Salt & Pepper grinder",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 864,
+    "sku": "567000",
+    "productName": "To Go Cup 0.35 l Navy blue",
+    "colour": "Navy blue",
+    "material": "90% recycled steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 517,
+    "sku": "313328",
+    "productName": "Stainless Steel Frying Pan 28 cm steel base",
+    "colour": "Polished steel",
+    "material": "Base: Aluminium/stainless steel,Body: 90% recycled post-consumer stainless steel,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "28 cm"
+    },
+    "productGroup": {
+      "name": "Stainless Steel Frying Pan steel base",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 788,
+    "sku": "531551",
+    "productName": "Green tools Palette Knife angled",
+    "colour": "green",
+    "material": "Plastic,Stainless Steel",
+    "variantAttributes": {
+      "size": "27 cm"
+    },
+    "productGroup": {
+      "name": "tools Palette Knife angled",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 631,
+    "sku": "505052",
+    "productName": "Sip'n'Go Tumbler 0.9 L Fig purple",
+    "colour": "Fig purple",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.9 L"
+    },
+    "productGroup": {
+      "name": "Sip'n'Go Tumbler",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 829,
+    "sku": "541043",
+    "productName": "Thumbler 38 cl Smokey grey",
+    "colour": "Smokey grey",
+    "material": "Mouth-blown Glass",
+    "variantAttributes": {
+      "size": "38 cl"
+    },
+    "productGroup": {
+      "name": "Thumbler",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 830,
+    "sku": "541044",
+    "productName": "Thumbler 48 cl Smokey grey",
+    "colour": "Smokey grey",
+    "material": "Mouth-blown Glass",
+    "variantAttributes": {
+      "size": "48 cl"
+    },
+    "productGroup": {
+      "name": "Thumbler",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 647,
+    "sku": "515291",
+    "productName": "Knife Stand angled White",
+    "colour": "White",
+    "material": "Aluminium,Plastic",
+    "variantAttributes": {
+      "size": "20x7.5x31 cm"
+    },
+    "productGroup": {
+      "name": "Knife stand angled",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 676,
+    "sku": "520453",
+    "productName": "Bread bin Elephant grey",
+    "colour": "Elephant grey",
+    "material": "FSC┬«∩╕Å-certified carbonized bamboo,Plastic",
+    "variantAttributes": {
+      "size": "42x19x15.5 cm"
+    },
+    "productGroup": {
+      "name": "Bread bin",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 516,
+    "sku": "313324",
+    "productName": "Stainless Steel Frying Pan 24 cm steel base",
+    "colour": "Polished steel",
+    "material": "Base: Aluminium/stainless steel,Body: 90% recycled post-consumer stainless steel,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "24 cm"
+    },
+    "productGroup": {
+      "name": "Stainless Steel Frying Pan steel base",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 515,
+    "sku": "313320",
+    "productName": "Stainless Steel Frying Pan 20 cm steel base",
+    "colour": "Polished steel",
+    "material": "Base: Aluminium/stainless steel,Body: 90% recycled post-consumer stainless steel,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Stainless Steel Frying Pan steel base",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 677,
+    "sku": "520454",
+    "productName": "Bread bin Sand",
+    "colour": "Sand",
+    "material": "FSC┬«∩╕Å-certified carbonized bamboo,Plastic",
+    "variantAttributes": {
+      "size": "42x19x15.5 cm"
+    },
+    "productGroup": {
+      "name": "Bread bin",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 496,
+    "sku": "304828",
+    "productName": "Professional Frying pan 28 cm Slip-Let┬« Laser Titanium",
+    "colour": "Black",
+    "material": "Body: 100% recycled post-consumer aluminum,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "28 cm"
+    },
+    "productGroup": {
+      "name": "Professional Frying pan Slip Let┬« Laser Titanium",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 495,
+    "sku": "304824",
+    "productName": "Professional Frying pan 24 cm Slip-Let┬« Laser Titanium",
+    "colour": "Black",
+    "material": "Body: 100% recycled post-consumer aluminum,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "24 cm"
+    },
+    "productGroup": {
+      "name": "Professional Frying pan Slip Let┬« Laser Titanium",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 494,
+    "sku": "304820",
+    "productName": "Professional Frying pan 20 cm Slip-Let┬« Laser Titanium",
+    "colour": "Black",
+    "material": "Body: 100% recycled post-consumer aluminum,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Professional Frying pan Slip Let┬« Laser Titanium",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 435,
+    "sku": "260328",
+    "productName": "Grey Line Frying pan 28 cm ceramic Slip-Let┬« coating",
+    "colour": "Grey",
+    "material": "Base: stainless steel,Body: 100% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ28 cm"
+    },
+    "productGroup": {
+      "name": "Line Frying pan 28 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 716,
+    "sku": "530638",
+    "productName": "Toolbox low 15 cm White",
+    "colour": "White",
+    "material": "Ceramic,Oak",
+    "variantAttributes": {
+      "size": "15 cm"
+    },
+    "productGroup": {
+      "name": "Toolbox low",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 598,
+    "sku": "502932",
+    "productName": "Vacuum jug 1.0 l Stainless steel",
+    "colour": null,
+    "material": "PP Plastic,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug Stainless steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 396,
+    "sku": "118406",
+    "productName": "Ladle with pouring lip 6 cm Stainless steel",
+    "colour": null,
+    "material": "Stainless steel",
+    "variantAttributes": {
+      "size": "6 cm"
+    },
+    "productGroup": {
+      "name": "Ladle with pouring lip Stainless steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 432,
+    "sku": "260324",
+    "productName": "Grey Line Frying pan 24 cm ceramic Slip-Let┬« coating",
+    "colour": "Grey",
+    "material": "Base: stainless steel,Body: 100% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ24 cm"
+    },
+    "productGroup": {
+      "name": "Line Frying pan 24 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 737,
+    "sku": "530692",
+    "productName": "Laundry bag Light grey",
+    "colour": "Light grey",
+    "material": "Beechwood,Plastic,Polyester",
+    "variantAttributes": {
+      "size": "75 l"
+    },
+    "productGroup": {
+      "name": "Laundry bag",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 873,
+    "sku": "567011",
+    "productName": "To Go Cup 0.35 l Night sky",
+    "colour": "Night sky",
+    "material": "90% post-consumer recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 398,
+    "sku": "118411",
+    "productName": "Ladle with pouring lip 11 cm Stainless steel",
+    "colour": null,
+    "material": "Stainless steel",
+    "variantAttributes": {
+      "size": "11 cm"
+    },
+    "productGroup": {
+      "name": "Ladle with pouring lip Stainless steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 439,
+    "sku": "266424",
+    "productName": "White Line Frying pan 24 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ24 cm"
+    },
+    "productGroup": {
+      "name": "Line Frying pan 24 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 440,
+    "sku": "266428",
+    "productName": "White Line Frying pan 28 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ28 cm"
+    },
+    "productGroup": {
+      "name": "Line Frying pan 28 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 874,
+    "sku": "567012",
+    "productName": "To Go Cup 0.35 l Caramel cream",
+    "colour": "Caramel Cream",
+    "material": "90% post-consumer recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 557,
+    "sku": "502778",
+    "productName": "Nordic kitchen Serving dish 13x37 cm",
+    "colour": null,
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "13x37 cm"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Serving dish",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 434,
+    "sku": "260327",
+    "productName": "Grey Line Saut├⌐ pan 24 cm ceramic Slip-Let┬« coating",
+    "colour": "Grey",
+    "material": "Base: stainless steel,Body: 100% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ24 cm"
+    },
+    "productGroup": {
+      "name": "Line Saut├⌐ pan 24 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 442,
+    "sku": "266611",
+    "productName": "White Line Saucepan 1.1 l 13 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "1.1 l 13 cm"
+    },
+    "productGroup": {
+      "name": "Line Saucepan ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 444,
+    "sku": "266625",
+    "productName": "White Line Pot 2.5 l 16 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "1.8 l 16 cm"
+    },
+    "productGroup": {
+      "name": "Line Pot 2.5 l 16 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 614,
+    "sku": "503078",
+    "productName": "To Go thermo mealbox 640 ml Golden sand",
+    "colour": "Golden sand",
+    "material": "Stainless Steel",
+    "variantAttributes": {
+      "size": "0.64 l",
+      "colorname": "Golden sand"
+    },
+    "productGroup": {
+      "name": "To Go thermo mealbox 640 ml",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 689,
+    "sku": "530459",
+    "productName": "Nordic kitchen Serving spoon large",
+    "colour": "Black",
+    "material": "Oiled oak,Silicone",
+    "variantAttributes": {
+      "size": "27 cm"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Serving spoon large",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 720,
+    "sku": "530669",
+    "productName": "Soap dispenser Matt white",
+    "colour": "matt white",
+    "material": "Plastic,Rubber,Stainless Steel",
+    "variantAttributes": {
+      "size": "18 cm"
+    },
+    "productGroup": {
+      "name": "Soap dispenser",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 719,
+    "sku": "530668",
+    "productName": "Soap dispenser Matt black",
+    "colour": "matt black",
+    "material": "Plastic,Rubber,Stainless Steel",
+    "variantAttributes": {
+      "size": "18 cm"
+    },
+    "productGroup": {
+      "name": "Soap dispenser",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 892,
+    "sku": "567116",
+    "productName": "Urban To Go Cup 0.35 l Night sky",
+    "colour": "Night sky",
+    "material": "90% recycled post-consumer stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l",
+      "colorname": "Night sky"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 723,
+    "sku": "530675",
+    "productName": "Soap dispenser Marble grey",
+    "colour": "Marble grey",
+    "material": "Nylon,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ8 cm"
+    },
+    "productGroup": {
+      "name": "Soap dispenser",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 750,
+    "sku": "530779",
+    "productName": "Magnetic trivet Ruby",
+    "colour": "Ruby",
+    "material": "Nylon,Silicone",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Magnetic trivet",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 443,
+    "sku": "266618",
+    "productName": "White Line Saucepan 1.8 l 16 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "1.8 l 16 cm"
+    },
+    "productGroup": {
+      "name": "Line Saucepan ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 445,
+    "sku": "266638",
+    "productName": "White Line Pot 3.8 l 20 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "3.8 l 20 cm"
+    },
+    "productGroup": {
+      "name": "Line Pot ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 895,
+    "sku": "567200",
+    "productName": "Urban To Go Cup 0,35 L Black",
+    "colour": "Black",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 L",
+      "colorname": "Black"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup 0 35 L",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 626,
+    "sku": "505030",
+    "productName": "24/12 To Go thermo flask",
+    "colour": "stainless steel",
+    "material": "Nylon,Plastic,Stainless steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "24/12 To Go thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 746,
+    "sku": "530773",
+    "productName": "Magnetic trivet bamboo",
+    "colour": "Bamboo",
+    "material": "FSC┬«∩╕Å-certified carbonized bamboo,Magnets",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Magnetic trivet",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 384,
+    "sku": "118020",
+    "productName": "Strainer 20 cm Stainless steel",
+    "colour": null,
+    "material": "Stainless steel",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Strainer Stainless steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 897,
+    "sku": "567202",
+    "productName": "Urban To Go Cup 0,35 L Fig purple",
+    "colour": "Fig purple",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 L",
+      "colorname": "Fig purple"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup 0 35 L",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1062,
+    "sku": "591503",
+    "productName": "Silhouette Storage jar 1.5 l",
+    "colour": null,
+    "material": "Leather,Mouth-blown Glass,Oiled oak,Silicone",
+    "variantAttributes": {
+      "size": "1.5 l"
+    },
+    "productGroup": {
+      "name": "Silhouette Storage jar",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 393,
+    "sku": "118320",
+    "productName": "Whisk with coating 20 cm",
+    "colour": null,
+    "material": "Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Whisk with coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1063,
+    "sku": "591504",
+    "productName": "Silhouette Storage jar 2.0 l",
+    "colour": null,
+    "material": "Leather,Mouth-blown Glass,Oiled oak,Silicone",
+    "variantAttributes": {
+      "size": "2.0 l"
+    },
+    "productGroup": {
+      "name": "Silhouette Storage jar",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 898,
+    "sku": "567203",
+    "productName": "Urban To Go Cup 0,35 L Funky ballerina",
+    "colour": "Funky ballerina",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 L",
+      "colorname": "Funky ballerina"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup 0 35 L",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 744,
+    "sku": "530730",
+    "productName": "Magnetic trivets Black",
+    "colour": "Black",
+    "material": "Nylon,Silicone",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Magnetic trivets",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 821,
+    "sku": "541009",
+    "productName": "Tumbler 35 cl",
+    "colour": null,
+    "material": "Glass",
+    "variantAttributes": {
+      "size": "35 cl"
+    },
+    "productGroup": {
+      "name": "Tumbler",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1122,
+    "sku": "887284",
+    "productName": "Legio Nova Bowl 0.5 l",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "0.5 l ├ÿ13 cm"
+    },
+    "productGroup": {
+      "name": "Legio Nova Bowl 0.5 l",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1032,
+    "sku": "571625",
+    "productName": "RADIANT LED battery lamp 25 cm - Dusty Blue",
+    "colour": "Dusty blue",
+    "material": "Plastic,Rubber",
+    "variantAttributes": {
+      "size": "25 cm"
+    },
+    "productGroup": {
+      "name": "RADIANT LED battery lamp",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 600,
+    "sku": "503025",
+    "productName": "Drinking bottle 0.5 l Marble grey",
+    "colour": "Marble grey",
+    "material": "Polyester,Silicone,Stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1125,
+    "sku": "887291",
+    "productName": "Legio Nova Serving dish 37x25 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "37x25 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Serving dish",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 640,
+    "sku": "512709",
+    "productName": "Nordic kitchen Cup 35 cl",
+    "colour": "Black",
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "35 cl"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Cup",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1022,
+    "sku": "571387",
+    "productName": "Acorn vase 16.5 cm Stone",
+    "colour": "Stone",
+    "material": "mouth-blown tinted glass",
+    "variantAttributes": {
+      "size": "16.5 cm"
+    },
+    "productGroup": {
+      "name": "Acorn vase",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1014,
+    "sku": "571375",
+    "productName": "2 Acorn tealight holder Laguna",
+    "colour": "Laguna",
+    "material": "UV-resistant glass",
+    "variantAttributes": {
+      "size": "H8 cm ├ÿ6,5 cm"
+    },
+    "productGroup": {
+      "name": "2 Acorn tealight holder",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 643,
+    "sku": "512712",
+    "productName": "Nordic kitchen Cylinder jug 0.5 l",
+    "colour": "Black",
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Cylinder jug",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 394,
+    "sku": "118325",
+    "productName": "Whisk with coating 25 cm",
+    "colour": null,
+    "material": "Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "25 cm"
+    },
+    "productGroup": {
+      "name": "Whisk with coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 387,
+    "sku": "118226",
+    "productName": "Whisk with silicone 20 cm",
+    "colour": null,
+    "material": "Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Whisk with silicone",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 610,
+    "sku": "503053",
+    "productName": "Drinking bottle 0.5 l Pearl beige",
+    "colour": "Pearl beige",
+    "material": "Polyester,Silicone,Stainless Steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 792,
+    "sku": "531557",
+    "productName": "Green tools Cutting board 38x28 cm",
+    "colour": "Green",
+    "material": "Plastic,Rubber",
+    "variantAttributes": {
+      "size": "38x28 cm"
+    },
+    "productGroup": {
+      "name": "tools Cutting board",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 793,
+    "sku": "531558",
+    "productName": "Green tools Cutting board 34x24 cm",
+    "colour": "Green",
+    "material": "Plastic,Rubber",
+    "variantAttributes": {
+      "size": "34x24 cm"
+    },
+    "productGroup": {
+      "name": "tools Cutting board",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 459,
+    "sku": "301502",
+    "productName": "Green tools Mixing bowl lid 18 cm",
+    "colour": "Green",
+    "material": "Plastic",
+    "variantAttributes": {
+      "size": "18 cm"
+    },
+    "productGroup": {
+      "name": "tools Mixing bowl lid",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 491,
+    "sku": "304020",
+    "productName": "Stainless Steel Frying pan 20 cm Slip-Let┬« Laser Titanium",
+    "colour": "Polished steel",
+    "material": "Base: Aluminium/stainless steel,Body: 90% recycled post-consumer stainless steel,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "20 cm",
+      "colorname": "Polished steel"
+    },
+    "productGroup": {
+      "name": "Stainless Steel Frying pan Slip Let┬« Laser Titanium",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1023,
+    "sku": "571388",
+    "productName": "Acorn vase 16.5 cm clear",
+    "colour": "Clear",
+    "material": "mouth-blown tinted glass",
+    "variantAttributes": {
+      "size": "16.5 cm"
+    },
+    "productGroup": {
+      "name": "Acorn vase",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1024,
+    "sku": "571393",
+    "productName": "Acorn lantern Stone",
+    "colour": "Stone",
+    "material": "Powder-coated steel,Tinted mouth-blown glass",
+    "variantAttributes": {
+      "size": "H20 cm"
+    },
+    "productGroup": {
+      "name": "Acorn lantern",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1102,
+    "sku": "887228",
+    "productName": "Legio Nova Dinner plate 28 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "28 cm"
+    },
+    "productGroup": {
+      "name": "Legio Nova Dinner plate",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 664,
+    "sku": "520439",
+    "productName": "Nordic kitchen tea vacuum jug 1.0 l Black",
+    "colour": "Black",
+    "material": "bamboo,plastic,stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen tea vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1082,
+    "sku": "886219",
+    "productName": "Legio Plate 19 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "19 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Plate",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 807,
+    "sku": "537781",
+    "productName": "Citadel Pedal bin 5.0 l Sand",
+    "colour": "Sand",
+    "material": "Plastic,Powder-coated steel,Stainless Steel",
+    "variantAttributes": {
+      "size": "5.0 l"
+    },
+    "productGroup": {
+      "name": "Citadel Pedal bin",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1027,
+    "sku": "571420",
+    "productName": "Glow Lantern 18 cm Black",
+    "colour": "Black",
+    "material": "Aluminium,Borosilicate Glass",
+    "variantAttributes": {
+      "size": "18 cm",
+      "colorname": "Black"
+    },
+    "productGroup": {
+      "name": "Glow Lantern",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 812,
+    "sku": "537797",
+    "productName": "Citadel Soap dispenser Sand",
+    "colour": "Sand",
+    "material": "Plastic,Powder-coated steel,Stainless Steel",
+    "variantAttributes": {
+      "size": "12 cm"
+    },
+    "productGroup": {
+      "name": "Citadel Soap dispenser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 388,
+    "sku": "118227",
+    "productName": "Whisk with silicone 25 cm",
+    "colour": null,
+    "material": "Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "25 cm"
+    },
+    "productGroup": {
+      "name": "Whisk with silicone",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 605,
+    "sku": "503048",
+    "productName": "Drinking bottle 0.5 l Chocolate",
+    "colour": "Chocolate",
+    "material": "Polyester,Silicone,Stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 389,
+    "sku": "118228",
+    "productName": "Whisk with silicone 30 cm",
+    "colour": null,
+    "material": "Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "30 cm"
+    },
+    "productGroup": {
+      "name": "Whisk with silicone",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 525,
+    "sku": "346620",
+    "productName": "Multi Frying pan 20 cm Mosaic ceramic Slip-Let┬« coating",
+    "colour": "Brushed steel",
+    "material": "Body: Steel layer 90% recycled post-consumer 18/8 stainless steel,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "Multi Frying pan Mosaic ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 527,
+    "sku": "346625",
+    "productName": "Multi Frying pan 24 cm Mosaic ceramic Slip-Let┬« coating",
+    "colour": "Brushed steel",
+    "material": "Base: Aluminium/stainless steel,Body: Aluminium layer 100% recycled post-consumer aluminium,Body: Steel layer 90% recycled post-consumer 18/8 stainless steel,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "24 cm"
+    },
+    "productGroup": {
+      "name": "Multi Frying pan Mosaic ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 528,
+    "sku": "346628",
+    "productName": "Multi Frying pan 28 cm Mosaic ceramic Slip-Let┬« coating",
+    "colour": "Brushed steel",
+    "material": "Base: Aluminium/stainless steel,Body: Aluminium layer 100% recycled post-consumer aluminium,Body: Steel layer 90% recycled post-consumer 18/8 stainless steel,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "28 cm"
+    },
+    "productGroup": {
+      "name": "Multi Frying pan Mosaic ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 828,
+    "sku": "541041",
+    "productName": "Tumbler 48 cl",
+    "colour": null,
+    "material": "Glass",
+    "variantAttributes": {
+      "size": "48 cl"
+    },
+    "productGroup": {
+      "name": "Tumbler",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 971,
+    "sku": "570902",
+    "productName": "Saturn Bird feeder Copper",
+    "colour": "Copper",
+    "material": "Borosilicate Glass,Copper,Silicone,Steel wire",
+    "variantAttributes": {
+      "size": "├ÿ24 cm",
+      "colorname": "Copper"
+    },
+    "productGroup": {
+      "name": "Saturn Bird feeder",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 529,
+    "sku": "501001",
+    "productName": "2 Espresso tumblers Black",
+    "colour": "Black",
+    "material": "Porcelain,Silicone",
+    "variantAttributes": {
+      "size": "8 cl"
+    },
+    "productGroup": {
+      "name": "2 Espresso tumblers",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 530,
+    "sku": "501002",
+    "productName": "2 Lungo tumblers Black",
+    "colour": "Black",
+    "material": "Porcelain,Silicone",
+    "variantAttributes": {
+      "size": "23 cl"
+    },
+    "productGroup": {
+      "name": "2 Lungo tumblers",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 977,
+    "sku": "571013",
+    "productName": "De luxe birdfeeder copper",
+    "colour": "Copper",
+    "material": "Borosilicate Glass,Copper,Silicone,Steel",
+    "variantAttributes": {
+      "size": "├ÿ25.5 cm",
+      "colorname": "Copper"
+    },
+    "productGroup": {
+      "name": "De luxe birdfeeder",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1046,
+    "sku": "575045",
+    "productName": "Glass drinking bottle 0.5l Cactus green",
+    "colour": "Cactus green",
+    "material": "Borosilicate Glass,Nylon,Plastic,Stainless steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Glass drinking bottle 0.5l",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 395,
+    "sku": "118330",
+    "productName": "Whisk with coating 30 cm",
+    "colour": null,
+    "material": "Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "30 cm"
+    },
+    "productGroup": {
+      "name": "Whisk with coating",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 531,
+    "sku": "501003",
+    "productName": "2 Cafe Latte tumblers Black",
+    "colour": "Black",
+    "material": "Porcelain,Silicone",
+    "variantAttributes": {
+      "size": "36 cl"
+    },
+    "productGroup": {
+      "name": "2 Cafe Latte tumblers",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 383,
+    "sku": "118018",
+    "productName": "Strainer 18 cm Stainless steel",
+    "colour": null,
+    "material": "Stainless steel",
+    "variantAttributes": {
+      "size": "18 cm"
+    },
+    "productGroup": {
+      "name": "Strainer Stainless steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 687,
+    "sku": "530457",
+    "productName": "Nordic kitchen Spatula",
+    "colour": "Black",
+    "material": "Oiled oak,Silicone",
+    "variantAttributes": {
+      "size": "28 cm"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Spatula",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 850,
+    "sku": "549031",
+    "productName": "Shoehorn 55 cm steel",
+    "colour": "Polished steel",
+    "material": "Stainless Steel,Leather",
+    "variantAttributes": {
+      "size": "55 cm"
+    },
+    "productGroup": {
+      "name": "Shoehorn steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 849,
+    "sku": "549030",
+    "productName": "Shoehorn 35 cm steel",
+    "colour": "Polished steel",
+    "material": "Stainless Steel,Leather",
+    "variantAttributes": {
+      "size": "35 cm"
+    },
+    "productGroup": {
+      "name": "Shoehorn steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 460,
+    "sku": "301503",
+    "productName": "Green tools Mixing bowl lid 20 cm",
+    "colour": "Green",
+    "material": "Plastic",
+    "variantAttributes": {
+      "size": "20 cm"
+    },
+    "productGroup": {
+      "name": "tools Mixing bowl lid",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1054,
+    "sku": "575102",
+    "productName": "Urban thermo flask 0.7 l Night sky",
+    "colour": "Night sky",
+    "material": "90% recycled post-consumer stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.7 l",
+      "colorname": "Night sky"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 564,
+    "sku": "502790",
+    "productName": "Nordic kitchen Cup 30 cl",
+    "colour": "Black",
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "30 cl"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Cup",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 591,
+    "sku": "502911",
+    "productName": "Vacuum jug 1.0 l White",
+    "colour": "White",
+    "material": "Glass,Plastic,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 570,
+    "sku": "502796",
+    "productName": "Nordic kitchen Bowl 2.0 l",
+    "colour": "Black",
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "2.0 l"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Bowl",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1145,
+    "sku": "887440",
+    "productName": "Legio Nova Oval bowl 18 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "18 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Oval bowl",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 572,
+    "sku": "502798",
+    "productName": "Nordic kitchen Jug 0.5 l",
+    "colour": "Black",
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen jug",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1010,
+    "sku": "571370",
+    "productName": "SunLight Lounge Solar lamp 24.5 cm",
+    "colour": null,
+    "material": "Plastic,Steel",
+    "variantAttributes": {
+      "size": "24.5 cm"
+    },
+    "productGroup": {
+      "name": "SunLight Lounge Solar lamp",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1007,
+    "sku": "571316",
+    "productName": "SunLight Solar lantern 30 cm",
+    "colour": null,
+    "material": "Plastic,Powder-coated steel",
+    "variantAttributes": {
+      "size": "30 cm"
+    },
+    "productGroup": {
+      "name": "SunLight Solar lantern",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1061,
+    "sku": "591502",
+    "productName": "Silhouette Storage jar 1.0 l",
+    "colour": null,
+    "material": "Leather,Mouth-blown Glass,Oiled oak,Silicone",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Silhouette Storage jar",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1147,
+    "sku": "887442",
+    "productName": "Legio Nova Oval bowl 26 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "26 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Oval bowl",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1011,
+    "sku": "571371",
+    "productName": "SunLight Lounge Solar lamp 50.5 cm",
+    "colour": null,
+    "material": "Plastic,Steel",
+    "variantAttributes": {
+      "size": "50.5 cm"
+    },
+    "productGroup": {
+      "name": "SunLight Lounge Solar lamp",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 584,
+    "sku": "502893",
+    "productName": "Vacuum Jug 1.0 l Night Sky",
+    "colour": "Night sky",
+    "material": "90% recycled post-consumer stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0l"
+    },
+    "productGroup": {
+      "name": "Dallah Vacuum Jug",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 633,
+    "sku": "505054",
+    "productName": "Sip'n'Go Tumbler 0.9 L Green goddess",
+    "colour": "Green goddess",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.9 L",
+      "colorname": "Green goddess"
+    },
+    "productGroup": {
+      "name": "Sip'n'Go Tumbler",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1077,
+    "sku": "822023",
+    "productName": "Liquid lounge Thermo bottle 0.7 L",
+    "colour": "Brushed steel",
+    "material": "Oiled walnut,90% recycled stainless steel",
+    "variantAttributes": {
+      "size": "0.7 L",
+      "colorname": "Brushed steel"
+    },
+    "productGroup": {
+      "name": "Liquid lounge Thermo bottle",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1130,
+    "sku": "887305",
+    "productName": "Legio Nova Jug 1.6 l",
+    "colour": null,
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "1.6 l"
+    },
+    "productGroup": {
+      "name": "Legio Nova Jug",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 606,
+    "sku": "503049",
+    "productName": "Drinking bottle 0.5 l Sage",
+    "colour": "Sage",
+    "material": "Polyester,Silicone,Stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 603,
+    "sku": "503046",
+    "productName": "Drinking bottle 0.5 l Soft beige",
+    "colour": "Soft beige",
+    "material": "Polyester,Silicone,Stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l",
+      "colorname": "Soft beige"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 608,
+    "sku": "503051",
+    "productName": "Drinking bottle 0.5 l Blue sky",
+    "colour": "Blue sky",
+    "material": "Polyester,Silicone,Stainless Steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l",
+      "colorname": "Blue sky"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 824,
+    "sku": "541036",
+    "productName": "Magnum wineglass 60 cl",
+    "colour": null,
+    "material": "Mouth-blown Glass",
+    "variantAttributes": {
+      "size": "60 cl"
+    },
+    "productGroup": {
+      "name": "Magnum wineglass",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 609,
+    "sku": "503052",
+    "productName": "Drinking bottle 0.5 l Emerald green",
+    "colour": "Emerald green",
+    "material": "Polyester,Silicone,Stainless Steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l",
+      "colorname": "Emerald green"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 441,
+    "sku": "266524",
+    "productName": "White Line Saut├⌐ pan 24 cm ceramic Slip-Let┬« coating",
+    "colour": "White",
+    "material": "Base: stainless steel,Body: 98% recycled post-consumer aluminum,Ceramic Slip-Let┬« coating,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ24 cm"
+    },
+    "productGroup": {
+      "name": "Line Saut├⌐ pan 24 cm ceramic Slip Let┬« coating",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 825,
+    "sku": "541037",
+    "productName": "Magnum wineglass 90 cl",
+    "colour": null,
+    "material": "Mouth-blown Glass",
+    "variantAttributes": {
+      "size": "90 cl"
+    },
+    "productGroup": {
+      "name": "Magnum wineglass",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 646,
+    "sku": "515290",
+    "productName": "Knife stand angled Black",
+    "colour": "Black",
+    "material": "Aluminium,Plastic",
+    "variantAttributes": {
+      "size": "20x7.5x31 cm"
+    },
+    "productGroup": {
+      "name": "Knife stand angled",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 911,
+    "sku": "567435",
+    "productName": "4 Facet tumblers 43 cl",
+    "colour": null,
+    "material": "Glass",
+    "variantAttributes": {
+      "size": "43 cl"
+    },
+    "productGroup": {
+      "name": "4 Facet tumblers",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 844,
+    "sku": "541241",
+    "productName": "Legio Nova tumblers 50 cl 6 pcs.",
+    "colour": null,
+    "material": "Crystal",
+    "variantAttributes": {
+      "size": "50 cl"
+    },
+    "productGroup": {
+      "name": "Legio Nova tumblers 6 pcs.",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1047,
+    "sku": "575046",
+    "productName": "Glass drinking bottle 0.5l Rose quartz",
+    "colour": "Rose quartz",
+    "material": "Borosilicate Glass,Nylon,Plastic,Stainless steel",
+    "variantAttributes": {
+      "size": "0.5 l",
+      "colorname": "Rose quartz"
+    },
+    "productGroup": {
+      "name": "Glass drinking bottle 0.5l",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 675,
+    "sku": "520452",
+    "productName": "Bread bin Black",
+    "colour": "Black",
+    "material": "FSC┬«∩╕Å-certified carbonized bamboo,Plastic",
+    "variantAttributes": {
+      "size": "42x19x15.5 cm"
+    },
+    "productGroup": {
+      "name": "Bread bin",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 644,
+    "sku": "512713",
+    "productName": "Nordic kitchen Cylinder jug 1.0 l",
+    "colour": "Black",
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Cylinder jug",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1078,
+    "sku": "822024",
+    "productName": "Liquid lounge Thermo bottle 1.0 L",
+    "colour": "Brushed steel",
+    "material": "Oiled walnut,90% recycled stainless steel",
+    "variantAttributes": {
+      "size": "1.0 L"
+    },
+    "productGroup": {
+      "name": "Liquid lounge Thermo bottle",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 724,
+    "sku": "530676",
+    "productName": "Soap dispenser Elephant grey",
+    "colour": "Elephant grey",
+    "material": "Nylon,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "├ÿ8 cm"
+    },
+    "productGroup": {
+      "name": "Soap dispenser",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1091,
+    "sku": "886261",
+    "productName": "Legio Nova Jug 0.5 l",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Legio Nova Jug",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 558,
+    "sku": "502779",
+    "productName": "Nordic kitchen Serving dish 12x24 cm",
+    "colour": null,
+    "material": "Stoneware",
+    "variantAttributes": {
+      "size": "12x24 cm"
+    },
+    "productGroup": {
+      "name": "Nordic kitchen Serving dish",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 492,
+    "sku": "304024",
+    "productName": "Stainless Steel Frying pan 24 cm Slip-Let┬« Laser Titanium",
+    "colour": "Polished steel",
+    "material": "Base: Aluminium/stainless steel,Body: 90% recycled post-consumer stainless steel,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "24 cm",
+      "colorname": "Polished steel"
+    },
+    "productGroup": {
+      "name": "Stainless Steel Frying pan Slip Let┬« Laser Titanium",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 493,
+    "sku": "304028",
+    "productName": "Stainless Steel Frying pan 28 cm Slip-Let┬« Laser Titanium",
+    "colour": "Polished steel",
+    "material": "Base: Aluminium/stainless steel,Body: 90% recycled post-consumer stainless steel,Handle: stainless steel",
+    "variantAttributes": {
+      "size": "28 cm",
+      "colorname": "Polished steel"
+    },
+    "productGroup": {
+      "name": "Stainless Steel Frying pan Slip Let┬« Laser Titanium",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 811,
+    "sku": "537796",
+    "productName": "Citadel Soap dispenser Black",
+    "colour": "Black",
+    "material": "Plastic,Powder-coated steel,Stainless Steel",
+    "variantAttributes": {
+      "size": "12 cm"
+    },
+    "productGroup": {
+      "name": "Citadel Soap dispenser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 575,
+    "sku": "502802",
+    "productName": "Vacuum jug 1.0 l Matt white",
+    "colour": "Matt white",
+    "material": "Glass,Plastic,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1098,
+    "sku": "887224",
+    "productName": "Legio Nova Deep plate 25 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "25 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Deep plate",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1099,
+    "sku": "887225",
+    "productName": "Legio Nova Dinner plate 25 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "25 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Dinner plate",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 958,
+    "sku": "568169",
+    "productName": "Self-watering herb organiser Black",
+    "colour": "Black",
+    "material": "Ceramic,Plastic",
+    "variantAttributes": {
+      "size": "31 cm"
+    },
+    "productGroup": {
+      "name": "Self watering herb organiser",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1017,
+    "sku": "571379",
+    "productName": "2 Acorn tealight holder Grape",
+    "colour": "Grape",
+    "material": "UV-resistant Glass",
+    "variantAttributes": {
+      "size": "H8 cm ├ÿ6.5 cm",
+      "colorname": "Grape"
+    },
+    "productGroup": {
+      "name": "2 Acorn tealight holder",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 789,
+    "sku": "531552",
+    "productName": "Green tools Measuring Jug  1.0 L",
+    "colour": "Green",
+    "material": "Plastic",
+    "variantAttributes": {
+      "size": "28 cm"
+    },
+    "productGroup": {
+      "name": "tools Palette Knife angled",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 599,
+    "sku": "502990",
+    "productName": "Drinking bottle 0.5 l Grey",
+    "colour": "Grey",
+    "material": "Polyester,Silicone,Stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Drinking bottle",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1110,
+    "sku": "887258",
+    "productName": "Legio Nova Cup 30 cl",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "30 cl",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Cup",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 597,
+    "sku": "502930",
+    "productName": "Vacuum jug 1.1 l Stainless steel",
+    "colour": null,
+    "material": "Plastic,Stainless steel",
+    "variantAttributes": {
+      "size": "1.1 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug Stainless steel",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1111,
+    "sku": "887259",
+    "productName": "Legio Nova Cup 40 cl",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "40 cl",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Cup",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 573,
+    "sku": "502800",
+    "productName": "Vacuum jug 1.0 l Marble grey",
+    "colour": "Marble grey",
+    "material": "Glass,Plastic,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 628,
+    "sku": "505034",
+    "productName": "24/12 To Go thermo flask Sage",
+    "colour": "Sage",
+    "material": "nylon,plastic,stainless steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "24/12 To Go thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 576,
+    "sku": "502803",
+    "productName": "Vacuum jug 1.0 l Matt grey",
+    "colour": "Matt grey",
+    "material": "90% recycled post-consumer stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 976,
+    "sku": "571012",
+    "productName": "De luxe birdfeeder black",
+    "colour": "black",
+    "material": "Borosilicate Glass,Silicone,Stainless Steel",
+    "variantAttributes": {
+      "size": "├ÿ25.5 cm",
+      "colorname": "black"
+    },
+    "productGroup": {
+      "name": "De luxe birdfeeder",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 960,
+    "sku": "568171",
+    "productName": "Stone flowerpot ├ÿ19 cm",
+    "colour": null,
+    "material": "Ceramic",
+    "variantAttributes": {
+      "size": "├ÿ19 cm"
+    },
+    "productGroup": {
+      "name": "Stone Flowerpot",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 577,
+    "sku": "502804",
+    "productName": "Vacuum jug 1.0 l Navy blue",
+    "colour": "Navy blue",
+    "material": "90% recycled post-consumer stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 578,
+    "sku": "502850",
+    "productName": "Rise vacuum jug 1.0 l Black",
+    "colour": "Black",
+    "material": "Glass insert,Plastic",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Rise vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 580,
+    "sku": "502869",
+    "productName": "Vacuum jug 1.0 l Peach Melba",
+    "colour": "Peach melba",
+    "material": "Glass,Plastic,Silicone,Stainless Steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1008,
+    "sku": "571317",
+    "productName": "SunLight Solar lantern 43 cm",
+    "colour": null,
+    "material": "Plastic,Powder-coated steel",
+    "variantAttributes": {
+      "size": "43 cm"
+    },
+    "productGroup": {
+      "name": "SunLight Solar lantern",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1028,
+    "sku": "571421",
+    "productName": "Glow Lantern 23.5 cm Black",
+    "colour": "Black",
+    "material": "Aluminium,Borosilicate Glass",
+    "variantAttributes": {
+      "size": "23.5 cm",
+      "colorname": "Black"
+    },
+    "productGroup": {
+      "name": "Glow Lantern",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1025,
+    "sku": "571394",
+    "productName": "Acorn lantern Mint green",
+    "colour": "Mint Green",
+    "material": "Powder-coated steel,Tinted mouth-blown glass",
+    "variantAttributes": {
+      "size": "H20 cm",
+      "colorname": "Mint Green"
+    },
+    "productGroup": {
+      "name": "Acorn lantern",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 586,
+    "sku": "502896",
+    "productName": "Vacuum Jug 1.0 l Sand",
+    "colour": "Sand",
+    "material": "90% recycled stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0l"
+    },
+    "productGroup": {
+      "name": "Dallah Vacuum Jug",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1109,
+    "sku": "887255",
+    "productName": "Legio Nova Cup 35 cl",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "35 cl",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Cup",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 535,
+    "sku": "501045",
+    "productName": "2 Lungo tumblers Marble Grey",
+    "colour": "Marble grey",
+    "material": "Porcelain,Silicone",
+    "variantAttributes": {
+      "size": "23 cl"
+    },
+    "productGroup": {
+      "name": "2 Lungo tumblers",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 533,
+    "sku": "501022",
+    "productName": "2 Cafe Latte tumblers Grey",
+    "colour": "Grey",
+    "material": "Porcelain,Silicone",
+    "variantAttributes": {
+      "size": "36 cl"
+    },
+    "productGroup": {
+      "name": "2 Cafe Latte tumblers",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 532,
+    "sku": "501021",
+    "productName": "2 Lungo tumblers Grey",
+    "colour": "Grey",
+    "material": "Porcelain,Silicone",
+    "variantAttributes": {
+      "size": "23 cl"
+    },
+    "productGroup": {
+      "name": "2 Lungo tumblers",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 809,
+    "sku": "537792",
+    "productName": "Citadel Toilet brush Black",
+    "colour": "Black",
+    "material": "Plastic,Powder-coated steel,Stainless Steel",
+    "variantAttributes": {
+      "size": "40 cm"
+    },
+    "productGroup": {
+      "name": "Citadel Toilet brush",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1149,
+    "sku": "732010013",
+    "productName": "Tidy Basket 48x35x26cm Tin",
+    "colour": "Tin",
+    "material": "85% post-consumer recycled plastic",
+    "variantAttributes": {
+      "size": "48x35x26 cm",
+      "colorname": "Tin"
+    },
+    "productGroup": {
+      "name": "Tidy Basket",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 592,
+    "sku": "502913",
+    "productName": "Vacuum jug 1.0 l Red",
+    "colour": "Red",
+    "material": "Glass,Plastic,Silicone,Stainless steel",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 579,
+    "sku": "502851",
+    "productName": "Rise vacuum jug 1.0 l White",
+    "colour": "White",
+    "material": "Glass insert,Plastic",
+    "variantAttributes": {
+      "size": "1.0 l"
+    },
+    "productGroup": {
+      "name": "Rise vacuum jug",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 866,
+    "sku": "567002",
+    "productName": "To Go Cup 0.35 l Grey",
+    "colour": "Grey",
+    "material": "90% recycled steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 585,
+    "sku": "502894",
+    "productName": "Vacuum Jug 1.0 l Caramel Cream",
+    "colour": "Caramel Cream",
+    "material": "90% recycled post-consumer stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0l"
+    },
+    "productGroup": {
+      "name": "Dallah Vacuum Jug",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 617,
+    "sku": "503100",
+    "productName": "RE-Hydrate Thermo flask 0.5 L Black",
+    "colour": "Black",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 619,
+    "sku": "503102",
+    "productName": "RE-Hydrate Thermo flask 0.5 L Fig purple",
+    "colour": "Fig purple",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 926,
+    "sku": "567625",
+    "productName": "Garlic press",
+    "colour": null,
+    "material": "Mouth-blown Glass,Stainless steel",
+    "variantAttributes": {
+      "size": "18 cm"
+    },
+    "productGroup": {
+      "name": "Garlic press",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 889,
+    "sku": "567104",
+    "productName": "Urban To Go Cup 0.35 l Golden sand",
+    "colour": "Golden sand",
+    "material": "90% recycled steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l",
+      "colorname": "Golden sand"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 878,
+    "sku": "567016",
+    "productName": "To Go Cup 0.35 L Green goddess",
+    "colour": "Green goddess",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 L"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 620,
+    "sku": "503103",
+    "productName": "RE-Hydrate Thermo flask 0.5 L Funky ballerina",
+    "colour": "Funky ballerina",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "RE Hydrate Thermo flask",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 871,
+    "sku": "567008",
+    "productName": "To Go Cup 0.35 l Coconut",
+    "colour": "Coconut",
+    "material": "90% recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 870,
+    "sku": "567006",
+    "productName": "To Go Cup 0.35 l Vintage brown",
+    "colour": "Vintage brown",
+    "material": "90% post-consumer recycled stainless steel,Plastic,Silicone",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "To Go Cup",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 882,
+    "sku": "567042",
+    "productName": "City To Go Cup 0.35 l Black",
+    "colour": "black",
+    "material": "90% recycled steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "City To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 738,
+    "sku": "530693",
+    "productName": "Laundry bag Dark grey",
+    "colour": "Dark grey",
+    "material": "Beechwood,Plastic,Polyester",
+    "variantAttributes": {
+      "size": "75 l"
+    },
+    "productGroup": {
+      "name": "Laundry bag",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1015,
+    "sku": "571377",
+    "productName": "2 Acorn tealight holder Rose",
+    "colour": "Rose",
+    "material": "UV-resistant Glass",
+    "variantAttributes": {
+      "size": "H8 cm ├ÿ6.5\ncm",
+      "colorname": "Rose"
+    },
+    "productGroup": {
+      "name": "2 Acorn tealight holder",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1031,
+    "sku": "571624",
+    "productName": "RADIANT LED battery lamp 25 cm - Pearl Beige",
+    "colour": "Pearl Beige",
+    "material": "Plastic,Rubber",
+    "variantAttributes": {
+      "size": "25 cm"
+    },
+    "productGroup": {
+      "name": "RADIANT LED battery lamp",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1020,
+    "sku": "571383",
+    "productName": "Radiant round LED lamp Oak",
+    "colour": "Oak",
+    "material": "Oak,Plastic",
+    "variantAttributes": {
+      "size": "15 cm",
+      "colorname": "Oak"
+    },
+    "productGroup": {
+      "name": "Radiant round LED lamp",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 587,
+    "sku": "502897",
+    "productName": "Vacuum Jug 1.0 l Ruby",
+    "colour": "Ruby",
+    "material": "90% recycled stainless steel,Glass,Plastic",
+    "variantAttributes": {
+      "size": "1.0l"
+    },
+    "productGroup": {
+      "name": "Dallah Vacuum Jug",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1051,
+    "sku": "575050",
+    "productName": "Urban Thermo flask 0.5 L Green goddess",
+    "colour": "Green goddess",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.5 L"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1058,
+    "sku": "575106",
+    "productName": "Urban Thermo flask 0.7 L Funky ballerina",
+    "colour": "Funky ballerina",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.7 L"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1086,
+    "sku": "886228",
+    "productName": "Legio Plate 28 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "28 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Plate",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1085,
+    "sku": "886225",
+    "productName": "Legio Plate 25 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "25 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Plate",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1052,
+    "sku": "575100",
+    "productName": "Urban thermo flask 0.7 l Steel/Black",
+    "colour": "Black, Steel",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.7 L",
+      "colorname": "Black, Steel"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask Steel/Black",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 893,
+    "sku": "567117",
+    "productName": "Urban To Go Cup 0.35 l Caramel cream",
+    "colour": "Caramel Cream",
+    "material": "90% recycled post-consumer stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l",
+      "colorname": "Caramel Cream"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 879,
+    "sku": "567033",
+    "productName": "City To Go Cup 0.35 l Mocca",
+    "colour": "Mocca",
+    "material": "90% recycled steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "City To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1127,
+    "sku": "887293",
+    "productName": "Legio Nova Serving dish 24x12 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "24x12 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Serving dish",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1137,
+    "sku": "887410",
+    "productName": "Legio Nova bowl 0.5 l",
+    "colour": "white",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "0.5 l ├ÿ13 cm",
+      "colorname": "white"
+    },
+    "productGroup": {
+      "name": "Legio Nova Bowl 0.5 l",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 881,
+    "sku": "567041",
+    "productName": "City To Go Cup 0.35 l steel/black",
+    "colour": "steel/black",
+    "material": "90% recycled steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 l"
+    },
+    "productGroup": {
+      "name": "City To Go Cup",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 896,
+    "sku": "567201",
+    "productName": "Urban To Go Cup 0,35 L Coconut",
+    "colour": "Coconut",
+    "material": "90% recycled stainless steel,Plastic",
+    "variantAttributes": {
+      "size": "0.35 L"
+    },
+    "productGroup": {
+      "name": "Urban To Go Cup 0 35 L",
+      "variantAxes": [
+        "color"
+      ]
+    }
+  },
+  {
+    "id": 1134,
+    "sku": "887318",
+    "productName": "Legio Nova Serving dish 42 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "42 cm",
+      "colorname": "White"
+    },
+    "productGroup": {
+      "name": "Legio Nova Serving dish",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1135,
+    "sku": "887394",
+    "productName": "Legio Nova Serving dish 37x13 cm",
+    "colour": "White",
+    "material": "Porcelain",
+    "variantAttributes": {
+      "size": "37x13 cm"
+    },
+    "productGroup": {
+      "name": "Legio Nova Serving dish",
+      "variantAxes": [
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1039,
+    "sku": "575027",
+    "productName": "Urban thermo flask 0.5 l Blue sky",
+    "colour": "Blue sky",
+    "material": "Plastic,Stainless Steel",
+    "variantAttributes": {
+      "size": "0.5 l"
+    },
+    "productGroup": {
+      "name": "Urban thermo flask",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  },
+  {
+    "id": 1026,
+    "sku": "571397",
+    "productName": "Acorn Vase 22 cm Mint green",
+    "colour": "Mint green",
+    "material": "mouth-blown tinted glass",
+    "variantAttributes": {
+      "size": "22 cm"
+    },
+    "productGroup": {
+      "name": "Acorn vase",
+      "variantAxes": [
+        "color",
+        "size"
+      ]
+    }
+  }
+]

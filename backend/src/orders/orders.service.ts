@@ -125,11 +125,14 @@ export class OrdersService {
       if (!product) {
         throw new BadRequestException(`Product ${item.productId} not found`);
       }
-      const unitPriceExclVat = product.pricing?.price_excl_vat_aed
-        ? Number(product.pricing.price_excl_vat_aed)
+      // Authoritative price is the VAT-inclusive price shown on the storefront.
+      // Derive excl-VAT from incl-VAT to avoid stale price_excl_vat_aed values
+      // that can be out of sync (e.g. from compareAtPrice mis-mapping).
+      const unitPriceInclVat = product.pricing?.price_incl_vat_aed
+        ? Number(product.pricing.price_incl_vat_aed)
         : 0;
-      const unitVatAmount = Math.round(unitPriceExclVat * vatRate * 100) / 100;
-      const unitPriceInclVat = unitPriceExclVat + unitVatAmount;
+      const unitPriceExclVat = Math.round((unitPriceInclVat / (1 + vatRate)) * 100) / 100;
+      const unitVatAmount = Math.round((unitPriceInclVat - unitPriceExclVat) * 100) / 100;
       const lineSubtotalExclVat = Math.round(unitPriceExclVat * item.quantity * 100) / 100;
       const lineVatAmount = Math.round(unitVatAmount * item.quantity * 100) / 100;
       const lineTotalInclVat = Math.round(unitPriceInclVat * item.quantity * 100) / 100;
@@ -238,10 +241,20 @@ export class OrdersService {
     if (requested > balanceAed) {
       throw new BadRequestException(`Insufficient loyalty balance. Available: AED ${balanceAed.toFixed(2)}`);
     }
-    const maxRedeemable = subtotal * 0.30;
+    // Admin-configured cap (default 30% when unset). Falls back gracefully
+    // if the settings service is unavailable.
+    let maxRedeemPercent = 0.3;
+    try {
+      const cfg = await this.settingsService.getLoyaltyConfig();
+      const pct = Number(cfg?.maxRedeemPercent);
+      if (Number.isFinite(pct) && pct > 0 && pct <= 1) maxRedeemPercent = pct;
+    } catch (err: any) {
+      this.logger.warn(`Loyalty config lookup failed, using default 30%: ${err?.message ?? err}`);
+    }
+    const maxRedeemable = subtotal * maxRedeemPercent;
     if (requested > maxRedeemable) {
       throw new BadRequestException(
-        `Loyalty redemption cannot exceed 30% of subtotal (max: AED ${maxRedeemable.toFixed(2)})`,
+        `Loyalty redemption cannot exceed ${Math.round(maxRedeemPercent * 100)}% of subtotal (max: AED ${maxRedeemable.toFixed(2)})`,
       );
     }
     return requested;
@@ -354,16 +367,35 @@ export class OrdersService {
     return { orderShippingAddressId, orderBillingAddressId };
   }
 
-  private async finalizeLoyaltyEarn(orderId: string, subtotal: number, loyaltyRedeemAed: number, order: any): Promise<any> {
+  private async finalizeLoyaltyEarn(orderId: string, subtotal: number, loyaltyRedeemAed: number, order: any, userId: string): Promise<any> {
     const earnPercent = await this.getLoyaltyEarnPercent();
     const eligibleForEarn = Math.max(0, subtotal - loyaltyRedeemAed);
     const loyaltyEarnAed = Math.round(eligibleForEarn * earnPercent * 100) / 100;
     if (loyaltyEarnAed <= 0) return order;
-    return this.prisma.order.update({
+
+    const updated = await this.prisma.order.update({
       where: { id: orderId },
       data: { loyaltyEarnAed },
       include: { items: true, shippingAddress: true, billingAddress: true },
     });
+
+    // Credit the earned amount as PENDING in the loyalty wallet — it will
+    // be CONFIRMED on DELIVERED, or REVERSED on cancellation/refund before
+    // delivery. Non-fatal: a wallet failure here must not roll back the order.
+    try {
+      await this.loyaltyService.addPendingLoyaltyCash(
+        userId,
+        loyaltyEarnAed,
+        orderId,
+        `Pending earn from order ${updated.orderNumber}`,
+      );
+    } catch (err: any) {
+      this.logger.error(
+        `Pending loyalty credit failed for order ${orderId}: ${err?.message ?? err}`,
+      );
+    }
+
+    return updated;
   }
 
   async createOrder(userId: string, createOrderDto: CreateOrderDto) {
@@ -470,7 +502,7 @@ export class OrdersService {
       });
     }
 
-    const finalOrder = await this.finalizeLoyaltyEarn(order.id, subtotal, loyaltyRedeemAed, order);
+    const finalOrder = await this.finalizeLoyaltyEarn(order.id, subtotal, loyaltyRedeemAed, order, userId);
 
     // Fire-and-forget invoice generation + email (do not block order response on failure)
     this.issueInvoiceAndEmail(order.id).catch((err) =>
@@ -544,6 +576,70 @@ export class OrdersService {
   }
 
   /**
+   * Apply stock-lifecycle side effects for a status transition without
+   * actually updating the order row. Callers (e.g. admin endpoints) update
+   * the order separately. Idempotent / no-op for transitions that don't
+   * affect stock (e.g. PROCESSING -> SHIPPED).
+   */
+  async applyStockLifecycle(
+    orderId: string,
+    newStatus: OrderStatus,
+    userId?: string,
+  ): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    const stockItems = order.items
+      .filter((item): item is typeof item & { productId: number } => item.productId != null)
+      .map(item => ({ productId: item.productId, quantity: item.quantity }));
+    await this.handleStockTransition(newStatus, order.status, stockItems, orderId, userId);
+    // Loyalty side-effects mirror the stock lifecycle: confirm pending on
+    // DELIVERED, reverse pending on CANCELLED/REFUNDED before delivery.
+    // Non-fatal — logged + swallowed so admin status update never 500s
+    // because of a loyalty wallet hiccup.
+    try {
+      await this.applyLoyaltyLifecycle(orderId, newStatus, order.status);
+    } catch (err: any) {
+      this.logger.error(
+        `Loyalty lifecycle failed for order ${orderId} ${order.status} -> ${newStatus}: ${err?.message ?? err}`,
+      );
+    }
+  }
+
+  /**
+   * Apply loyalty-wallet side effects for a status transition. Idempotent.
+   * - DELIVERED: confirm the pending earn (move pending -> balance).
+   * - CANCELLED/REFUNDED before delivery: reverse the pending earn.
+   * - Returns after delivery are handled by returns.service.reverseLoyaltyEarned.
+   */
+  private async applyLoyaltyLifecycle(
+    orderId: string,
+    newStatus: OrderStatus,
+    oldStatus: OrderStatus,
+  ): Promise<void> {
+    if (newStatus === oldStatus) return;
+
+    if (newStatus === OrderStatus.DELIVERED) {
+      await this.loyaltyService.confirmPendingLoyaltyCash(orderId);
+      return;
+    }
+
+    if (newStatus === OrderStatus.CANCELLED || newStatus === OrderStatus.REFUNDED) {
+      // If the order was already delivered, the credit is in balanceAed.
+      // Refunds-after-delivery are handled by returns.service. We only
+      // touch pending here.
+      if (oldStatus !== OrderStatus.DELIVERED) {
+        const reason = newStatus === OrderStatus.CANCELLED ? 'order cancelled' : 'order refunded';
+        await this.loyaltyService.reversePendingLoyaltyCash(orderId, reason);
+      }
+    }
+  }
+
+  /**
    * Update order status with stock lifecycle management.
    * Handles confirm/release/restore based on transition.
    */
@@ -568,6 +664,13 @@ export class OrdersService {
       .map(item => ({ productId: item.productId, quantity: item.quantity }));
 
     await this.handleStockTransition(newStatus, oldStatus, stockItems, orderId, userId);
+    try {
+      await this.applyLoyaltyLifecycle(orderId, newStatus, oldStatus);
+    } catch (err: any) {
+      this.logger.error(
+        `Loyalty lifecycle failed for order ${orderId} ${oldStatus} -> ${newStatus}: ${err?.message ?? err}`,
+      );
+    }
 
     const updateData = this.buildOrderStatusUpdateData(newStatus, oldStatus, order.paymentStatus, notes);
 
@@ -650,16 +753,35 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
 
-    const [shippingAddress, billingAddress] = await Promise.all([
+    const [shippingAddress, billingAddress, returnedByItemId] = await Promise.all([
       baseOrder.shippingAddressId
         ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
         : null,
       baseOrder.billingAddressId
         ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
         : null,
+      this.computeReturnedByItem(orderId),
     ]);
 
-    return this.formatOrderResponse({ ...baseOrder, shippingAddress, billingAddress });
+    return this.formatOrderResponse({ ...baseOrder, shippingAddress, billingAddress, returnedByItemId });
+  }
+
+  /** Sum of returned quantities per orderItemId across all non-rejected/non-cancelled returns. */
+  private async computeReturnedByItem(orderId: string): Promise<Record<string, number>> {
+    const items = await this.prisma.returnItem.findMany({
+      where: {
+        return: {
+          orderId,
+          status: { notIn: ['REJECTED', 'CANCELLED'] },
+        },
+      },
+      select: { orderItemId: true, quantity: true },
+    });
+    const map: Record<string, number> = {};
+    for (const it of items) {
+      map[it.orderItemId] = (map[it.orderItemId] ?? 0) + it.quantity;
+    }
+    return map;
   }
 
   async getAllOrders(page = 1, limit = 20) {
@@ -762,6 +884,7 @@ export class OrdersService {
         name: item.name,
         sku: item.sku,
         quantity: item.quantity,
+        returnedQuantity: order.returnedByItemId?.[item.id] ?? 0,
         price: Number(item.price),
         subtotal: Number(item.subtotal),
       })),

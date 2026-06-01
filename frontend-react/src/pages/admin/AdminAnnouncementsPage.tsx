@@ -113,12 +113,6 @@ export default function AdminAnnouncementsPage() {
                   const started = new Date(a.startsAt) <= now;
                   const expired = a.expiresAt && new Date(a.expiresAt) < now;
                   const live = a.isActive && started && !expired;
-                  let statusTag: string;
-                  let statusLabel: string;
-                  if (live) { statusTag = 'table-tag-green'; statusLabel = 'Live'; }
-                  else if (expired) { statusTag = 'table-tag-red'; statusLabel = 'Expired'; }
-                  else if (!a.isActive) { statusTag = 'table-tag-yellow'; statusLabel = 'Inactive'; }
-                  else { statusTag = 'table-tag-blue'; statusLabel = 'Scheduled'; }
                   return (
                     <tr key={a.id}>
                       <td style={{ textAlign: 'center', fontWeight: 600 }}>{a.sortOrder}</td>
@@ -134,9 +128,9 @@ export default function AdminAnnouncementsPage() {
                       </td>
                       <td>
                         <span
-                          className={`${styles['table-tag']} ${styles[statusTag]}`}
+                          className={`${styles['table-tag']} ${live ? styles['table-tag-green'] : expired ? styles['table-tag-red'] : !a.isActive ? styles['table-tag-yellow'] : styles['table-tag-blue']}`}
                         >
-                          {statusLabel}
+                          {live ? 'Live' : expired ? 'Expired' : !a.isActive ? 'Inactive' : 'Scheduled'}
                         </span>
                       </td>
                       <td style={{ fontSize: 12, color: 'var(--admin-text-dim)' }}>
@@ -164,7 +158,7 @@ export default function AdminAnnouncementsPage() {
       {/* Drawer */}
       {drawerOpen && (
         <>
-          <button type="button" aria-label="Close" className={styles['drawer-backdrop']} onClick={() => setDrawerOpen(false)} />
+          <div className={styles['drawer-backdrop']} onClick={() => setDrawerOpen(false)} />
           <div className={styles['drawer']}>
             <div className={styles['drawer-header']}>
               <h2>{editing ? 'Edit Announcement' : 'New Announcement'}</h2>
@@ -203,8 +197,8 @@ export default function AdminAnnouncementsPage() {
               {form._type === 'promo' ? (
                 <>
                   <div className={styles['field']}>
-                    <label htmlFor="select-promo-code">Select Promo Code *</label>
-                    <select id="select-promo-code"
+                    <label>Select Promo Code *</label>
+                    <select
                       value={form.promoCodeId ?? ''}
                       onChange={(e) => {
                         const pid = e.target.value || null;
@@ -212,10 +206,7 @@ export default function AdminAnnouncementsPage() {
                         if (pid) {
                           const pc = promoCodes.find((p) => p.id === pid);
                           if (pc) {
-                            let valueStr: string;
-                            if (pc.type === 'PERCENTAGE') valueStr = `${pc.value}% off`;
-                            else if (pc.type === 'FREE_SHIPPING') valueStr = 'Free shipping';
-                            else valueStr = `AED ${pc.value} off`;
+                            const valueStr = pc.type === 'PERCENTAGE' ? `${pc.value}% off` : pc.type === 'FREE_SHIPPING' ? 'Free shipping' : `AED ${pc.value} off`;
                             const minStr = pc.minOrderAmount ? ` on orders over AED ${pc.minOrderAmount}` : '';
                             f('text', `Use code ${pc.code} for ${valueStr}${minStr}`);
                           }
@@ -223,66 +214,60 @@ export default function AdminAnnouncementsPage() {
                       }}
                     >
                       <option value="">— Choose a promo code —</option>
-                      {promoCodes.map((p) => {
-                        let label: string;
-                        if (p.type === 'PERCENTAGE') label = `${p.value}%`;
-                        else if (p.type === 'FREE_SHIPPING') label = 'Free Ship';
-                        else label = `AED ${p.value}`;
-                        return (
+                      {promoCodes.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.code} — {label}
+                          {p.code} — {p.type === 'PERCENTAGE' ? `${p.value}%` : p.type === 'FREE_SHIPPING' ? 'Free Ship' : `AED ${p.value}`}
                           {!p.isActive ? ' (inactive)' : ''}
                         </option>
-                        );
-                      })}
+                      ))}
                     </select>
                   </div>
                   <div className={styles['field']}>
-                    <label htmlFor="display-text-auto-generated-ed">Display Text (auto-generated, editable)</label>
-                    <textarea id="display-text-auto-generated-ed" rows={3} value={form.text} onChange={(e) => f('text', e.target.value)} placeholder="Auto-generated from promo code" />
+                    <label>Display Text (auto-generated, editable)</label>
+                    <textarea rows={3} value={form.text} onChange={(e) => f('text', e.target.value)} placeholder="Auto-generated from promo code" />
                   </div>
                 </>
               ) : (
                 <div className={styles['field']}>
-                  <label htmlFor="message-text">Message Text *</label>
-                  <textarea id="message-text" rows={3} value={form.text} onChange={(e) => f('text', e.target.value)} placeholder="e.g. Free shipping on orders over AED 75" />
+                  <label>Message Text *</label>
+                  <textarea rows={3} value={form.text} onChange={(e) => f('text', e.target.value)} placeholder="e.g. Free shipping on orders over AED 75" />
                 </div>
               )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className={styles['field']}>
-                  <label htmlFor="link-url">Link URL</label>
-                  <input id="link-url" value={form.linkUrl ?? ''} onChange={(e) => f('linkUrl', e.target.value)} placeholder="/sale" />
+                  <label>Link URL</label>
+                  <input value={form.linkUrl ?? ''} onChange={(e) => f('linkUrl', e.target.value)} placeholder="/sale" />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="link-label">Link Label</label>
-                  <input id="link-label" value={form.linkLabel ?? ''} onChange={(e) => f('linkLabel', e.target.value)} placeholder="Shop Now" />
+                  <label>Link Label</label>
+                  <input value={form.linkLabel ?? ''} onChange={(e) => f('linkLabel', e.target.value)} placeholder="Shop Now" />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div className={styles['field']}>
-                  <label htmlFor="sort-order">Sort Order</label>
-                  <input id="sort-order" type="number" value={form.sortOrder ?? 0} onChange={(e) => f('sortOrder', e.target.value)} />
+                  <label>Sort Order</label>
+                  <input type="number" value={form.sortOrder ?? 0} onChange={(e) => f('sortOrder', e.target.value)} />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="bg-color">BG Color</label>
-                  <input id="bg-color" value={form.bgColor ?? ''} onChange={(e) => f('bgColor', e.target.value)} placeholder="#1a1a2e" />
+                  <label>BG Color</label>
+                  <input value={form.bgColor ?? ''} onChange={(e) => f('bgColor', e.target.value)} placeholder="#1a1a2e" />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="text-color">Text Color</label>
-                  <input id="text-color" value={form.textColor ?? ''} onChange={(e) => f('textColor', e.target.value)} placeholder="#ffffff" />
+                  <label>Text Color</label>
+                  <input value={form.textColor ?? ''} onChange={(e) => f('textColor', e.target.value)} placeholder="#ffffff" />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className={styles['field']}>
-                  <label htmlFor="starts-at">Starts At</label>
-                  <input id="starts-at" type="datetime-local" value={form.startsAt?.slice(0, 16) ?? ''} onChange={(e) => f('startsAt', e.target.value)} />
+                  <label>Starts At</label>
+                  <input type="datetime-local" value={form.startsAt?.slice(0, 16) ?? ''} onChange={(e) => f('startsAt', e.target.value)} />
                 </div>
                 <div className={styles['field']}>
-                  <label htmlFor="expires-at">Expires At</label>
-                  <input id="expires-at" type="datetime-local" value={form.expiresAt?.slice(0, 16) ?? ''} onChange={(e) => f('expiresAt', e.target.value)} />
+                  <label>Expires At</label>
+                  <input type="datetime-local" value={form.expiresAt?.slice(0, 16) ?? ''} onChange={(e) => f('expiresAt', e.target.value)} />
                 </div>
               </div>
 
@@ -316,10 +301,7 @@ export default function AdminAnnouncementsPage() {
             <div className={styles['drawer-footer']}>
               <button className={styles['btn-secondary']} onClick={() => setDrawerOpen(false)}>Cancel</button>
               <button className={styles['btn-primary']} disabled={saving || !form.text || (form._type === 'promo' && !form.promoCodeId)} onClick={save}>
-                {(() => {
-                  if (saving) return 'Saving...';
-                  return editing ? 'Update' : 'Create';
-                })()}
+                {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
               </button>
             </div>
           </div>

@@ -7,9 +7,9 @@ import { AddCartItemDto, UpdateCartItemDto, CartItemType } from './dto';
 @Injectable()
 export class CartService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly productsService: ProductsService,
-    private readonly settingsService: SettingsService,
+    private prisma: PrismaService,
+    private productsService: ProductsService,
+    private settingsService: SettingsService,
   ) {}
 
   /**
@@ -51,35 +51,28 @@ export class CartService {
 
     // Transform to the same API shape the frontend expects
     const transformedMap = new Map(
-      products.map((p: any) => {
-        const stockQty = p.stockQty ?? 0;
-        const reservedQty = p.reservedQty ?? 0;
-        const available = Math.max(0, stockQty - reservedQty);
-        return [
-          p.id,
-          {
-            id: p.id.toString(),
-            name: p.productName,
-            description: p.description,
-            price: p.pricing?.price_incl_vat_aed
-              ? Number.parseFloat(p.pricing.price_incl_vat_aed.toString())
-              : 0,
-            images: p.images?.map((img: any) => ({
-              id: img.id,
-              url: img.media_asset_id,
-              alt: img.altText || p.productName,
-              displayOrder: img.displayOrder,
-            })) || [],
-            brand: p.brand
-              ? { id: p.brand.id, name: p.brand.name, slug: p.brand.slug }
-              : null,
-            stockQty,
-            reservedQty,
-            available,
-            inStock: available > 0 && p.isActive !== false,
-          },
-        ];
-      }),
+      products.map((p: any) => [
+        p.id,
+        {
+          id: p.id.toString(),
+          name: p.productName,
+          description: p.description,
+          price: p.pricing?.price_incl_vat_aed
+            ? parseFloat(p.pricing.price_incl_vat_aed.toString())
+            : 0,
+          images: p.images?.map((img: any) => ({
+            id: img.id,
+            url: img.media_asset_id,
+            alt: img.altText || p.productName,
+            displayOrder: img.displayOrder,
+          })) || [],
+          brand: p.brand
+            ? { id: p.brand.id, name: p.brand.name, slug: p.brand.slug }
+            : null,
+          stockQty: p.stockQty ?? 0,
+          inStock: (p.stockQty ?? 0) > 0,
+        },
+      ]),
     );
 
     // Attach transformed product data to items
@@ -97,12 +90,14 @@ export class CartService {
       },
     });
 
-    cart ??= await this.prisma.cart.create({
-      data: { userId },
-      include: {
-        items: true,
-      },
-    });
+    if (!cart) {
+      cart = await this.prisma.cart.create({
+        data: { userId },
+        include: {
+          items: true,
+        },
+      });
+    }
 
     // Enrich cart items with product data from inventory schema
     const enrichedItems = await this.enrichCartItemsWithProducts(cart.items);
@@ -114,7 +109,7 @@ export class CartService {
   }
 
   async addItem(userId: string, addCartItemDto: AddCartItemDto) {
-    const { type, itemId, quantity } = addCartItemDto;
+    const { type, itemId, quantity, customization } = addCartItemDto;
 
     // Get or create cart
     let cart = await this.prisma.cart.findFirst({
@@ -122,42 +117,38 @@ export class CartService {
       include: { items: true },
     });
 
-    // Create cart if not exists
-    cart ??= await this.prisma.cart.create({
-      data: { userId },
-      include: { items: true },
-    });
+    if (!cart) {
+      // Create cart if not exists
+      cart = await this.prisma.cart.create({
+        data: { userId },
+        include: { items: true },
+      });
+    }
 
     // Validate item exists and stock is available
     if (type === CartItemType.PRODUCT) {
       // itemId should be the product ID (Int for Product)
-      const productId = typeof itemId === 'string' ? Number.parseInt(itemId, 10) : itemId;
+      const productId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+      
+      const hasStock = await this.productsService.checkStock(productId, quantity);
+      if (!hasStock) {
+        throw new BadRequestException('Insufficient stock');
+      }
 
-      // Check if item already in cart so we know the new total quantity
+      // Check if item already in cart
       const existingItem = cart.items.find(
         (item) => item.productId === productId,
       );
-      const newQuantity = (existingItem?.quantity ?? 0) + quantity;
-
-      // Validate against true availability (stockQty - reservedQty)
-      const product = await this.prisma.product.findUnique({
-        where: { id: productId },
-        select: { id: true, productName: true, isActive: true, stockQty: true, reservedQty: true },
-      });
-      if (!product?.isActive) {
-        throw new BadRequestException('Product is not available');
-      }
-      const available = Math.max(0, (product.stockQty ?? 0) - (product.reservedQty ?? 0));
-      if (available <= 0) {
-        throw new BadRequestException(`${product.productName} is out of stock`);
-      }
-      if (newQuantity > available) {
-        throw new BadRequestException(
-          `Only ${available} unit${available === 1 ? '' : 's'} of ${product.productName} available (you requested ${newQuantity})`,
-        );
-      }
 
       if (existingItem) {
+        // Update quantity
+        const newQuantity = existingItem.quantity + quantity;
+        const hasStockForNew = await this.productsService.checkStock(productId, newQuantity);
+        
+        if (!hasStockForNew) {
+          throw new BadRequestException('Insufficient stock for requested quantity');
+        }
+
         await this.prisma.cartItem.update({
           where: { id: existingItem.id },
           data: { quantity: newQuantity },
@@ -196,23 +187,14 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
-    // Check stock against true availability (stockQty - reservedQty)
+    // Check stock
     if (cartItem.productId) {
-      const product = await this.prisma.product.findUnique({
-        where: { id: cartItem.productId },
-        select: { productName: true, isActive: true, stockQty: true, reservedQty: true },
-      });
-      if (!product?.isActive) {
-        throw new BadRequestException('Product is not available');
-      }
-      const available = Math.max(0, (product.stockQty ?? 0) - (product.reservedQty ?? 0));
-      if (available <= 0) {
-        throw new BadRequestException(`${product.productName} is out of stock`);
-      }
-      if (quantity > available) {
-        throw new BadRequestException(
-          `Only ${available} unit${available === 1 ? '' : 's'} of ${product.productName} available`,
-        );
+      const hasStock = await this.productsService.checkStock(
+        cartItem.productId,
+        quantity,
+      );
+      if (!hasStock) {
+        throw new BadRequestException('Insufficient stock');
       }
     }
 
@@ -269,7 +251,7 @@ export class CartService {
       if (item.product) {
         // Product price is a Decimal, convert to number
         const price = typeof item.product.price === 'object' 
-          ? Number.parseFloat(item.product.price.toString()) 
+          ? parseFloat(item.product.price.toString()) 
           : Number(item.product.price);
         subtotal += price * item.quantity;
       }
@@ -277,9 +259,9 @@ export class CartService {
 
     const vatRate = await this.settingsService.getVatRate();
     const vat = subtotal * vatRate; // Dynamic VAT from settings
-    // Shipping is mandatory on every order — read admin-configured fee
-    // from SiteSetting `shipping_fee` (default AED 10).
-    const shipping = await this.settingsService.getShippingFee();
+    const shippingFee = await this.settingsService.getShippingFee();
+    const freeThreshold = await this.settingsService.getFreeShippingThreshold();
+    const shipping = freeThreshold > 0 && subtotal >= freeThreshold ? 0 : shippingFee;
     const total = subtotal + vat + shipping;
 
     return {

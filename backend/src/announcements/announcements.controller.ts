@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards,
+  Controller, Get, Post, Patch, Delete, Param, Body, UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -28,13 +28,8 @@ export class AnnouncementsAdminController {
   constructor(private readonly svc: AnnouncementsService) {}
 
   @Get()
-  findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const parsedPage = page ? Math.max(1, Number.parseInt(page, 10) || 1) : 1;
-    const parsedLimit = limit ? Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 100)) : 100;
-    return this.svc.findAll({ page: parsedPage, limit: parsedLimit });
+  findAll() {
+    return this.svc.findAll();
   }
 
   @Get('promo-codes-list')

@@ -17,7 +17,7 @@ export class AppController {
   @Get()
   getRoot() {
     return {
-      message: 'Solo Ecommerce Backend API',
+      message: 'Collation Foundation Curation Ecommerce Backend API',
       version: '1.0.0',
       status: 'running',
       endpoints: {
@@ -34,7 +34,7 @@ export class AppController {
   @Post('contact')
   @HttpCode(200)
   async submitContact(@Body() dto: ContactDto) {
-    const adminEmail = 'info@solotestsite.site';
+    const adminEmail = 'info@cfcgcc.com';
     const subject = (dto.subject?.trim() || `Website inquiry from ${dto.name}`).slice(0, 200);
     const html = `
       <h2 style="margin:0 0 16px">New Contact Form Submission</h2>

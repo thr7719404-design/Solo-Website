@@ -188,7 +188,7 @@ export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
       const limit = typeof target.available === 'number' ? target.available : undefined;
       const finalQty = typeof limit === 'number' ? Math.min(Math.max(1, quantity), Math.max(1, limit)) : Math.max(1, quantity);
       if (typeof limit === 'number' && quantity > limit) {
-        const msg = limit <= 0 ? `${target.name} is out of stock` : `Only ${limit} unit${limit === 1 ? '' : 's'} available`;
+        const msg = limit <= 0 ? `${target.name} is available on request` : `Only ${limit} unit${limit === 1 ? '' : 's'} available`;
         showNotice(cartItemId, msg);
       }
       const next = readGuestCart().map(i => i.id === cartItemId ? { ...i, quantity: finalQty } : i);
@@ -204,7 +204,7 @@ export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
     if (typeof limit === 'number' && quantity > limit) {
       let msg: string;
       if (limit <= 0) {
-        msg = `${target.name} is out of stock`;
+        msg = `${target.name} is available on request`;
       } else {
         const unitLabel = limit === 1 ? '' : 's';
         msg = `Only ${limit} unit${unitLabel} available`;

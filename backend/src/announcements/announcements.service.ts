@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
-import { computeAnnouncementStatus } from './announcement-status.util';
 
 @Injectable()
 export class AnnouncementsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
   /** Public: active announcements — promo-linked ones get fresh text from the promo code */
   async getActive() {
@@ -37,14 +36,12 @@ export class AnnouncementsService {
         // For promo-linked announcements, generate fresh text from the promo code
         if (a.promoCodeId && a.promoCode) {
           const p = a.promoCode;
-          let valueStr: string;
-          if (p.type === 'PERCENTAGE') {
-            valueStr = `${Number(p.value)}% off`;
-          } else if (p.type === 'FREE_SHIPPING') {
-            valueStr = 'Free shipping';
-          } else {
-            valueStr = `AED ${Number(p.value)} off`;
-          }
+          const valueStr =
+            p.type === 'PERCENTAGE'
+              ? `${Number(p.value)}% off`
+              : p.type === 'FREE_SHIPPING'
+                ? 'Free shipping'
+                : `AED ${Number(p.value)} off`;
           const minStr = p.minOrderAmount
             ? ` on orders over AED ${Number(p.minOrderAmount)}`
             : '';
@@ -78,21 +75,12 @@ export class AnnouncementsService {
     });
   }
 
-  /** Admin: list with hard cap (default 100) — returns array for backward compat */
-  async findAll(opts?: { page?: number; limit?: number }) {
-    const page = opts?.page ?? 1;
-    const limit = opts?.limit ?? 100;
-    const skip = (page - 1) * limit;
-    const rows = await this.prisma.announcement.findMany({
+  /** Admin: list all — include promo code relation */
+  async findAll() {
+    return this.prisma.announcement.findMany({
       include: { promoCode: true },
       orderBy: { sortOrder: 'asc' },
-      skip,
-      take: limit,
     });
-    // Attach computed lifecycle status (LIVE / SCHEDULED / EXPIRED / INACTIVE)
-    // so the admin UI can render a single honest pill instead of guessing from
-    // raw timestamps.
-    return rows.map((a) => ({ ...a, status: computeAnnouncementStatus(a) }));
   }
 
   /** Admin: get one */

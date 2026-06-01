@@ -81,7 +81,7 @@ export class BnplController {
       throw new BadRequestException('Order is not pending payment');
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'https://proud-flower-0b1f4af0f.1.azurestaticapps.net';
+    const frontendUrl = (process.env.FRONTEND_URL || 'https://cfcgcc.com').split(',')[0].trim();
     const callbackBase = `${frontendUrl}/payment-callback`;
 
     const session = await this.tabbyService.createCheckoutSession({
@@ -221,7 +221,7 @@ export class BnplController {
       throw new BadRequestException('Order is not pending payment');
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || 'https://proud-flower-0b1f4af0f.1.azurestaticapps.net';
+    const frontendUrl = (process.env.FRONTEND_URL || 'https://cfcgcc.com').split(',')[0].trim();
     const callbackBase = `${frontendUrl}/payment-callback`;
 
     const session = await this.tamaraService.createCheckoutSession({

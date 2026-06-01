@@ -1,14 +1,9 @@
-import os
 import psycopg2
-
-password = os.environ.get('PGPASSWORD')
-if not password:
-    raise SystemExit('PGPASSWORD env var is required.')
 
 conn = psycopg2.connect(
     host='pg-qlyb5greec2io.postgres.database.azure.com',
     port=5432, dbname='solo_ecommerce',
-    user='soloadmin', password=password,
+    user='soloadmin', password='GhrTRtfwYjvL60M5y17W',
     sslmode='require'
 )
 cur = conn.cursor()

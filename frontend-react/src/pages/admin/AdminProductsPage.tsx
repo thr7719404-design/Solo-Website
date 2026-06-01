@@ -410,7 +410,7 @@ export default function AdminProductsPage() {
       setForm({
         name: full.name, slug: full.slug ?? '', sku: full.sku ?? '',
         description: full.description ?? '', shortDescription: full.shortDescription ?? '',
-        price: String(full.price ?? ''), compareAtPrice: String(full.compareAtPrice ?? full.listPrice ?? ''),
+        price: String(full.price ?? ''), compareAtPrice: (full.compareAtPrice != null && full.compareAtPrice > 0) ? String(full.compareAtPrice) : '',
         costPrice: String(full.costPrice ?? ''),
         categoryIds: ((full.categoryIds && full.categoryIds.length > 0)
           ? full.categoryIds.map((x: any) => String(x))
@@ -474,10 +474,10 @@ export default function AdminProductsPage() {
       return;
     }
     // Compare At Price must be strictly greater than Price (it's the "was" / strikethrough price).
-    if (form.compareAtPrice) {
+    if (form.compareAtPrice && form.compareAtPrice !== '0') {
       const price = Number.parseFloat(form.price);
       const compareAt = Number.parseFloat(form.compareAtPrice);
-      if (!Number.isNaN(compareAt) && !Number.isNaN(price) && compareAt <= price) {
+      if (!Number.isNaN(compareAt) && !Number.isNaN(price) && compareAt > 0 && compareAt <= price) {
         alert('Compare At Price must be higher than the selling Price (it represents the original / strikethrough price).');
         return;
       }
@@ -522,7 +522,7 @@ export default function AdminProductsPage() {
       categoryIds: form.categoryIds ?? [],
       subcategoryIds: form.subcategoryIds ?? [],
       price: Number.parseFloat(form.price) || 0,
-      compareAtPrice: form.compareAtPrice ? Number.parseFloat(form.compareAtPrice) : undefined,
+      compareAtPrice: form.compareAtPrice ? Number.parseFloat(form.compareAtPrice) : 0,
       costPrice: form.costPrice ? Number.parseFloat(form.costPrice) : undefined,
       stockQuantity: Number.parseInt(form.stockQuantity) || 0,
       lowStockThreshold: Number.parseInt(form.lowStockThreshold) || 5,
@@ -880,7 +880,7 @@ export default function AdminProductsPage() {
                               const id = String(c.id);
                               const checked = form.categoryIds.includes(id);
                               return (
-                                <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontWeight: 'normal', cursor: 'pointer' }}>
+                                <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontWeight: 'normal', cursor: 'pointer', textTransform: 'none', letterSpacing: 0, fontSize: 14, color: 'var(--admin-text, #222)', margin: 0 }}>
                                   <input
                                     type="checkbox"
                                     checked={checked}
@@ -921,7 +921,7 @@ export default function AdminProductsPage() {
                                     const checked = form.subcategoryIds.includes(sid);
                                     const parentCatId = String(c.id);
                                     return (
-                                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0 2px 12px', fontWeight: 'normal', cursor: 'pointer' }}>
+                                      <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 0 2px 12px', fontWeight: 'normal', cursor: 'pointer', textTransform: 'none', letterSpacing: 0, fontSize: 14, color: 'var(--admin-text, #222)', margin: 0 }}>
                                         <input
                                           type="checkbox"
                                           checked={checked}

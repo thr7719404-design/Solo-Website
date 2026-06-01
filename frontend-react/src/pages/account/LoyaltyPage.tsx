@@ -23,6 +23,7 @@ export default function LoyaltyPage() {
   if (!loyalty) return <div className="py-12 text-center text-gray-500">Could not load loyalty data.</div>;
 
   const balance = Number(loyalty.balanceAed ?? 0);
+  const pending = Number(loyalty.pendingBalanceAed ?? 0);
   const totalEarned = Number(loyalty.totalEarnedAed ?? 0);
   const totalRedeemed = Number(loyalty.totalRedeemedAed ?? 0);
 
@@ -46,6 +47,11 @@ export default function LoyaltyPage() {
             <p className="text-4xl font-bold mt-2 bg-gradient-to-r from-[#D4A843] to-[#F0D78C] bg-clip-text text-transparent">
               {config.currency} {balance.toFixed(2)}
             </p>
+            {pending > 0 && (
+              <p className="text-xs text-amber-200/80 mt-2">
+                + {config.currency} {pending.toFixed(2)} pending — released after delivery
+              </p>
+            )}
           </div>
           <div className="w-16 h-16 bg-gradient-to-br from-[#D4A843] to-[#B8860B] rounded-2xl flex items-center justify-center shadow-lg">
             <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -116,7 +122,15 @@ export default function LoyaltyPage() {
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{t.description || t.type}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {t.description || t.type}
+                      {t.status === 'PENDING' && (
+                        <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
+                      )}
+                      {t.status === 'REVERSED' && (
+                        <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 border border-gray-200">Reversed</span>
+                      )}
+                    </p>
                     <p className="text-xs text-gray-400">{new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                 </div>

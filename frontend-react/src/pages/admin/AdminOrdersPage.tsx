@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { adminApi } from '@/api/admin';
-import { downloadOrderInvoice } from '@/api/invoices';
 import styles from './Admin.module.css';
 
 export default function AdminOrdersPage() {
@@ -11,23 +9,12 @@ export default function AdminOrdersPage() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [loadError, setLoadError] = useState<string | null>(null);
   const limit = 15;
 
   useEffect(() => {
-    setLoadError(null);
     adminApi.getOrders({ page, limit, search: search || undefined, status: statusFilter || undefined })
       .then(r => { setOrders(r.items ?? []); setTotal(r.total ?? 0); })
-      .catch((err: any) => {
-        const status = err?.response?.status;
-        const msg = err?.response?.data?.message || err?.message || 'Unknown error';
-        const statusPart = status ? ' (HTTP ' + status + ')' : '';
-        setOrders([]);
-        setTotal(0);
-        setLoadError(`Failed to load orders${statusPart}: ${msg}`);
-        // eslint-disable-next-line no-console
-        console.error('[AdminOrdersPage] getOrders failed', err);
-      });
+      .catch(() => {});
   }, [page, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -42,13 +29,21 @@ export default function AdminOrdersPage() {
 
   const tagClass = (s: string) => {
     const sl = s.toLowerCase();
-    const map: Record<string, string> = {
-      delivered: 'table-tag-green',
-      shipped: 'table-tag-violet',
-      processing: 'table-tag-blue',
-      cancelled: 'table-tag-red',
-    };
-    return map[sl] ?? 'table-tag-yellow';
+    return sl === 'delivered' ? 'table-tag-green'
+    : sl === 'shipped' ? 'table-tag-violet'
+    : sl === 'processing' ? 'table-tag-blue'
+    : sl === 'cancelled' ? 'table-tag-red'
+    : 'table-tag-yellow';
+  };
+
+  const formatPaymentMethod = (m?: string | null) => {
+    if (!m) return '—';
+    if (m === 'CASH_ON_DELIVERY') return 'COD';
+    return m
+      .toLowerCase()
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
   };
 
   return (
@@ -61,23 +56,6 @@ export default function AdminOrdersPage() {
         <span className={styles['count-chip']}>{total} orders</span>
       </div>
       <div className={styles['admin-body']}>
-
-        {loadError && (
-          <div
-            role="alert"
-            style={{
-              background: 'rgba(220, 38, 38, 0.08)',
-              border: '1px solid rgba(220, 38, 38, 0.4)',
-              color: '#b91c1c',
-              padding: '12px 16px',
-              borderRadius: 8,
-              marginBottom: 16,
-              fontSize: 14,
-            }}
-          >
-            {loadError}
-          </div>
-        )}
 
         {/* Toolbar */}
         <div className={styles['toolbar-v2']}>
@@ -109,8 +87,11 @@ export default function AdminOrdersPage() {
               <tr>
                 <th>Order #</th>
                 <th>Customer</th>
+                <th>Phone</th>
+                <th>City</th>
                 <th>Items</th>
                 <th>Total</th>
+                <th>Payment</th>
                 <th>Status</th>
                 <th>Date</th>
                 <th style={{ width: 80 }}>Actions</th>
@@ -118,25 +99,22 @@ export default function AdminOrdersPage() {
             </thead>
             <tbody>
               {orders.length === 0 ? (
-                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No orders found</td></tr>
+                <tr><td colSpan={10} style={{ textAlign: 'center', padding: 40, color: 'var(--admin-text-muted)' }}>No orders found</td></tr>
               ) : (
                 orders.map(o => (
                   <tr key={o.id}>
                     <td><Link to={`/admin/orders/${o.id}`} className={styles['table-name']}>#{o.orderNumber}</Link></td>
                     <td>{o.customer?.name ?? `${o.user?.firstName ?? ''} ${o.user?.lastName ?? ''}`}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{o.customerPhone ?? o.customer?.phone ?? '—'}</td>
+                    <td>{o.shippingCity ?? '—'}</td>
                     <td>{o.itemCount ?? o.items?.length ?? '—'}</td>
                     <td style={{ fontWeight: 600 }}>AED {Number(o.total).toFixed(2)}</td>
+                    <td style={{ whiteSpace: 'nowrap' }}>{formatPaymentMethod(o.paymentMethod)}</td>
                     <td><span className={`${styles['table-tag']} ${styles[tagClass(o.status)]}`}>{o.status}</span></td>
                     <td style={{ color: 'var(--admin-text-dim)' }}>{new Date(o.createdAt).toLocaleDateString()}</td>
                     <td>
                       <div className={styles['table-actions']}>
                         <Link to={`/admin/orders/${o.id}`} className={styles['table-action-btn']} title="View">👁</Link>
-                        <button
-                          type="button"
-                          onClick={() => downloadOrderInvoice(o.id, o.orderNumber).catch(() => toast.error('Failed to download invoice'))}
-                          className={styles['table-action-btn']}
-                          title="Download Invoice"
-                        >📄</button>
                       </div>
                     </td>
                   </tr>

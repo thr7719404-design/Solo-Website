@@ -116,7 +116,7 @@ export class ProductGroupsService {
     let candidate = slug;
     let suffix = 1;
     while (true) {
-      const existing = await this.prisma.productGroup.findUnique({ where: { slug: candidate } });
+      const existing = await (this.prisma as any).productGroup.findUnique({ where: { slug: candidate } });
       if (!existing || existing.id === excludeId) return candidate;
       suffix += 1;
       candidate = `${slug}-${suffix}`;
@@ -125,7 +125,7 @@ export class ProductGroupsService {
 
   /** Replace a product's relational variant attribute rows AND mirror the JSON cache. */
   private async replaceProductAttributes(productId: number, attrs: AttributeInput[] | undefined) {
-    await this.prisma.variantAttribute.deleteMany({ where: { productId } });
+    await (this.prisma as any).variantAttribute.deleteMany({ where: { productId } });
     if (attrs && attrs.length > 0) {
       const byKey = new Map<string, AttributeInput & { productId: number }>();
       for (const a of attrs) {
@@ -135,7 +135,7 @@ export class ProductGroupsService {
       }
       const finalRows = Array.from(byKey.values());
       if (finalRows.length > 0) {
-        await this.prisma.variantAttribute.createMany({ data: finalRows });
+        await (this.prisma as any).variantAttribute.createMany({ data: finalRows });
       }
     }
     await this.prisma.product.update({
@@ -149,7 +149,7 @@ export class ProductGroupsService {
   // ─────────────────────────────────────────────────────────────────────
 
   async list() {
-    const groups = await this.prisma.productGroup.findMany({
+    const groups = await (this.prisma as any).productGroup.findMany({
       include: this.variantInclude,
       orderBy: { createdAt: 'desc' },
     });
@@ -157,7 +157,7 @@ export class ProductGroupsService {
   }
 
   async findOne(id: string) {
-    const group = await this.prisma.productGroup.findUnique({
+    const group = await (this.prisma as any).productGroup.findUnique({
       where: { id },
       include: this.variantInclude,
     });
@@ -166,7 +166,7 @@ export class ProductGroupsService {
   }
 
   async findBySlug(slug: string) {
-    const group = await this.prisma.productGroup.findUnique({
+    const group = await (this.prisma as any).productGroup.findUnique({
       where: { slug },
       include: this.variantInclude,
     });
@@ -178,7 +178,7 @@ export class ProductGroupsService {
     if (!dto.name?.trim()) throw new BadRequestException('Group name required');
     const baseSlug = dto.slug?.trim() ? slugify(dto.slug) : slugify(dto.name);
     const slug = await this.ensureUniqueSlug(baseSlug);
-    const group = await this.prisma.productGroup.create({
+    const group = await (this.prisma as any).productGroup.create({
       data: {
         name: dto.name.trim(),
         slug,
@@ -199,7 +199,7 @@ export class ProductGroupsService {
   }
 
   async update(id: string, dto: UpdateGroupDto) {
-    const existing = await this.prisma.productGroup.findUnique({ where: { id } });
+    const existing = await (this.prisma as any).productGroup.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Product group not found');
     const data: Record<string, unknown> = {};
     if (dto.name !== undefined) data.name = dto.name.trim();
@@ -210,7 +210,7 @@ export class ProductGroupsService {
     if (dto.slug !== undefined && dto.slug.trim() && dto.slug !== existing.slug) {
       data.slug = await this.ensureUniqueSlug(slugify(dto.slug), id);
     }
-    await this.prisma.productGroup.update({ where: { id }, data });
+    await (this.prisma as any).productGroup.update({ where: { id }, data });
     if (dto.productIds !== undefined) {
       await this.prisma.product.updateMany({
         where: { productGroupId: id, id: { notIn: dto.productIds } },
@@ -228,13 +228,13 @@ export class ProductGroupsService {
   }
 
   async remove(id: string) {
-    const existing = await this.prisma.productGroup.findUnique({ where: { id } });
+    const existing = await (this.prisma as any).productGroup.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Product group not found');
     await this.prisma.product.updateMany({
       where: { productGroupId: id },
       data: { productGroupId: null, isDefaultVariant: false },
     });
-    await this.prisma.productGroup.delete({ where: { id } });
+    await (this.prisma as any).productGroup.delete({ where: { id } });
     return { success: true };
   }
 
@@ -243,7 +243,7 @@ export class ProductGroupsService {
   // ─────────────────────────────────────────────────────────────────────
 
   async addVariant(groupId: string, dto: AddVariantDto) {
-    const group = await this.prisma.productGroup.findUnique({ where: { id: groupId } });
+    const group = await (this.prisma as any).productGroup.findUnique({ where: { id: groupId } });
     if (!group) throw new NotFoundException('Product group not found');
     const product = await this.prisma.product.findUnique({ where: { id: dto.productId } });
     if (!product) throw new NotFoundException('Product not found');
@@ -338,7 +338,7 @@ export class ProductGroupsService {
 
     const baseSlug = dto.slug?.trim() ? slugify(dto.slug) : slugify(dto.groupName);
     const slug = await this.ensureUniqueSlug(baseSlug);
-    const group = await this.prisma.productGroup.create({
+    const group = await (this.prisma as any).productGroup.create({
       data: {
         name: dto.groupName.trim(),
         slug,
@@ -449,7 +449,7 @@ export class ProductGroupsService {
       }
 
       const slug = await this.ensureUniqueSlug(slugify(baseDisplay));
-      const group = await this.prisma.productGroup.create({
+      const group = await (this.prisma as any).productGroup.create({
         data: { name: baseDisplay, slug, variantAxes },
       });
       groupsCreated += 1;
@@ -487,7 +487,7 @@ export class ProductGroupsService {
     const product = await this.prisma.product.findUnique({ where: { id: productId } });
     if (!product) throw new NotFoundException('Product not found');
     if (dto.productGroupId) {
-      const group = await this.prisma.productGroup.findUnique({ where: { id: dto.productGroupId } });
+      const group = await (this.prisma as any).productGroup.findUnique({ where: { id: dto.productGroupId } });
       if (!group) throw new NotFoundException('Product group not found');
     }
     await this.prisma.product.update({

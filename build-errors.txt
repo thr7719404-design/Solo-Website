@@ -1,0 +1,695 @@
+
+> solo-backend@1.0.0 build
+> nest build
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:143:15[39m[22m
+TS2353: Object literal may only specify known properties, and 'variantAttributes' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 141 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({
+   [90m 142 |[39m       where[33m:[39m { id[33m:[39m productId }[33m,[39m
+  [31m[1m>[22m[39m[90m 143 |[39m       data[33m:[39m { variantAttributes[33m:[39m attributesToJson(attrs) [33m?[39m[33m?[39m undefined }[33m,[39m
+   [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 144 |[39m     })[33m;[39m
+   [90m 145 |[39m   }
+   [90m 146 |[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:194:17[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput> & ProductUncheckedUpdateManyInput) | (Without<...> & ProductUpdateManyMutationInput)'.
+  [0m [90m 192 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+   [90m 193 |[39m         where[33m:[39m { id[33m:[39m { [36min[39m[33m:[39m dto[33m.[39mproductIds } }[33m,[39m
+  [31m[1m>[22m[39m[90m 194 |[39m         data[33m:[39m { productGroupId[33m:[39m group[33m.[39mid }[33m,[39m
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 195 |[39m       })[33m;[39m
+   [90m 196 |[39m       [36mawait[39m [36mthis[39m[33m.[39mensureSingleDefault(group[33m.[39mid)[33m;[39m
+   [90m 197 |[39m     }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:216:18[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type 'ProductWhereInput'.
+  [0m [90m 214 |[39m     [36mif[39m (dto[33m.[39mproductIds [33m!==[39m undefined) {
+   [90m 215 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+  [31m[1m>[22m[39m[90m 216 |[39m         where[33m:[39m { productGroupId[33m:[39m id[33m,[39m id[33m:[39m { notIn[33m:[39m dto[33m.[39mproductIds } }[33m,[39m
+   [90m     |[39m                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 217 |[39m         data[33m:[39m { productGroupId[33m:[39m [36mnull[39m[33m,[39m isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m 218 |[39m       })[33m;[39m
+   [90m 219 |[39m       [36mif[39m (dto[33m.[39mproductIds[33m.[39mlength [33m>[39m [35m0[39m) {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:217:17[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput> & ProductUncheckedUpdateManyInput) | (Without<...> & ProductUpdateManyMutationInput)'.
+  [0m [90m 215 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+   [90m 216 |[39m         where[33m:[39m { productGroupId[33m:[39m id[33m,[39m id[33m:[39m { notIn[33m:[39m dto[33m.[39mproductIds } }[33m,[39m
+  [31m[1m>[22m[39m[90m 217 |[39m         data[33m:[39m { productGroupId[33m:[39m [36mnull[39m[33m,[39m isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 218 |[39m       })[33m;[39m
+   [90m 219 |[39m       [36mif[39m (dto[33m.[39mproductIds[33m.[39mlength [33m>[39m [35m0[39m) {
+   [90m 220 |[39m         [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:222:19[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput> & ProductUncheckedUpdateManyInput) | (Without<...> & ProductUpdateManyMutationInput)'.
+  [0m [90m 220 |[39m         [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+   [90m 221 |[39m           where[33m:[39m { id[33m:[39m { [36min[39m[33m:[39m dto[33m.[39mproductIds } }[33m,[39m
+  [31m[1m>[22m[39m[90m 222 |[39m           data[33m:[39m { productGroupId[33m:[39m id }[33m,[39m
+   [90m     |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 223 |[39m         })[33m;[39m
+   [90m 224 |[39m       }
+   [90m 225 |[39m       [36mawait[39m [36mthis[39m[33m.[39mensureSingleDefault(id)[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:234:16[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type 'ProductWhereInput'.
+  [0m [90m 232 |[39m     [36mif[39m ([33m![39mexisting) [36mthrow[39m [36mnew[39m [33mNotFoundException[39m([32m'Product group not found'[39m)[33m;[39m
+   [90m 233 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+  [31m[1m>[22m[39m[90m 234 |[39m       where[33m:[39m { productGroupId[33m:[39m id }[33m,[39m
+   [90m     |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 235 |[39m       data[33m:[39m { productGroupId[33m:[39m [36mnull[39m[33m,[39m isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m 236 |[39m     })[33m;[39m
+   [90m 237 |[39m     [36mawait[39m ([36mthis[39m[33m.[39mprisma [36mas[39m any)[33m.[39mproductGroup[33m.[39m[36mdelete[39m({ where[33m:[39m { id } })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:235:15[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput> & ProductUncheckedUpdateManyInput) | (Without<...> & ProductUpdateManyMutationInput)'.
+  [0m [90m 233 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+   [90m 234 |[39m       where[33m:[39m { productGroupId[33m:[39m id }[33m,[39m
+  [31m[1m>[22m[39m[90m 235 |[39m       data[33m:[39m { productGroupId[33m:[39m [36mnull[39m[33m,[39m isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 236 |[39m     })[33m;[39m
+   [90m 237 |[39m     [36mawait[39m ([36mthis[39m[33m.[39mprisma [36mas[39m any)[33m.[39mproductGroup[33m.[39m[36mdelete[39m({ where[33m:[39m { id } })[33m;[39m
+   [90m 238 |[39m     [36mreturn[39m { success[33m:[39m [36mtrue[39m }[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:254:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 252 |[39m       where[33m:[39m { id[33m:[39m dto[33m.[39mproductId }[33m,[39m
+   [90m 253 |[39m       data[33m:[39m {
+  [31m[1m>[22m[39m[90m 254 |[39m         productGroupId[33m:[39m groupId[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 255 |[39m         [33m...[39m(dto[33m.[39mvariantSortOrder [33m!==[39m undefined [33m?[39m { variantSortOrder[33m:[39m dto[33m.[39mvariantSortOrder } [33m:[39m {})[33m,[39m
+   [90m 256 |[39m       }[33m,[39m
+   [90m 257 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:271:17[39m[22m
+TS2339: Property 'productGroupId' does not exist on type '{ name_ar: string | null; slug: string; description: string | null; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; categoryId: number | null; sku: string; productName: string; ... 23 more ...; lowStockAlert: number; }'.
+  [0m [90m 269 |[39m     [36mconst[39m product [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindUnique({ where[33m:[39m { id[33m:[39m productId } })[33m;[39m
+   [90m 270 |[39m     [36mif[39m ([33m![39mproduct) [36mthrow[39m [36mnew[39m [33mNotFoundException[39m([32m'Product not found'[39m)[33m;[39m
+  [31m[1m>[22m[39m[90m 271 |[39m     [36mif[39m (product[33m.[39mproductGroupId [33m!==[39m groupId) {
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 272 |[39m       [36mthrow[39m [36mnew[39m [33mBadRequestException[39m([32m'Product not in this group'[39m)[33m;[39m
+   [90m 273 |[39m     }
+   [90m 274 |[39m     [36mawait[39m [36mthis[39m[33m.[39mreplaceProductAttributes(productId[33m,[39m [])[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:277:15[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 275 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({
+   [90m 276 |[39m       where[33m:[39m { id[33m:[39m productId }[33m,[39m
+  [31m[1m>[22m[39m[90m 277 |[39m       data[33m:[39m { productGroupId[33m:[39m [36mnull[39m[33m,[39m isDefaultVariant[33m:[39m [36mfalse[39m[33m,[39m variantAttributes[33m:[39m undefined }[33m,[39m
+   [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 278 |[39m     })[33m;[39m
+   [90m 279 |[39m     [36mawait[39m [36mthis[39m[33m.[39mensureSingleDefault(groupId)[33m;[39m
+   [90m 280 |[39m     [36mreturn[39m [36mthis[39m[33m.[39mfindOne(groupId)[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:285:29[39m[22m
+TS2339: Property 'productGroupId' does not exist on type '{ name_ar: string | null; slug: string; description: string | null; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; categoryId: number | null; sku: string; productName: string; ... 23 more ...; lowStockAlert: number; }'.
+  [0m [90m 283 |[39m   [36masync[39m setDefault(groupId[33m:[39m string[33m,[39m productId[33m:[39m number) {
+   [90m 284 |[39m     [36mconst[39m product [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindUnique({ where[33m:[39m { id[33m:[39m productId } })[33m;[39m
+  [31m[1m>[22m[39m[90m 285 |[39m     [36mif[39m ([33m![39mproduct [33m||[39m product[33m.[39mproductGroupId [33m!==[39m groupId) {
+   [90m     |[39m                             [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 286 |[39m       [36mthrow[39m [36mnew[39m [33mBadRequestException[39m([32m'Product not in this group'[39m)[33m;[39m
+   [90m 287 |[39m     }
+   [90m 288 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39m$transaction([[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:290:18[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type 'ProductWhereInput'.
+  [0m [90m 288 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39m$transaction([
+   [90m 289 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+  [31m[1m>[22m[39m[90m 290 |[39m         where[33m:[39m { productGroupId[33m:[39m groupId }[33m,[39m
+   [90m     |[39m                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 291 |[39m         data[33m:[39m { isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m 292 |[39m       })[33m,[39m
+   [90m 293 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:291:17[39m[22m
+TS2353: Object literal may only specify known properties, and 'isDefaultVariant' does not exist in type '(Without<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput> & ProductUncheckedUpdateManyInput) | (Without<...> & ProductUpdateManyMutationInput)'.
+  [0m [90m 289 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+   [90m 290 |[39m         where[33m:[39m { productGroupId[33m:[39m groupId }[33m,[39m
+  [31m[1m>[22m[39m[90m 291 |[39m         data[33m:[39m { isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 292 |[39m       })[33m,[39m
+   [90m 293 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({
+   [90m 294 |[39m         where[33m:[39m { id[33m:[39m productId }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:295:17[39m[22m
+TS2353: Object literal may only specify known properties, and 'isDefaultVariant' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 293 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({
+   [90m 294 |[39m         where[33m:[39m { id[33m:[39m productId }[33m,[39m
+  [31m[1m>[22m[39m[90m 295 |[39m         data[33m:[39m { isDefaultVariant[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 296 |[39m       })[33m,[39m
+   [90m 297 |[39m     ])[33m;[39m
+   [90m 298 |[39m     [36mreturn[39m [36mthis[39m[33m.[39mfindOne(groupId)[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:304:16[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type 'ProductWhereInput'.
+  [0m [90m 302 |[39m   [36mprivate[39m [36masync[39m ensureSingleDefault(groupId[33m:[39m string) {
+   [90m 303 |[39m     [36mconst[39m members [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+  [31m[1m>[22m[39m[90m 304 |[39m       where[33m:[39m { productGroupId[33m:[39m groupId }[33m,[39m
+   [90m     |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 305 |[39m       select[33m:[39m { id[33m:[39m [36mtrue[39m[33m,[39m isDefaultVariant[33m:[39m [36mtrue[39m[33m,[39m variantSortOrder[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m 306 |[39m       orderBy[33m:[39m [{ variantSortOrder[33m:[39m [32m'asc'[39m }[33m,[39m { id[33m:[39m [32m'asc'[39m }][33m,[39m
+   [90m 307 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:305:27[39m[22m
+TS2353: Object literal may only specify known properties, and 'isDefaultVariant' does not exist in type 'ProductSelect<DefaultArgs>'.
+  [0m [90m 303 |[39m     [36mconst[39m members [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+   [90m 304 |[39m       where[33m:[39m { productGroupId[33m:[39m groupId }[33m,[39m
+  [31m[1m>[22m[39m[90m 305 |[39m       select[33m:[39m { id[33m:[39m [36mtrue[39m[33m,[39m isDefaultVariant[33m:[39m [36mtrue[39m[33m,[39m variantSortOrder[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m     |[39m                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 306 |[39m       orderBy[33m:[39m [{ variantSortOrder[33m:[39m [32m'asc'[39m }[33m,[39m { id[33m:[39m [32m'asc'[39m }][33m,[39m
+   [90m 307 |[39m     })[33m;[39m
+   [90m 308 |[39m     [36mif[39m (members[33m.[39mlength [33m===[39m [35m0[39m) [36mreturn[39m[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:306:19[39m[22m
+TS2353: Object literal may only specify known properties, and 'variantSortOrder' does not exist in type 'ProductOrderByWithRelationInput'.
+  [0m [90m 304 |[39m       where[33m:[39m { productGroupId[33m:[39m groupId }[33m,[39m
+   [90m 305 |[39m       select[33m:[39m { id[33m:[39m [36mtrue[39m[33m,[39m isDefaultVariant[33m:[39m [36mtrue[39m[33m,[39m variantSortOrder[33m:[39m [36mtrue[39m }[33m,[39m
+  [31m[1m>[22m[39m[90m 306 |[39m       orderBy[33m:[39m [{ variantSortOrder[33m:[39m [32m'asc'[39m }[33m,[39m { id[33m:[39m [32m'asc'[39m }][33m,[39m
+   [90m     |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 307 |[39m     })[33m;[39m
+   [90m 308 |[39m     [36mif[39m (members[33m.[39mlength [33m===[39m [35m0[39m) [36mreturn[39m[33m;[39m
+   [90m 309 |[39m     [36mconst[39m defaults [33m=[39m members[33m.[39mfilter(m [33m=>[39m m[33m.[39misDefaultVariant)[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:309:44[39m[22m
+TS2339: Property 'isDefaultVariant' does not exist on type '{ name_ar: string | null; slug: string; description: string | null; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; categoryId: number | null; sku: string; productName: string; ... 23 more ...; lowStockAlert: number; }'.
+  [0m [90m 307 |[39m     })[33m;[39m
+   [90m 308 |[39m     [36mif[39m (members[33m.[39mlength [33m===[39m [35m0[39m) [36mreturn[39m[33m;[39m
+  [31m[1m>[22m[39m[90m 309 |[39m     [36mconst[39m defaults [33m=[39m members[33m.[39mfilter(m [33m=>[39m m[33m.[39misDefaultVariant)[33m;[39m
+   [90m     |[39m                                            [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 310 |[39m     [36mif[39m (defaults[33m.[39mlength [33m===[39m [35m1[39m) [36mreturn[39m[33m;[39m
+   [90m 311 |[39m     [36mif[39m (defaults[33m.[39mlength [33m===[39m [35m0[39m) {
+   [90m 312 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:314:17[39m[22m
+TS2353: Object literal may only specify known properties, and 'isDefaultVariant' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 312 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({
+   [90m 313 |[39m         where[33m:[39m { id[33m:[39m members[[35m0[39m][33m.[39mid }[33m,[39m
+  [31m[1m>[22m[39m[90m 314 |[39m         data[33m:[39m { isDefaultVariant[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 315 |[39m       })[33m;[39m
+   [90m 316 |[39m     } [36melse[39m {
+   [90m 317 |[39m       [36mconst[39m keep [33m=[39m defaults[[35m0[39m][33m.[39mid[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:319:18[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type 'ProductWhereInput'.
+  [0m [90m 317 |[39m       [36mconst[39m keep [33m=[39m defaults[[35m0[39m][33m.[39mid[33m;[39m
+   [90m 318 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+  [31m[1m>[22m[39m[90m 319 |[39m         where[33m:[39m { productGroupId[33m:[39m groupId[33m,[39m id[33m:[39m { not[33m:[39m keep } }[33m,[39m
+   [90m     |[39m                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 320 |[39m         data[33m:[39m { isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m 321 |[39m       })[33m;[39m
+   [90m 322 |[39m     }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:320:17[39m[22m
+TS2353: Object literal may only specify known properties, and 'isDefaultVariant' does not exist in type '(Without<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput> & ProductUncheckedUpdateManyInput) | (Without<...> & ProductUpdateManyMutationInput)'.
+  [0m [90m 318 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+   [90m 319 |[39m         where[33m:[39m { productGroupId[33m:[39m groupId[33m,[39m id[33m:[39m { not[33m:[39m keep } }[33m,[39m
+  [31m[1m>[22m[39m[90m 320 |[39m         data[33m:[39m { isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 321 |[39m       })[33m;[39m
+   [90m 322 |[39m     }
+   [90m 323 |[39m   }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:352:15[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateManyMutationInput, ProductUncheckedUpdateManyInput> & ProductUncheckedUpdateManyInput) | (Without<...> & ProductUpdateManyMutationInput)'.
+  [0m [90m 350 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdateMany({
+   [90m 351 |[39m       where[33m:[39m { id[33m:[39m { [36min[39m[33m:[39m products[33m.[39mmap(p [33m=>[39m p[33m.[39mid) } }[33m,[39m
+  [31m[1m>[22m[39m[90m 352 |[39m       data[33m:[39m { productGroupId[33m:[39m group[33m.[39mid }[33m,[39m
+   [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 353 |[39m     })[33m;[39m
+   [90m 354 |[39m
+   [90m 355 |[39m     [36mfor[39m ([36mconst[39m p [36mof[39m products) {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:378:32[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type 'ProductWhereInput'.
+  [0m [90m 376 |[39m   [36masync[39m autoGroupByName(dryRun [33m=[39m [36mfalse[39m) {
+   [90m 377 |[39m     [36mconst[39m products [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+  [31m[1m>[22m[39m[90m 378 |[39m       where[33m:[39m { isActive[33m:[39m [36mtrue[39m[33m,[39m productGroupId[33m:[39m [36mnull[39m }[33m,[39m
+   [90m     |[39m                                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 379 |[39m       select[33m:[39m {
+   [90m 380 |[39m         id[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 381 |[39m         sku[33m:[39m [36mtrue[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:463:19[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 461 |[39m         [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({
+   [90m 462 |[39m           where[33m:[39m { id[33m:[39m v[33m.[39mid }[33m,[39m
+  [31m[1m>[22m[39m[90m 463 |[39m           data[33m:[39m { productGroupId[33m:[39m group[33m.[39mid }[33m,[39m
+   [90m     |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 464 |[39m         })[33m;[39m
+   [90m 465 |[39m         [36mif[39m (attrs[33m.[39mlength [33m>[39m [35m0[39m) {
+   [90m 466 |[39m           [36mawait[39m [36mthis[39m[33m.[39mreplaceProductAttributes(v[33m.[39mid[33m,[39m attrs)[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:496:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 494 |[39m       where[33m:[39m { id[33m:[39m productId }[33m,[39m
+   [90m 495 |[39m       data[33m:[39m {
+  [31m[1m>[22m[39m[90m 496 |[39m         productGroupId[33m:[39m dto[33m.[39mproductGroupId[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 497 |[39m         [33m...[39m(dto[33m.[39mvariantSortOrder [33m!==[39m undefined [33m?[39m { variantSortOrder[33m:[39m dto[33m.[39mvariantSortOrder } [33m:[39m {})[33m,[39m
+   [90m 498 |[39m       }[33m,[39m
+   [90m 499 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/product-groups/product-groups.service.ts:521:17[39m[22m
+TS2353: Object literal may only specify known properties, and 'isDefaultVariant' does not exist in type '(Without<ProductUpdateInput, ProductUncheckedUpdateInput> & ProductUncheckedUpdateInput) | (Without<...> & ProductUpdateInput)'.
+  [0m [90m 519 |[39m       [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mupdate({
+   [90m 520 |[39m         where[33m:[39m { id[33m:[39m productId }[33m,[39m
+  [31m[1m>[22m[39m[90m 521 |[39m         data[33m:[39m { isDefaultVariant[33m:[39m [36mfalse[39m }[33m,[39m
+   [90m     |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 522 |[39m       })[33m;[39m
+   [90m 523 |[39m     }
+   [90m 524 |[39m     [36mreturn[39m { success[33m:[39m [36mtrue[39m }[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/reports.service.ts:1200:19[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 1198 |[39m
+   [90m 1199 |[39m     [36mconst[39m [byStatus[33m,[39m recent[33m,[39m totalCount] [33m=[39m [36mawait[39m [33mPromise[39m[33m.[39mall([
+  [31m[1m>[22m[39m[90m 1200 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mgroupBy({
+   [90m      |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 1201 |[39m         by[33m:[39m [[32m'status'[39m][33m,[39m
+   [90m 1202 |[39m         where[33m:[39m { createdAt[33m:[39m { gte[33m:[39m since } }[33m,[39m
+   [90m 1203 |[39m         _count[33m:[39m { id[33m:[39m [36mtrue[39m }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/reports.service.ts:1205:19[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 1203 |[39m         _count[33m:[39m { id[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m 1204 |[39m       })[33m,[39m
+  [31m[1m>[22m[39m[90m 1205 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mfindMany({
+   [90m      |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 1206 |[39m         where[33m:[39m { createdAt[33m:[39m { gte[33m:[39m since } }[33m,[39m
+   [90m 1207 |[39m         orderBy[33m:[39m { createdAt[33m:[39m [32m'desc'[39m }[33m,[39m
+   [90m 1208 |[39m         take[33m:[39m [35m15[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/reports.service.ts:1211:19[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 1209 |[39m         select[33m:[39m { id[33m:[39m [36mtrue[39m[33m,[39m name[33m:[39m [36mtrue[39m[33m,[39m email[33m:[39m [36mtrue[39m[33m,[39m status[33m:[39m [36mtrue[39m[33m,[39m createdAt[33m:[39m [36mtrue[39m[33m,[39m items[33m:[39m { select[33m:[39m { quantity[33m:[39m [36mtrue[39m } } }[33m,[39m
+   [90m 1210 |[39m       })[33m,[39m
+  [31m[1m>[22m[39m[90m 1211 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mcount({ where[33m:[39m { createdAt[33m:[39m { gte[33m:[39m since } } })[33m,[39m
+   [90m      |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 1212 |[39m     ])[33m;[39m
+   [90m 1213 |[39m
+   [90m 1214 |[39m     [36mreturn[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/reports.service.ts:1217:30[39m[22m
+TS7006: Parameter 's' implicitly has an 'any' type.
+  [0m [90m 1215 |[39m       periodDays[33m:[39m days[33m,[39m
+   [90m 1216 |[39m       total[33m:[39m totalCount[33m,[39m
+  [31m[1m>[22m[39m[90m 1217 |[39m       byStatus[33m:[39m byStatus[33m.[39mmap(s [33m=>[39m ({ status[33m:[39m s[33m.[39mstatus[33m,[39m count[33m:[39m s[33m.[39m_count[33m.[39mid }))[33m,[39m
+   [90m      |[39m                              [31m[1m^[22m[39m
+   [90m 1218 |[39m       recent[33m:[39m recent[33m.[39mmap(r [33m=>[39m ({
+   [90m 1219 |[39m         id[33m:[39m r[33m.[39mid[33m,[39m name[33m:[39m r[33m.[39mname[33m,[39m email[33m:[39m r[33m.[39memail[33m,[39m status[33m:[39m r[33m.[39mstatus[33m,[39m
+   [90m 1220 |[39m         createdAt[33m:[39m r[33m.[39mcreatedAt[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/reports.service.ts:1218:26[39m[22m
+TS7006: Parameter 'r' implicitly has an 'any' type.
+  [0m [90m 1216 |[39m       total[33m:[39m totalCount[33m,[39m
+   [90m 1217 |[39m       byStatus[33m:[39m byStatus[33m.[39mmap(s [33m=>[39m ({ status[33m:[39m s[33m.[39mstatus[33m,[39m count[33m:[39m s[33m.[39m_count[33m.[39mid }))[33m,[39m
+  [31m[1m>[22m[39m[90m 1218 |[39m       recent[33m:[39m recent[33m.[39mmap(r [33m=>[39m ({
+   [90m      |[39m                          [31m[1m^[22m[39m
+   [90m 1219 |[39m         id[33m:[39m r[33m.[39mid[33m,[39m name[33m:[39m r[33m.[39mname[33m,[39m email[33m:[39m r[33m.[39memail[33m,[39m status[33m:[39m r[33m.[39mstatus[33m,[39m
+   [90m 1220 |[39m         createdAt[33m:[39m r[33m.[39mcreatedAt[33m,[39m
+   [90m 1221 |[39m         totalQuantity[33m:[39m r[33m.[39mitems[33m.[39mreduce((s[33m,[39m i) [33m=>[39m s [33m+[39m i[33m.[39mquantity[33m,[39m [35m0[39m)[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/reports.service.ts:1221:40[39m[22m
+TS7006: Parameter 's' implicitly has an 'any' type.
+  [0m [90m 1219 |[39m         id[33m:[39m r[33m.[39mid[33m,[39m name[33m:[39m r[33m.[39mname[33m,[39m email[33m:[39m r[33m.[39memail[33m,[39m status[33m:[39m r[33m.[39mstatus[33m,[39m
+   [90m 1220 |[39m         createdAt[33m:[39m r[33m.[39mcreatedAt[33m,[39m
+  [31m[1m>[22m[39m[90m 1221 |[39m         totalQuantity[33m:[39m r[33m.[39mitems[33m.[39mreduce((s[33m,[39m i) [33m=>[39m s [33m+[39m i[33m.[39mquantity[33m,[39m [35m0[39m)[33m,[39m
+   [90m      |[39m                                        [31m[1m^[22m[39m
+   [90m 1222 |[39m         lineCount[33m:[39m r[33m.[39mitems[33m.[39mlength[33m,[39m
+   [90m 1223 |[39m       }))[33m,[39m
+   [90m 1224 |[39m     }[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/reports.service.ts:1221:43[39m[22m
+TS7006: Parameter 'i' implicitly has an 'any' type.
+  [0m [90m 1219 |[39m         id[33m:[39m r[33m.[39mid[33m,[39m name[33m:[39m r[33m.[39mname[33m,[39m email[33m:[39m r[33m.[39memail[33m,[39m status[33m:[39m r[33m.[39mstatus[33m,[39m
+   [90m 1220 |[39m         createdAt[33m:[39m r[33m.[39mcreatedAt[33m,[39m
+  [31m[1m>[22m[39m[90m 1221 |[39m         totalQuantity[33m:[39m r[33m.[39mitems[33m.[39mreduce((s[33m,[39m i) [33m=>[39m s [33m+[39m i[33m.[39mquantity[33m,[39m [35m0[39m)[33m,[39m
+   [90m      |[39m                                           [31m[1m^[22m[39m
+   [90m 1222 |[39m         lineCount[33m:[39m r[33m.[39mitems[33m.[39mlength[33m,[39m
+   [90m 1223 |[39m       }))[33m,[39m
+   [90m 1224 |[39m     }[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/seed-images.service.ts:131:29[39m[22m
+TS2339: Property 'imageUrl' does not exist on type '{ name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; image_id: string | null; parent_id: number | null; }'.
+  [0m [90m 129 |[39m     [36mconst[39m cats [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mcategory[33m.[39mfindMany({ where[33m:[39m { isActive[33m:[39m [36mtrue[39m } })[33m;[39m
+   [90m 130 |[39m     [36mfor[39m ([36mconst[39m cat [36mof[39m cats) {
+  [31m[1m>[22m[39m[90m 131 |[39m       [36mif[39m ([33m![39moverwrite [33m&&[39m cat[33m.[39mimageUrl) {
+   [90m     |[39m                             [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 132 |[39m         result[33m.[39mskipped[33m.[39mcategories[33m++[39m[33m;[39m
+   [90m 133 |[39m         [36mcontinue[39m[33m;[39m
+   [90m 134 |[39m       }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/seed-images.service.ts:145:76[39m[22m
+TS2353: Object literal may only specify known properties, and 'imageUrl' does not exist in type '(Without<CategoryUpdateInput, CategoryUncheckedUpdateInput> & CategoryUncheckedUpdateInput) | (Without<...> & CategoryUpdateInput)'.
+  [0m [90m 143 |[39m           result[33m.[39mfallback[33m.[39mcategories[33m++[39m[33m;[39m
+   [90m 144 |[39m         }
+  [31m[1m>[22m[39m[90m 145 |[39m         [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mcategory[33m.[39mupdate({ where[33m:[39m { id[33m:[39m cat[33m.[39mid }[33m,[39m data[33m:[39m { imageUrl[33m:[39m url } })[33m;[39m
+   [90m     |[39m                                                                            [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 146 |[39m         result[33m.[39mprocessed[33m.[39mcategories[33m++[39m[33m;[39m
+   [90m 147 |[39m       } [36mcatch[39m (err[33m:[39m any) {
+   [90m 148 |[39m         result[33m.[39merrors[33m.[39mpush({ kind[33m:[39m [32m'category'[39m[33m,[39m id[33m:[39m cat[33m.[39mid[33m,[39m name[33m:[39m cat[33m.[39mname[33m,[39m message[33m:[39m err[33m?[39m[33m.[39mmessage [33m||[39m [32m'failed'[39m })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/seed-images.service.ts:181:79[39m[22m
+TS2353: Object literal may only specify known properties, and 'imageUrl' does not exist in type '(Without<SubcategoryUpdateInput, SubcategoryUncheckedUpdateInput> & SubcategoryUncheckedUpdateInput) | (Without<...> & SubcategoryUpdateInput)'.
+  [0m [90m 179 |[39m           result[33m.[39mfallback[33m.[39msubcategories[33m++[39m[33m;[39m
+   [90m 180 |[39m         }
+  [31m[1m>[22m[39m[90m 181 |[39m         [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39msubcategory[33m.[39mupdate({ where[33m:[39m { id[33m:[39m sub[33m.[39mid }[33m,[39m data[33m:[39m { imageUrl[33m:[39m url } })[33m;[39m
+   [90m     |[39m                                                                               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 182 |[39m         result[33m.[39mprocessed[33m.[39msubcategories[33m++[39m[33m;[39m
+   [90m 183 |[39m       } [36mcatch[39m (err[33m:[39m any) {
+   [90m 184 |[39m         result[33m.[39merrors[33m.[39mpush({ kind[33m:[39m [32m'subcategory'[39m[33m,[39m id[33m:[39m sub[33m.[39mid[33m,[39m name[33m:[39m sub[33m.[39mname[33m,[39m message[33m:[39m err[33m?[39m[33m.[39mmessage [33m||[39m [32m'failed'[39m })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/seed-images.service.ts:193:31[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m 191 |[39m     [36mconst[39m brands [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbrand[33m.[39mfindMany({ where[33m:[39m { isActive[33m:[39m [36mtrue[39m } })[33m;[39m
+   [90m 192 |[39m     [36mfor[39m ([36mconst[39m brand [36mof[39m brands) {
+  [31m[1m>[22m[39m[90m 193 |[39m       [36mif[39m ([33m![39moverwrite [33m&&[39m brand[33m.[39mlogoUrl) {
+   [90m     |[39m                               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 194 |[39m         result[33m.[39mskipped[33m.[39mbrands[33m++[39m[33m;[39m
+   [90m 195 |[39m         [36mcontinue[39m[33m;[39m
+   [90m 196 |[39m       }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/admin/seed-images.service.ts:199:75[39m[22m
+TS2353: Object literal may only specify known properties, and 'logoUrl' does not exist in type '(Without<BrandUpdateInput, BrandUncheckedUpdateInput> & BrandUncheckedUpdateInput) | (Without<...> & BrandUpdateInput)'.
+  [0m [90m 197 |[39m       [36mtry[39m {
+   [90m 198 |[39m         [36mconst[39m url [33m=[39m [36mawait[39m [36mthis[39m[33m.[39muploadTile(brand[33m.[39mname[33m,[39m [32m'SOLO BRAND'[39m[33m,[39m [32m`brand-${brand.slug}`[39m[33m,[39m [32m'brands'[39m)[33m;[39m
+  [31m[1m>[22m[39m[90m 199 |[39m         [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbrand[33m.[39mupdate({ where[33m:[39m { id[33m:[39m brand[33m.[39mid }[33m,[39m data[33m:[39m { logoUrl[33m:[39m url } })[33m;[39m
+   [90m     |[39m                                                                           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 200 |[39m         result[33m.[39mprocessed[33m.[39mbrands[33m++[39m[33m;[39m
+   [90m 201 |[39m         result[33m.[39mfallback[33m.[39mbrands[33m++[39m[33m;[39m
+   [90m 202 |[39m       } [36mcatch[39m (err[33m:[39m any) {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:28:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'logoUrl' does not exist in type '(Without<BrandCreateInput, BrandUncheckedCreateInput> & BrandUncheckedCreateInput) | (Without<...> & BrandCreateInput)'.
+  [0m [90m 26 |[39m         slug[33m,[39m
+   [90m 27 |[39m         description[33m:[39m createBrandDto[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m 28 |[39m         logoUrl[33m,[39m
+   [90m    |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 29 |[39m         website[33m:[39m createBrandDto[33m.[39mwebsite[33m,[39m
+   [90m 30 |[39m         isActive[33m:[39m createBrandDto[33m.[39misActive [33m?[39m[33m?[39m [36mtrue[39m[33m,[39m
+   [90m 31 |[39m       }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:39:22[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m 37 |[39m       slug[33m:[39m brand[33m.[39mslug[33m,[39m
+   [90m 38 |[39m       description[33m:[39m brand[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m 39 |[39m       logoUrl[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m    |[39m                      [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 40 |[39m       logo[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m 41 |[39m       website[33m:[39m brand[33m.[39mwebsite[33m,[39m
+   [90m 42 |[39m       isActive[33m:[39m brand[33m.[39misActive[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:40:19[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m 38 |[39m       description[33m:[39m brand[33m.[39mdescription[33m,[39m
+   [90m 39 |[39m       logoUrl[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+  [31m[1m>[22m[39m[90m 40 |[39m       logo[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m    |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 41 |[39m       website[33m:[39m brand[33m.[39mwebsite[33m,[39m
+   [90m 42 |[39m       isActive[33m:[39m brand[33m.[39misActive[33m,[39m
+   [90m 43 |[39m       createdAt[33m:[39m brand[33m.[39mcreatedAt[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:64:22[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ _count: { products: number; }; } & { name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m 62 |[39m       slug[33m:[39m brand[33m.[39mslug[33m,[39m
+   [90m 63 |[39m       description[33m:[39m brand[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m 64 |[39m       logoUrl[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m    |[39m                      [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 65 |[39m       logo[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m 66 |[39m       website[33m:[39m brand[33m.[39mwebsite[33m,[39m
+   [90m 67 |[39m       isActive[33m:[39m brand[33m.[39misActive[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:65:19[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ _count: { products: number; }; } & { name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m 63 |[39m       description[33m:[39m brand[33m.[39mdescription[33m,[39m
+   [90m 64 |[39m       logoUrl[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+  [31m[1m>[22m[39m[90m 65 |[39m       logo[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m    |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 66 |[39m       website[33m:[39m brand[33m.[39mwebsite[33m,[39m
+   [90m 67 |[39m       isActive[33m:[39m brand[33m.[39misActive[33m,[39m
+   [90m 68 |[39m       productCount[33m:[39m brand[33m.[39m_count[33m?[39m[33m.[39mproducts [33m||[39m [35m0[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:98:22[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ _count: { products: number; }; } & { name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m  96 |[39m       slug[33m:[39m brand[33m.[39mslug[33m,[39m
+   [90m  97 |[39m       description[33m:[39m brand[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m  98 |[39m       logoUrl[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m     |[39m                      [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m  99 |[39m       logo[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m 100 |[39m       website[33m:[39m brand[33m.[39mwebsite[33m,[39m
+   [90m 101 |[39m       isActive[33m:[39m brand[33m.[39misActive[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:99:19[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ _count: { products: number; }; } & { name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m  97 |[39m       description[33m:[39m brand[33m.[39mdescription[33m,[39m
+   [90m  98 |[39m       logoUrl[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+  [31m[1m>[22m[39m[90m  99 |[39m       logo[33m:[39m brand[33m.[39mlogoUrl[33m,[39m
+   [90m     |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 100 |[39m       website[33m:[39m brand[33m.[39mwebsite[33m,[39m
+   [90m 101 |[39m       isActive[33m:[39m brand[33m.[39misActive[33m,[39m
+   [90m 102 |[39m       productCount[33m:[39m brand[33m.[39m_count[33m?[39m[33m.[39mproducts [33m||[39m [35m0[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:159:24[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ _count: { products: number; }; } & { name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m 157 |[39m       slug[33m:[39m updated[33m.[39mslug[33m,[39m
+   [90m 158 |[39m       description[33m:[39m updated[33m.[39mdescription[33m,[39m
+  [31m[1m>[22m[39m[90m 159 |[39m       logoUrl[33m:[39m updated[33m.[39mlogoUrl[33m,[39m
+   [90m     |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 160 |[39m       logo[33m:[39m updated[33m.[39mlogoUrl[33m,[39m
+   [90m 161 |[39m       website[33m:[39m updated[33m.[39mwebsite[33m,[39m
+   [90m 162 |[39m       isActive[33m:[39m updated[33m.[39misActive[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/brands/brands.service.ts:160:21[39m[22m
+TS2339: Property 'logoUrl' does not exist on type '{ _count: { products: number; }; } & { name: string; name_ar: string | null; slug: string; description: string | null; sort_order: number; isActive: boolean; createdAt: Date; updatedAt: Date; id: number; logo_id: string | null; website: string | null; }'.
+  [0m [90m 158 |[39m       description[33m:[39m updated[33m.[39mdescription[33m,[39m
+   [90m 159 |[39m       logoUrl[33m:[39m updated[33m.[39mlogoUrl[33m,[39m
+  [31m[1m>[22m[39m[90m 160 |[39m       logo[33m:[39m updated[33m.[39mlogoUrl[33m,[39m
+   [90m     |[39m                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 161 |[39m       website[33m:[39m updated[33m.[39mwebsite[33m,[39m
+   [90m 162 |[39m       isActive[33m:[39m updated[33m.[39misActive[33m,[39m
+   [90m 163 |[39m       productCount[33m:[39m updated[33m.[39m_count[33m?[39m[33m.[39mproducts [33m||[39m [35m0[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:5:10[39m[22m
+TS2724: '"@prisma/client"' has no exported member named 'BulkOrderStatus'. Did you mean 'OrderStatus'?
+  [0m [90m 3 |[39m [36mimport[39m { [33mEmailService[39m } [36mfrom[39m [32m'../email/email.service'[39m[33m;[39m
+   [90m 4 |[39m [36mimport[39m { [33mCreateBulkOrderDto[39m[33m,[39m [33mUpdateBulkOrderStatusDto[39m } [36mfrom[39m [32m'./dto'[39m[33m;[39m
+  [31m[1m>[22m[39m[90m 5 |[39m [36mimport[39m { [33mBulkOrderStatus[39m } [36mfrom[39m [32m'@prisma/client'[39m[33m;[39m
+   [90m   |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 6 |[39m
+   [90m 7 |[39m [33m@[39m[33mInjectable[39m()
+   [90m 8 |[39m [36mexport[39m [36mclass[39m [33mBulkOrdersService[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:17:41[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 15 |[39m
+   [90m 16 |[39m   [36masync[39m create(dto[33m:[39m [33mCreateBulkOrderDto[39m) {
+  [31m[1m>[22m[39m[90m 17 |[39m     [36mconst[39m bulkOrder [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mcreate({
+   [90m    |[39m                                         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 18 |[39m       data[33m:[39m {
+   [90m 19 |[39m         name[33m:[39m dto[33m.[39mname[33m,[39m
+   [90m 20 |[39m         email[33m:[39m dto[33m.[39memail[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:41:47[39m[22m
+TS7006: Parameter 'item' implicitly has an 'any' type.
+  [0m [90m 39 |[39m     [36mtry[39m {
+   [90m 40 |[39m       [90m// Fetch product details (price + image + description) for enriched email[39m
+  [31m[1m>[22m[39m[90m 41 |[39m       [36mconst[39m productIds [33m=[39m bulkOrder[33m.[39mitems[33m.[39mmap((item) [33m=>[39m item[33m.[39mproductId)[33m;[39m
+   [90m    |[39m                                               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 42 |[39m       [36mconst[39m products [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+   [90m 43 |[39m         where[33m:[39m { id[33m:[39m { [36min[39m[33m:[39m productIds } }[33m,[39m
+   [90m 44 |[39m         include[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:79:15[39m[22m
+TS7006: Parameter 'item' implicitly has an 'any' type.
+  [0m [90m 77 |[39m
+   [90m 78 |[39m       [36mconst[39m itemRows [33m=[39m bulkOrder[33m.[39mitems
+  [31m[1m>[22m[39m[90m 79 |[39m         [33m.[39mmap((item) [33m=>[39m {
+   [90m    |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 80 |[39m           [36mconst[39m product [33m=[39m productMap[33m.[39m[36mget[39m(item[33m.[39mproductId)[33m;[39m
+   [90m 81 |[39m           [36mconst[39m imageUrl [33m=[39m product[33m?[39m[33m.[39mimages[33m?[39m[33m.[39m[[35m0[39m][33m?[39m[33m.[39mmedia_asset_id [33m||[39m [32m''[39m[33m;[39m
+   [90m 82 |[39m           [36mconst[39m description [33m=[39m product[33m?[39m[33m.[39mshortDescription [33m||[39m product[33m?[39m[33m.[39mdescription [33m||[39m [32m''[39m[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:172:19[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 170 |[39m
+   [90m 171 |[39m     [36mconst[39m [items[33m,[39m total] [33m=[39m [36mawait[39m [33mPromise[39m[33m.[39mall([
+  [31m[1m>[22m[39m[90m 172 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mfindMany({
+   [90m     |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 173 |[39m         where[33m,[39m
+   [90m 174 |[39m         include[33m:[39m { items[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m 175 |[39m         orderBy[33m:[39m { createdAt[33m:[39m [32m'desc'[39m }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:179:19[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 177 |[39m         take[33m:[39m limit[33m,[39m
+   [90m 178 |[39m       })[33m,[39m
+  [31m[1m>[22m[39m[90m 179 |[39m       [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mcount({ where })[33m,[39m
+   [90m     |[39m                   [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 180 |[39m     ])[33m;[39m
+   [90m 181 |[39m
+   [90m 182 |[39m     [36mreturn[39m { items[33m,[39m total[33m,[39m page[33m,[39m limit[33m,[39m totalPages[33m:[39m [33mMath[39m[33m.[39mceil(total [33m/[39m limit) }[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:186:37[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 184 |[39m
+   [90m 185 |[39m   [36masync[39m findOne(id[33m:[39m string) {
+  [31m[1m>[22m[39m[90m 186 |[39m     [36mconst[39m order [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mfindUnique({
+   [90m     |[39m                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 187 |[39m       where[33m:[39m { id }[33m,[39m
+   [90m 188 |[39m       include[33m:[39m { items[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m 189 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:195:37[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 193 |[39m
+   [90m 194 |[39m   [36masync[39m updateStatus(id[33m:[39m string[33m,[39m dto[33m:[39m [33mUpdateBulkOrderStatusDto[39m) {
+  [31m[1m>[22m[39m[90m 195 |[39m     [36mconst[39m order [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mfindUnique({ where[33m:[39m { id } })[33m;[39m
+   [90m     |[39m                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 196 |[39m     [36mif[39m ([33m![39morder) [36mthrow[39m [36mnew[39m [33mNotFoundException[39m([32m'Bulk order request not found'[39m)[33m;[39m
+   [90m 197 |[39m
+   [90m 198 |[39m     [36mreturn[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mupdate({[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:198:24[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 196 |[39m     [36mif[39m ([33m![39morder) [36mthrow[39m [36mnew[39m [33mNotFoundException[39m([32m'Bulk order request not found'[39m)[33m;[39m
+   [90m 197 |[39m
+  [31m[1m>[22m[39m[90m 198 |[39m     [36mreturn[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mupdate({
+   [90m     |[39m                        [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 199 |[39m       where[33m:[39m { id }[33m,[39m
+   [90m 200 |[39m       data[33m:[39m {
+   [90m 201 |[39m         status[33m:[39m dto[33m.[39mstatus [36mas[39m [33mBulkOrderStatus[39m[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:209:37[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 207 |[39m
+   [90m 208 |[39m   [36masync[39m remove(id[33m:[39m string) {
+  [31m[1m>[22m[39m[90m 209 |[39m     [36mconst[39m order [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mfindUnique({ where[33m:[39m { id } })[33m;[39m
+   [90m     |[39m                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 210 |[39m     [36mif[39m ([33m![39morder) [36mthrow[39m [36mnew[39m [33mNotFoundException[39m([32m'Bulk order request not found'[39m)[33m;[39m
+   [90m 211 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39m[36mdelete[39m({ where[33m:[39m { id } })[33m;[39m
+   [90m 212 |[39m     [36mreturn[39m { message[33m:[39m [32m'Bulk order request deleted'[39m }[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/bulk-orders/bulk-orders.service.ts:211:23[39m[22m
+TS2339: Property 'bulkOrderRequest' does not exist on type 'PrismaService'.
+  [0m [90m 209 |[39m     [36mconst[39m order [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39mfindUnique({ where[33m:[39m { id } })[33m;[39m
+   [90m 210 |[39m     [36mif[39m ([33m![39morder) [36mthrow[39m [36mnew[39m [33mNotFoundException[39m([32m'Bulk order request not found'[39m)[33m;[39m
+  [31m[1m>[22m[39m[90m 211 |[39m     [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mbulkOrderRequest[33m.[39m[36mdelete[39m({ where[33m:[39m { id } })[33m;[39m
+   [90m     |[39m                       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 212 |[39m     [36mreturn[39m { message[33m:[39m [32m'Bulk order request deleted'[39m }[33m;[39m
+   [90m 213 |[39m   }
+   [90m 214 |[39m }[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:302:11[39m[22m
+TS2561: Object literal may only specify known properties, but 'categories' does not exist in type 'ProductInclude<DefaultArgs>'. Did you mean to write 'category'?
+  [0m [90m 300 |[39m           category[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 301 |[39m           subcategory[33m:[39m [36mtrue[39m[33m,[39m
+  [31m[1m>[22m[39m[90m 302 |[39m           categories[33m:[39m { include[33m:[39m { category[33m:[39m [36mtrue[39m } }[33m,[39m
+   [90m     |[39m           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 303 |[39m           subcategoriesLinks[33m:[39m { include[33m:[39m { subcategory[33m:[39m [36mtrue[39m } }[33m,[39m
+   [90m 304 |[39m           pricing[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 305 |[39m           images[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:399:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'ProductWhereInput'.
+  [0m [90m 397 |[39m     [36mconst[39m products [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+   [90m 398 |[39m       where[33m:[39m {
+  [31m[1m>[22m[39m[90m 399 |[39m         deletedAt[33m:[39m [36mnull[39m[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 400 |[39m         isActive[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 401 |[39m         isFeatured[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 402 |[39m         stockQty[33m:[39m { gt[33m:[39m [35m0[39m }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:428:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'ProductWhereInput'.
+  [0m [90m 426 |[39m     [36mconst[39m products [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+   [90m 427 |[39m       where[33m:[39m {
+  [31m[1m>[22m[39m[90m 428 |[39m         deletedAt[33m:[39m [36mnull[39m[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 429 |[39m         isActive[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 430 |[39m         isBestSeller[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 431 |[39m         stockQty[33m:[39m { gt[33m:[39m [35m0[39m }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:457:9[39m[22m
+TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'ProductWhereInput'.
+  [0m [90m 455 |[39m     [36mconst[39m products [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+   [90m 456 |[39m       where[33m:[39m {
+  [31m[1m>[22m[39m[90m 457 |[39m         deletedAt[33m:[39m [36mnull[39m[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 458 |[39m         isActive[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 459 |[39m         isNew[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 460 |[39m         stockQty[33m:[39m { gt[33m:[39m [35m0[39m }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:498:9[39m[22m
+TS2561: Object literal may only specify known properties, but 'categories' does not exist in type 'ProductInclude<DefaultArgs>'. Did you mean to write 'category'?
+  [0m [90m 496 |[39m       where[33m,[39m
+   [90m 497 |[39m       include[33m:[39m {
+  [31m[1m>[22m[39m[90m 498 |[39m         categories[33m:[39m [36mtrue[39m[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 499 |[39m         subcategoriesLinks[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 500 |[39m       }[33m,[39m
+   [90m 501 |[39m     })[33m;[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:544:15[39m[22m
+TS2353: Object literal may only specify known properties, and 'subcategoriesLinks' does not exist in type 'ProductWhereInput'.
+  [0m [90m 542 |[39m           [33mOR[39m[33m:[39m [
+   [90m 543 |[39m             { subcategoryId[33m:[39m { [36min[39m[33m:[39m subIds } }[33m,[39m
+  [31m[1m>[22m[39m[90m 544 |[39m             { subcategoriesLinks[33m:[39m { some[33m:[39m { subcategoryId[33m:[39m { [36min[39m[33m:[39m subIds } } } }[33m,[39m
+   [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 545 |[39m           ][33m,[39m
+   [90m 546 |[39m         }[33m,[39m
+   [90m 547 |[39m         include[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:566:15[39m[22m
+TS2561: Object literal may only specify known properties, but 'categories' does not exist in type 'ProductWhereInput'. Did you mean to write 'categoryId'?
+  [0m [90m 564 |[39m           [33mOR[39m[33m:[39m [
+   [90m 565 |[39m             { categoryId[33m:[39m { [36min[39m[33m:[39m catIds } }[33m,[39m
+  [31m[1m>[22m[39m[90m 566 |[39m             { categories[33m:[39m { some[33m:[39m { categoryId[33m:[39m { [36min[39m[33m:[39m catIds } } } }[33m,[39m
+   [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 567 |[39m           ][33m,[39m
+   [90m 568 |[39m         }[33m,[39m
+   [90m 569 |[39m         include[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:582:11[39m[22m
+TS2353: Object literal may only specify known properties, and 'deletedAt' does not exist in type 'ProductWhereInput'.
+  [0m [90m 580 |[39m       [36mconst[39m sameBrand [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+   [90m 581 |[39m         where[33m:[39m {
+  [31m[1m>[22m[39m[90m 582 |[39m           deletedAt[33m:[39m [36mnull[39m[33m,[39m
+   [90m     |[39m           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 583 |[39m           isActive[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 584 |[39m           stockQty[33m:[39m { gt[33m:[39m [35m0[39m }[33m,[39m
+   [90m 585 |[39m           id[33m:[39m { notIn[33m:[39m excludeIds }[33m,[39m[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:623:9[39m[22m
+TS2561: Object literal may only specify known properties, but 'categories' does not exist in type 'ProductInclude<DefaultArgs>'. Did you mean to write 'category'?
+  [0m [90m 621 |[39m         category[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 622 |[39m         subcategory[33m:[39m [36mtrue[39m[33m,[39m
+  [31m[1m>[22m[39m[90m 623 |[39m         categories[33m:[39m { include[33m:[39m { category[33m:[39m [36mtrue[39m } }[33m,[39m
+   [90m     |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 624 |[39m         subcategoriesLinks[33m:[39m { include[33m:[39m { subcategory[33m:[39m [36mtrue[39m } }[33m,[39m
+   [90m 625 |[39m         pricing[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 626 |[39m         images[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:645:18[39m[22m
+TS2353: Object literal may only specify known properties, and 'productGroupId' does not exist in type 'ProductWhereInput'.
+  [0m [90m 643 |[39m     [36mif[39m (product[33m.[39mproductGroupId) {
+   [90m 644 |[39m       [36mconst[39m siblings [33m=[39m [36mawait[39m [36mthis[39m[33m.[39mprisma[33m.[39mproduct[33m.[39mfindMany({
+  [31m[1m>[22m[39m[90m 645 |[39m         where[33m:[39m { productGroupId[33m:[39m product[33m.[39mproductGroupId[33m,[39m isActive[33m:[39m [36mtrue[39m }[33m,[39m
+   [90m     |[39m                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 646 |[39m         include[33m:[39m {
+   [90m 647 |[39m           pricing[33m:[39m [36mtrue[39m[33m,[39m
+   [90m 648 |[39m           images[33m:[39m {[0m
+
+[1m[31mERROR[39m[22m in [1m./src/products/products.service.ts:653:21[39m[22m
+TS2353: Object literal may only specify known properties, and 'variantSortOrder' does not exist in type 'ProductOrderByWithRelationInput'.
+  [0m [90m 651 |[39m           }[33m,[39m
+   [90m 652 |[39m         }[33m,[39m
+  [31m[1m>[22m[39m[90m 653 |[39m         orderBy[33m:[39m [{ variantSortOrder[33m:[39m [32m'asc'[39m }[33m,[39m { id[33m:[39m [32m'asc'[39m }][33m,[39m
+   [90m     |[39m                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+   [90m 654 |[39m       }) [36mas[39m any[][33m;[39m
+   [90m 655 |[39m       [36mawait[39m [36mthis[39m[33m.[39mresolveProductImageUrls(siblings)[33m;[39m
+   [90m 656 |[39m       variants [33m=[39m siblings[33m.[39mmap((s[33m:[39m any) [33m=>[39m ({[0m
+
+webpack 5.97.1 compiled with [1m[31m69 errors[39m[22m in 5926 ms

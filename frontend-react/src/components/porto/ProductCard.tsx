@@ -31,11 +31,11 @@ export default function ProductCard({ product }: Readonly<Props>) {
         </Link>
         {isOutOfStock && (
           <>
-            <span className={styles['oos-corner']} aria-hidden="true">Out of Stock</span>
+            <span className={styles['oos-corner']} aria-hidden="true">Available on Request</span>
             <Link
               to={`/product/${product.id}`}
               className={styles['special-order-ribbon']}
-              aria-label={`${product.name} is out of stock — tap to request a special order`}
+              aria-label={`${product.name} is available on request — tap to arrange a special order`}
             >
               <span className={styles['special-order-icon']}>◆</span>
               <span className={styles['special-order-text']}>

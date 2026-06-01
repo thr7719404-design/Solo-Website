@@ -6,7 +6,7 @@ import { SOLO_LOGO_PNG_BUFFER } from '../assets/solo-logo-png';
 
 // Brand / business constants for the invoice
 const BRAND = {
-  name: 'SOLO',
+  name: 'Collation Foundation Curation',
   trn: '104764432100001',
   phone: '0557133051',
   addressLines: [
@@ -174,7 +174,7 @@ export class InvoiceService {
         invoiceDate: new Date(),
         currencyCode: 'AED',
         vatRateSnapshot: 0.05,
-        sellerName: 'Solo Ecommerce',
+        sellerName: 'Collation Foundation Curation Ecommerce',
         sellerAddress: 'VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, UAE',
         buyerName,
         buyerAddress,
@@ -422,12 +422,13 @@ export class InvoiceService {
       const productName = product?.productName || item.name || 'Product';
       const itemCode = product?.sku || (item.productId ? String(item.productId) : '—');
       const qty = Number(item.quantity || 0);
-      // unitPrice on Order is treated as VAT-inclusive (selling price). Derive ex-VAT.
-      const unitInclVat = Number(item.unitPrice || item.price || 0);
-      const unitExclVat = unitInclVat / (1 + vatRate);
-      const lineExcl = unitExclVat * qty;
-      const lineVat = unitInclVat * qty - lineExcl;
-      const lineTotal = unitInclVat * qty;
+      // OrderItem stores excl-VAT in `price` (and snapshots in unitPriceExclVat / unitPriceInclVat).
+      // Legacy `subtotal` is the VAT-inclusive line total. Prefer VAT-aware snapshot fields when present.
+      const unitExclVat = Number(item.unitPriceExclVat ?? item.price ?? 0);
+      const unitInclVat = Number(item.unitPriceInclVat ?? unitExclVat * (1 + vatRate));
+      const lineExcl = Number(item.lineSubtotalExclVat ?? unitExclVat * qty);
+      const lineTotal = Number(item.lineTotalInclVat ?? item.subtotal ?? unitInclVat * qty);
+      const lineVat = Number(item.lineVatAmount ?? lineTotal - lineExcl);
 
       // New page if needed
       if (y > 720) {
@@ -547,7 +548,7 @@ export class InvoiceService {
       .font('Helvetica')
       .fillColor('#888888')
       .text(
-        'Thank you for shopping with SOLO  ·  VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, UAE  ·  Tel: ' + BRAND.phone,
+        'Thank you for shopping with CFC  ·  VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, UAE  ·  Tel: ' + BRAND.phone,
         40,
         720,
         { align: 'center', width: 532, lineBreak: false },

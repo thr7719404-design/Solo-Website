@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.*
+uploads
+.git
+*.md
+test
+coverage
+.vscode
+scripts
+build_output*.txt
+backup_categories_*.json
+build_errs.txt

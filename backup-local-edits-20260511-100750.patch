@@ -1,0 +1,2673 @@
+diff --git a/backend/src/auth/auth.controller.ts b/backend/src/auth/auth.controller.ts
+index d651e98..b62e3ff 100644
+--- a/backend/src/auth/auth.controller.ts
++++ b/backend/src/auth/auth.controller.ts
+@@ -31,10 +31,10 @@ export class AuthController {
+ 
+   /**
+    * Login with email and password
+-   * Rate limited: 5 requests per 15 minutes per IP
++   * Rate limited: 30 requests per 15 minutes per IP
+    */
+   @Post('login')
+-  @Throttle({ default: { ttl: 900000, limit: 5 } })
++  @Throttle({ default: { ttl: 900000, limit: 30 } })
+   @HttpCode(HttpStatus.OK)
+   async login(@Body() loginDto: LoginDto, @Req() req: any) {
+     const forwarded = req.headers?.['x-forwarded-for'];
+diff --git a/backend/src/orders/orders.service.ts b/backend/src/orders/orders.service.ts
+index 535081b..6cad395 100644
+--- a/backend/src/orders/orders.service.ts
++++ b/backend/src/orders/orders.service.ts
+@@ -1,11 +1,9 @@
+-import { Injectable, BadRequestException, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
++import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+ import { PrismaService } from '../prisma/prisma.service';
+ import { LoyaltyService } from '../users/loyalty.service';
+ import { StripeService } from '../stripe/stripe.service';
+ import { SettingsService } from '../settings/settings.service';
+ import { StockService } from '../stock/stock.service';
+-import { EmailService } from '../email/email.service';
+-import { InvoiceService } from './invoice.service';
+ import { CreateOrderDto, PaymentMethodDto } from './dto/create-order.dto';
+ import { OrderStatus, PaymentStatus, ShippingMethod, PaymentMethod, CartItemType } from '@prisma/client';
+ 
+@@ -17,57 +15,24 @@ export class OrdersService {
+     private readonly prisma: PrismaService,
+     private readonly loyaltyService: LoyaltyService,
+     private readonly stripeService: StripeService,
+-    @Inject(forwardRef(() => SettingsService))
+     private readonly settingsService: SettingsService,
+     private readonly stockService: StockService,
+-    private readonly emailService: EmailService,
+-    private readonly invoiceService: InvoiceService,
+   ) {}
+ 
+-  /**
+-   * Generate an invoice and email the PDF to the customer (fire-and-forget).
+-   * Failures are logged but do not block the order creation flow.
+-   */
+-  private async issueInvoiceAndEmail(orderId: string): Promise<void> {
+-    try {
+-      // Persist invoice record (and upload PDF to storage if configured)
+-      await this.invoiceService.persistInvoice(orderId);
+-
+-      // Generate PDF buffer for email attachment
+-      const { buffer } = await this.invoiceService.generateInvoicePdf(orderId, undefined, true);
++  async createOrder(userId: string, createOrderDto: CreateOrderDto) {
++    const { shippingAddressId, shippingAddress, billingAddressId, billingAddress, shippingMethod, paymentMethod, items, promoCode, notes } = createOrderDto;
+ 
+-      const order = await this.prisma.order.findUnique({
+-        where: { id: orderId },
+-        include: { user: { select: { email: true, firstName: true, lastName: true } } },
+-      });
+-      if (!order?.user?.email) return;
++    // Validate: either shippingAddressId or shippingAddress must be provided
++    if (!shippingAddressId && !shippingAddress) {
++      throw new BadRequestException('Either shippingAddressId or shippingAddress must be provided');
++    }
+ 
+-      const invoice = await this.prisma.invoices.findUnique({
+-        where: { orderId },
+-        select: { invoiceNumber: true },
+-      });
+-      const invoiceNumber = invoice?.invoiceNumber || `INV-${order.orderNumber}`;
+-      const customerName = `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() || 'Customer';
+-
+-      await this.emailService.sendOrderInvoiceEmail({
+-        to: order.user.email,
+-        customerName,
+-        orderNumber: order.orderNumber,
+-        invoiceNumber,
+-        total: Number(order.total || 0),
+-        currency: 'AED',
+-        pdfBuffer: buffer,
+-      });
+-    } catch (err) {
+-      this.logger.error(`Failed to issue/email invoice for order ${orderId}: ${(err as Error).message}`);
++    // Validate items
++    if (!items || items.length === 0) {
++      throw new BadRequestException('Order must contain at least one item');
+     }
+-  }
+ 
+-  private async resolveSavedAddresses(
+-    userId: string,
+-    shippingAddressId?: string,
+-    billingAddressId?: string,
+-  ): Promise<{ existingAddress: any; existingBillingAddress: any }> {
++    // If shippingAddressId is provided, validate it belongs to the user
+     let existingAddress = null;
+     if (shippingAddressId) {
+       existingAddress = await this.prisma.address.findFirst({
+@@ -77,6 +42,8 @@ export class OrdersService {
+         throw new BadRequestException('Shipping address not found or does not belong to user');
+       }
+     }
++
++    // If billingAddressId is provided, validate it belongs to the user
+     let existingBillingAddress = null;
+     if (billingAddressId) {
+       existingBillingAddress = await this.prisma.address.findFirst({
+@@ -86,22 +53,21 @@ export class OrdersService {
+         throw new BadRequestException('Billing address not found or does not belong to user');
+       }
+     }
+-    return { existingAddress, existingBillingAddress };
+-  }
+ 
+-  private async loadOrderProducts(items: Array<{ productId: number; quantity: number }>) {
++    // Fetch products with pricing to get current prices
+     const productIds = items.map(item => item.productId);
+     const products = await this.prisma.product.findMany({
+       where: { id: { in: productIds } },
+-      include: { pricing: true },
++      include: {
++        pricing: true,
++      },
+     });
++
+     if (products.length !== productIds.length) {
+       throw new BadRequestException('One or more products not found');
+     }
+-    return products;
+-  }
+ 
+-  private async checkOrderStock(items: Array<{ productId: number; quantity: number }>): Promise<void> {
++    // Check stock availability for all items
+     const stockCheck = await this.stockService.checkBulkAvailability(
+       items.map(item => ({ productId: item.productId, quantity: item.quantity })),
+     );
+@@ -111,13 +77,11 @@ export class OrdersService {
+         .join('; ');
+       throw new BadRequestException(`Insufficient stock: ${errorMsg}`);
+     }
+-  }
+ 
+-  private buildOrderItemsAndTotals(
+-    items: Array<{ productId: number; quantity: number }>,
+-    products: any[],
+-    vatRate: number,
+-  ): { orderItems: any[]; subtotalExclVat: number; totalVatAmount: number } {
++    // Get VAT rate from system settings
++    const vatRate = await this.settingsService.getVatRate();
++
++    // Calculate order totals — prices in DB are VAT-inclusive
+     let subtotalExclVat = 0;
+     let totalVatAmount = 0;
+     const orderItems = items.map(item => {
+@@ -125,16 +89,21 @@ export class OrdersService {
+       if (!product) {
+         throw new BadRequestException(`Product ${item.productId} not found`);
+       }
+-      const unitPriceExclVat = product.pricing?.price_excl_vat_aed
+-        ? Number(product.pricing.price_excl_vat_aed)
++      
++      // Use incl-VAT price as the authoritative price; derive excl-VAT from it
++      const unitPriceInclVat = product.pricing?.price_incl_vat_aed
++        ? Number(product.pricing.price_incl_vat_aed)
+         : 0;
+-      const unitVatAmount = Math.round(unitPriceExclVat * vatRate * 100) / 100;
+-      const unitPriceInclVat = unitPriceExclVat + unitVatAmount;
++      const unitPriceExclVat = Math.round((unitPriceInclVat / (1 + vatRate)) * 100) / 100;
++      const unitVatAmount = Math.round(unitPriceInclVat * 100) / 100 - unitPriceExclVat;
++
+       const lineSubtotalExclVat = Math.round(unitPriceExclVat * item.quantity * 100) / 100;
+       const lineVatAmount = Math.round(unitVatAmount * item.quantity * 100) / 100;
+       const lineTotalInclVat = Math.round(unitPriceInclVat * item.quantity * 100) / 100;
++
+       subtotalExclVat += lineSubtotalExclVat;
+       totalVatAmount += lineVatAmount;
++
+       return {
+         type: CartItemType.PRODUCT,
+         productId: product.id,
+@@ -152,317 +121,322 @@ export class OrdersService {
+         vatRateSnapshot: vatRate,
+       };
+     });
+-    return {
+-      orderItems,
+-      subtotalExclVat: Math.round(subtotalExclVat * 100) / 100,
+-      totalVatAmount: Math.round(totalVatAmount * 100) / 100,
+-    };
+-  }
+ 
+-  private validatePromoEligibility(promo: any, subtotal: number): void {
+-    if (!promo.isActive) {
+-      throw new BadRequestException('This promo code is no longer active');
+-    }
+-    if (promo.startsAt && new Date() < promo.startsAt) {
+-      throw new BadRequestException('This promo code is not yet valid');
+-    }
+-    if (promo.expiresAt && new Date() > promo.expiresAt) {
+-      throw new BadRequestException('This promo code has expired');
+-    }
+-    if (promo.usageLimit && promo.usageCount >= promo.usageLimit) {
+-      throw new BadRequestException('This promo code has reached its usage limit');
+-    }
+-    if (promo.minOrderAmount && subtotal < Number(promo.minOrderAmount)) {
+-      throw new BadRequestException(
+-        `Minimum order amount of AED ${Number(promo.minOrderAmount).toFixed(2)} required for this promo code`,
+-      );
+-    }
+-  }
++    // Round accumulated totals
++    subtotalExclVat = Math.round(subtotalExclVat * 100) / 100;
++    totalVatAmount = Math.round(totalVatAmount * 100) / 100;
++    const subtotal = subtotalExclVat + totalVatAmount; // VAT-inclusive subtotal
+ 
+-  private computePromoDiscount(promo: any, subtotal: number, shippingCost: number): {
+-    discount: number;
+-    promoDiscountType: string | null;
+-    promoDiscountValue: number | null;
+-    newShippingCost: number;
+-  } {
+-    if (promo.type === 'PERCENTAGE') {
+-      let discount = subtotal * (Number(promo.value) / 100);
+-      if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
+-        discount = Number(promo.maxDiscount);
++    // Calculate shipping cost (free if promo code is FREE_SHIPPING)
++    let shippingCost = this.calculateShippingCost(shippingMethod as unknown as ShippingMethod);
++    const shippingExclVat = shippingCost;
++    const shippingVatAmount = 0; // Shipping is VAT-exempt in UAE
++    
++    // Calculate discount if promo code
++    let discount = 0;
++    let promoDiscountType: string | null = null;
++    let promoDiscountValue: number | null = null;
++    let promoCodeId: string | null = null;
++    
++    if (promoCode) {
++      const promo = await this.prisma.promoCode.findUnique({
++        where: { code: promoCode },
++      });
++
++      if (!promo) {
++        throw new BadRequestException('Invalid promo code');
++      }
++      if (!promo.isActive) {
++        throw new BadRequestException('This promo code is no longer active');
++      }
++      if (promo.startsAt && new Date() < promo.startsAt) {
++        throw new BadRequestException('This promo code is not yet valid');
++      }
++      if (promo.expiresAt && new Date() > promo.expiresAt) {
++        throw new BadRequestException('This promo code has expired');
++      }
++      if (promo.usageLimit && promo.usageCount >= promo.usageLimit) {
++        throw new BadRequestException('This promo code has reached its usage limit');
++      }
++      if (promo.minOrderAmount && subtotal < Number(promo.minOrderAmount)) {
++        throw new BadRequestException(`Minimum order amount of AED ${Number(promo.minOrderAmount).toFixed(2)} required for this promo code`);
+       }
+-      return { discount, promoDiscountType: 'PERCENTAGE', promoDiscountValue: Number(promo.value), newShippingCost: shippingCost };
+-    }
+-    if (promo.type === 'FIXED_AMOUNT') {
+-      return {
+-        discount: Math.min(Number(promo.value), subtotal),
+-        promoDiscountType: 'FIXED_AMOUNT',
+-        promoDiscountValue: Number(promo.value),
+-        newShippingCost: shippingCost,
+-      };
+-    }
+-    if (promo.type === 'FREE_SHIPPING') {
+-      return { discount: shippingCost, promoDiscountType: 'FREE_SHIPPING', promoDiscountValue: 0, newShippingCost: 0 };
+-    }
+-    return { discount: 0, promoDiscountType: null, promoDiscountValue: null, newShippingCost: shippingCost };
+-  }
+ 
+-  private async resolvePromoCode(promoCode: string | undefined, subtotal: number, shippingCost: number): Promise<{
+-    discount: number;
+-    promoDiscountType: string | null;
+-    promoDiscountValue: number | null;
+-    promoCodeId: string | null;
+-    shippingCost: number;
+-  }> {
+-    if (!promoCode) {
+-      return { discount: 0, promoDiscountType: null, promoDiscountValue: null, promoCodeId: null, shippingCost };
++      promoCodeId = promo.id;
++
++      switch (promo.type) {
++        case 'PERCENTAGE':
++          discount = subtotal * (Number(promo.value) / 100);
++          if (promo.maxDiscount && discount > Number(promo.maxDiscount)) {
++            discount = Number(promo.maxDiscount);
++          }
++          promoDiscountType = 'PERCENTAGE';
++          promoDiscountValue = Number(promo.value);
++          break;
++        case 'FIXED_AMOUNT':
++          discount = Math.min(Number(promo.value), subtotal);
++          promoDiscountType = 'FIXED_AMOUNT';
++          promoDiscountValue = Number(promo.value);
++          break;
++        case 'FREE_SHIPPING':
++          discount = shippingCost; // Discount equals shipping cost
++          shippingCost = 0;
++          promoDiscountType = 'FREE_SHIPPING';
++          promoDiscountValue = 0;
++          break;
++      }
+     }
+-    const promo = await this.prisma.promoCode.findUnique({ where: { code: promoCode } });
+-    if (!promo) {
+-      throw new BadRequestException('Invalid promo code');
++    
++    // Validate and process loyalty cash redemption
++    let loyaltyRedeemAed = 0;
++    if (createOrderDto.loyaltyRedeemAed && createOrderDto.loyaltyRedeemAed > 0) {
++      // Get user's current loyalty balance
++      const loyaltyData = await this.loyaltyService.getLoyalty(userId);
++      const balanceAed = Number(loyaltyData.balanceAed);
++      
++      // Validate redemption amount doesn't exceed balance
++      if (createOrderDto.loyaltyRedeemAed > balanceAed) {
++        throw new BadRequestException(`Insufficient loyalty balance. Available: AED ${balanceAed.toFixed(2)}`);
++      }
++      
++      // Enforce 30% cap rule: can only redeem up to 30% of subtotal
++      const maxRedeemable = subtotal * 0.30;
++      if (createOrderDto.loyaltyRedeemAed > maxRedeemable) {
++        throw new BadRequestException(`Loyalty redemption cannot exceed 30% of subtotal (max: AED ${maxRedeemable.toFixed(2)})`);
++      }
++      
++      loyaltyRedeemAed = createOrderDto.loyaltyRedeemAed;
+     }
+-    this.validatePromoEligibility(promo, subtotal);
+-    const computed = this.computePromoDiscount(promo, subtotal, shippingCost);
+-    return {
+-      discount: computed.discount,
+-      promoDiscountType: computed.promoDiscountType,
+-      promoDiscountValue: computed.promoDiscountValue,
+-      promoCodeId: promo.id,
+-      shippingCost: computed.newShippingCost,
+-    };
+-  }
++    
++    // Calculate total — subtotal already includes VAT, so do NOT add VAT again
++    const total = Math.round((subtotal + shippingCost - discount - loyaltyRedeemAed) * 100) / 100;
+ 
+-  private async resolveLoyaltyRedeem(userId: string, requested: number | undefined, subtotal: number): Promise<number> {
+-    if (!requested || requested <= 0) return 0;
+-    const loyaltyData = await this.loyaltyService.getLoyalty(userId);
+-    const balanceAed = Number(loyaltyData.balanceAed);
+-    if (requested > balanceAed) {
+-      throw new BadRequestException(`Insufficient loyalty balance. Available: AED ${balanceAed.toFixed(2)}`);
+-    }
+-    const maxRedeemable = subtotal * 0.30;
+-    if (requested > maxRedeemable) {
+-      throw new BadRequestException(
+-        `Loyalty redemption cannot exceed 30% of subtotal (max: AED ${maxRedeemable.toFixed(2)})`,
+-      );
+-    }
+-    return requested;
+-  }
++    // Generate order number
++    const orderNumber = await this.generateOrderNumber();
+ 
+-  private async resolvePaymentStatus(
+-    paymentMethod: PaymentMethodDto,
+-    paymentIntentDtoId: string | undefined,
+-  ): Promise<{ initialPaymentStatus: PaymentStatus; initialOrderStatus: OrderStatus; paymentIntentId: string | null }> {
++    // Determine initial payment status based on payment method
++    let initialPaymentStatus: PaymentStatus = PaymentStatus.PENDING;
++    let initialOrderStatus: OrderStatus = OrderStatus.PAYMENT_PENDING;
++    let paymentIntentId: string | null = null;
++    
+     if (paymentMethod === PaymentMethodDto.CASH_ON_DELIVERY) {
+-      return {
+-        initialPaymentStatus: PaymentStatus.PENDING,
+-        initialOrderStatus: OrderStatus.PROCESSING,
+-        paymentIntentId: null,
+-      };
+-    }
+-    if (paymentMethod !== PaymentMethodDto.CREDIT_CARD) {
+-      return {
+-        initialPaymentStatus: PaymentStatus.PENDING,
+-        initialOrderStatus: OrderStatus.PAYMENT_PENDING,
+-        paymentIntentId: null,
+-      };
+-    }
+-    if (!paymentIntentDtoId) {
+-      throw new BadRequestException('Payment intent ID is required for credit card payments');
+-    }
+-    try {
+-      const pi = await this.stripeService.verifyPaymentIntent(paymentIntentDtoId);
+-      if (pi.status === 'succeeded') {
+-        return { initialPaymentStatus: PaymentStatus.PAID, initialOrderStatus: OrderStatus.PROCESSING, paymentIntentId: pi.id };
++      initialPaymentStatus = PaymentStatus.PENDING;
++      initialOrderStatus = OrderStatus.PROCESSING;
++    } else if (paymentMethod === PaymentMethodDto.CREDIT_CARD) {
++      // Verify Stripe payment
++      if (!createOrderDto.paymentIntentId) {
++        throw new BadRequestException('Payment intent ID is required for credit card payments');
+       }
+-      if (pi.status === 'requires_capture') {
+-        return { initialPaymentStatus: PaymentStatus.PENDING, initialOrderStatus: OrderStatus.PAYMENT_PENDING, paymentIntentId: pi.id };
++      
++      try {
++        const pi = await this.stripeService.verifyPaymentIntent(createOrderDto.paymentIntentId);
++        if (pi.status === 'succeeded') {
++          initialPaymentStatus = PaymentStatus.PAID;
++          initialOrderStatus = OrderStatus.PROCESSING;
++          paymentIntentId = pi.id;
++        } else if (pi.status === 'requires_capture') {
++          initialPaymentStatus = PaymentStatus.PENDING;
++          initialOrderStatus = OrderStatus.PAYMENT_PENDING;
++          paymentIntentId = pi.id;
++        } else {
++          throw new BadRequestException(`Payment not completed. Status: ${pi.status}`);
++        }
++      } catch (e) {
++        if (e instanceof BadRequestException) throw e;
++        throw new BadRequestException('Failed to verify payment. Please try again.');
+       }
+-      throw new BadRequestException(`Payment not completed. Status: ${pi.status}`);
+-    } catch (e) {
+-      if (e instanceof BadRequestException) throw e;
+-      throw new BadRequestException('Failed to verify payment. Please try again.');
+     }
+-  }
+-
+-  private createAddressFromExisting(_tx: any, _userId: string, source: any): Promise<string> {
+-    // Use the existing saved address directly — no copy needed.
+-    return Promise.resolve(source.id);
+-  }
+-
+-  private async createAddressFromInline(tx: any, userId: string, source: any): Promise<string> {
+-    const created = await tx.address.create({
+-      data: {
+-        userId,
+-        firstName: source.firstName,
+-        lastName: source.lastName,
+-        addressLine1: source.street,
+-        addressLine2: source.apartment,
+-        city: source.city,
+-        postalCode: source.postalCode,
+-        phone: source.phone || '',
+-      },
+-    });
+-    return created.id;
+-  }
+ 
+-  private async resolveBillingAddressId(
+-    tx: any,
+-    userId: string,
+-    shippingAddressId: string,
+-    existingBillingAddress: any,
+-    inlineBillingAddress: any,
+-    fallbackInlineShipping: any,
+-  ): Promise<string> {
+-    if (existingBillingAddress) {
+-      return this.createAddressFromExisting(tx, userId, existingBillingAddress);
+-    }
+-    if (inlineBillingAddress) {
+-      return this.createAddressFromInline(tx, userId, inlineBillingAddress);
+-    }
+-    if (fallbackInlineShipping) {
+-      return this.createAddressFromInline(tx, userId, fallbackInlineShipping);
+-    }
+-    return shippingAddressId;
+-  }
+-
+-  private async createOrderAddresses(
+-    tx: any,
+-    userId: string,
+-    ctx: {
+-      existingAddress: any;
+-      existingBillingAddress: any;
+-      shippingAddress: any;
+-      billingAddress: any;
+-    },
+-  ): Promise<{ orderShippingAddressId: string; orderBillingAddressId: string }> {
+-    let orderShippingAddressId: string;
+-    if (ctx.existingAddress) {
+-      orderShippingAddressId = await this.createAddressFromExisting(tx, userId, ctx.existingAddress);
+-    } else {
+-      if (!ctx.shippingAddress) {
+-        throw new BadRequestException('Shipping address data is required');
++    // Create the order in a transaction
++    const order = await this.prisma.$transaction(async (tx) => {
++      let orderShippingAddressId: string;
++      let orderBillingAddressId: string;
++
++      if (existingAddress) {
++        // Use existing saved address - create a copy for the order to preserve address at time of order
++        const shippingAddrCopy = await tx.address.create({
++          data: {
++            userId,
++            firstName: existingAddress.firstName,
++            lastName: existingAddress.lastName,
++            addressLine1: existingAddress.addressLine1,
++            addressLine2: existingAddress.addressLine2,
++            city: existingAddress.city,
++            postalCode: existingAddress.postalCode,
++            phone: existingAddress.phone || '',
++            label: existingAddress.label,
++          },
++        });
++        orderShippingAddressId = shippingAddrCopy.id;
++        // Default billing to shipping
++        orderBillingAddressId = shippingAddrCopy.id;
++
++        // If billingAddressId provided, lookup and create copy
++        if (existingBillingAddress) {
++          const billingAddrCopy = await tx.address.create({
++            data: {
++              userId,
++              firstName: existingBillingAddress.firstName,
++              lastName: existingBillingAddress.lastName,
++              addressLine1: existingBillingAddress.addressLine1,
++              addressLine2: existingBillingAddress.addressLine2,
++              city: existingBillingAddress.city,
++              postalCode: existingBillingAddress.postalCode,
++              phone: existingBillingAddress.phone || '',
++              label: existingBillingAddress.label,
++            },
++          });
++          orderBillingAddressId = billingAddrCopy.id;
++        } else if (billingAddress) {
++          // If billingAddress provided inline, create it
++          const billingAddr = await tx.address.create({
++            data: {
++              userId,
++              firstName: billingAddress.firstName,
++              lastName: billingAddress.lastName,
++              addressLine1: billingAddress.street,
++              addressLine2: billingAddress.apartment,
++              city: billingAddress.city,
++              postalCode: billingAddress.postalCode,
++              phone: billingAddress.phone || '',
++            },
++          });
++          orderBillingAddressId = billingAddr.id;
++        }
++      } else {
++        // Create new shipping address from provided data
++        // shippingAddress must exist here since we validated earlier
++        if (!shippingAddress) {
++          throw new BadRequestException('Shipping address data is required');
++        }
++        const shippingAddr = await tx.address.create({
++          data: {
++            userId,
++            firstName: shippingAddress.firstName,
++            lastName: shippingAddress.lastName,
++            addressLine1: shippingAddress.street,
++            addressLine2: shippingAddress.apartment,
++            city: shippingAddress.city,
++            postalCode: shippingAddress.postalCode,
++            phone: shippingAddress.phone || '',
++          },
++        });
++        orderShippingAddressId = shippingAddr.id;
++
++        // Create billing address
++        // Priority: billingAddressId > billingAddress inline > same as shipping
++        if (existingBillingAddress) {
++          const billingAddrCopy = await tx.address.create({
++            data: {
++              userId,
++              firstName: existingBillingAddress.firstName,
++              lastName: existingBillingAddress.lastName,
++              addressLine1: existingBillingAddress.addressLine1,
++              addressLine2: existingBillingAddress.addressLine2,
++              city: existingBillingAddress.city,
++              postalCode: existingBillingAddress.postalCode,
++              phone: existingBillingAddress.phone || '',
++              label: existingBillingAddress.label,
++            },
++          });
++          orderBillingAddressId = billingAddrCopy.id;
++        } else {
++          const billingData = billingAddress || shippingAddress;
++          if (!billingData) {
++            throw new BadRequestException('Billing address data is required');
++          }
++          const billingAddr = await tx.address.create({
++            data: {
++              userId,
++              firstName: billingData.firstName,
++              lastName: billingData.lastName,
++              addressLine1: billingData.street,
++              addressLine2: billingData.apartment,
++              city: billingData.city,
++              postalCode: billingData.postalCode,
++              phone: billingData.phone || '',
++            },
++          });
++          orderBillingAddressId = billingAddr.id;
++        }
+       }
+-      orderShippingAddressId = await this.createAddressFromInline(tx, userId, ctx.shippingAddress);
+-    }
+-    const orderBillingAddressId = await this.resolveBillingAddressId(
+-      tx,
+-      userId,
+-      orderShippingAddressId,
+-      ctx.existingBillingAddress,
+-      ctx.billingAddress,
+-      ctx.existingAddress ? null : ctx.shippingAddress,
+-    );
+-    return { orderShippingAddressId, orderBillingAddressId };
+-  }
+-
+-  private async finalizeLoyaltyEarn(orderId: string, subtotal: number, loyaltyRedeemAed: number, order: any): Promise<any> {
+-    const earnPercent = await this.getLoyaltyEarnPercent();
+-    const eligibleForEarn = Math.max(0, subtotal - loyaltyRedeemAed);
+-    const loyaltyEarnAed = Math.round(eligibleForEarn * earnPercent * 100) / 100;
+-    if (loyaltyEarnAed <= 0) return order;
+-    return this.prisma.order.update({
+-      where: { id: orderId },
+-      data: { loyaltyEarnAed },
+-      include: { items: true, shippingAddress: true, billingAddress: true },
+-    });
+-  }
+-
+-  async createOrder(userId: string, createOrderDto: CreateOrderDto) {
+-    const {
+-      shippingAddressId, shippingAddress, billingAddressId, billingAddress,
+-      shippingMethod, paymentMethod, items, promoCode, notes,
+-    } = createOrderDto;
+-
+-    if (!shippingAddressId && !shippingAddress) {
+-      throw new BadRequestException('Either shippingAddressId or shippingAddress must be provided');
+-    }
+-    if (!items || items.length === 0) {
+-      throw new BadRequestException('Order must contain at least one item');
+-    }
+-
+-    const { existingAddress, existingBillingAddress } = await this.resolveSavedAddresses(
+-      userId, shippingAddressId, billingAddressId,
+-    );
+ 
+-    const products = await this.loadOrderProducts(items);
+-    await this.checkOrderStock(items);
+-
+-    const vatRate = await this.settingsService.getVatRate();
+-    const { orderItems, subtotalExclVat, totalVatAmount } = this.buildOrderItemsAndTotals(items, products, vatRate);
+-    const subtotal = subtotalExclVat + totalVatAmount;
+-
+-    const initialShippingCost = await this.calculateShippingCost(
+-      shippingMethod as unknown as ShippingMethod,
+-      subtotal,
+-    );
+-    const promoResult = await this.resolvePromoCode(promoCode, subtotal, initialShippingCost);
+-    const { discount, promoDiscountType, promoDiscountValue, promoCodeId } = promoResult;
+-    const shippingCost = promoResult.shippingCost;
+-    const shippingExclVat = shippingCost;
+-    const shippingVatAmount = 0;
+-
+-    const loyaltyRedeemAed = await this.resolveLoyaltyRedeem(userId, createOrderDto.loyaltyRedeemAed, subtotal);
+-    const total = Math.round((subtotal + shippingCost - discount - loyaltyRedeemAed) * 100) / 100;
+-
+-    const orderNumber = await this.generateOrderNumber();
+-    const { initialPaymentStatus, initialOrderStatus, paymentIntentId } = await this.resolvePaymentStatus(
+-      paymentMethod, createOrderDto.paymentIntentId,
+-    );
+-
+-    const order = await this.prisma.$transaction(async (tx) => {
+-      const { orderShippingAddressId, orderBillingAddressId } = await this.createOrderAddresses(tx, userId, {
+-        existingAddress, existingBillingAddress, shippingAddress, billingAddress,
+-      });
++      // Prepare billing invoice fields (trim to 60 chars max)
+       const billingInvoiceCompany = createOrderDto.billingInvoiceCompany?.trim().substring(0, 60) || null;
+       const billingInvoiceVatNumber = createOrderDto.billingInvoiceVatNumber?.trim().substring(0, 60) || null;
+ 
++      // Create the order
+       const newOrder = await tx.order.create({
+         data: {
+-          orderNumber, userId,
++          orderNumber,
++          userId,
+           status: initialOrderStatus,
+           paymentStatus: initialPaymentStatus,
+           shippingAddressId: orderShippingAddressId,
+           billingAddressId: orderBillingAddressId,
+           shippingMethod: shippingMethod as unknown as ShippingMethod,
+-          shippingCost, subtotal, discount,
+-          vat: totalVatAmount, total,
++          shippingCost,
++          subtotal,
++          discount,
++          vat: totalVatAmount,
++          total,
+           subtotalExclVat,
+           vatAmount: totalVatAmount,
+           totalInclVat: total,
+           vatRateSnapshot: vatRate,
+-          shippingExclVat, shippingVatAmount,
+-          promoCode, promoDiscountType, promoDiscountValue, paymentIntentId,
++          shippingExclVat,
++          shippingVatAmount,
++          promoCode,
++          promoDiscountType,
++          promoDiscountValue,
++          paymentIntentId,
+           loyaltyRedeemAed: loyaltyRedeemAed > 0 ? loyaltyRedeemAed : null,
+           paymentMethod: paymentMethod as unknown as PaymentMethod,
+-          notes, billingInvoiceCompany, billingInvoiceVatNumber,
+-          items: { create: orderItems },
++          notes,
++          billingInvoiceCompany,
++          billingInvoiceVatNumber,
++          items: {
++            create: orderItems,
++          },
+           statusHistory: {
+             create: {
+               status: initialOrderStatus,
+-              notes: paymentMethod === PaymentMethodDto.CASH_ON_DELIVERY
+-                ? 'Order placed with Cash on Delivery'
++              notes: paymentMethod === PaymentMethodDto.CASH_ON_DELIVERY 
++                ? 'Order placed with Cash on Delivery' 
+                 : 'Order placed, awaiting payment',
+             },
+           },
+         },
+-        include: { items: true, shippingAddress: true, billingAddress: true },
++        include: {
++          items: true,
++          shippingAddress: true,
++          billingAddress: true,
++        },
+       });
+ 
++      // Reserve stock for all order items
+       await this.stockService.reserveStockBatch(
+         orderItems
+           .filter(item => item.productId != null)
+           .map(item => ({ productId: item.productId, quantity: item.quantity })),
+         newOrder.id,
+         userId,
+-        tx, // enroll in the outer transaction to avoid nested-tx split-brain
+       );
++
+       return newOrder;
+     });
+ 
++    // Process loyalty cash redemption outside transaction (after order created successfully)
+     if (loyaltyRedeemAed > 0) {
+       await this.loyaltyService.redeemLoyaltyCash(
+-        userId, loyaltyRedeemAed, order.id, `Redeemed on order ${order.orderNumber}`,
++        userId,
++        loyaltyRedeemAed,
++        order.id,
++        `Redeemed on order ${order.orderNumber}`,
+       );
+     }
++
++    // Increment promo code usage count
+     if (promoCodeId) {
+       await this.prisma.promoCode.update({
+         where: { id: promoCodeId },
+@@ -470,77 +444,36 @@ export class OrdersService {
+       });
+     }
+ 
+-    const finalOrder = await this.finalizeLoyaltyEarn(order.id, subtotal, loyaltyRedeemAed, order);
+-
+-    // Fire-and-forget invoice generation + email (do not block order response on failure)
+-    this.issueInvoiceAndEmail(order.id).catch((err) =>
+-      this.logger.error(`Invoice issuance threw for order ${order.id}: ${err?.message}`),
+-    );
+-
+-    return this.formatOrderResponse(finalOrder);
+-  }
++    // Compute and award loyalty cash earned from this order
++    const earnPercent = await this.getLoyaltyEarnPercent();
++    // Eligible amount = subtotal minus any loyalty redeemed
++    const eligibleForEarn = Math.max(0, subtotal - loyaltyRedeemAed);
++    const loyaltyEarnAed = Math.round(eligibleForEarn * earnPercent * 100) / 100;
+ 
+-  private async handleStockTransition(
+-    newStatus: OrderStatus,
+-    oldStatus: OrderStatus,
+-    stockItems: Array<{ productId: number; quantity: number }>,
+-    orderId: string,
+-    userId?: string,
+-  ): Promise<void> {
+-    if (stockItems.length === 0) return;
++    if (loyaltyEarnAed > 0) {
++      // Update the order with earned amount
++      const updatedOrder = await this.prisma.order.update({
++        where: { id: order.id },
++        data: { loyaltyEarnAed },
++        include: {
++          items: true,
++          shippingAddress: true,
++          billingAddress: true,
++        },
++      });
+ 
+-    if (newStatus === OrderStatus.PROCESSING && oldStatus === OrderStatus.PAYMENT_PENDING) {
+-      await this.stockService.confirmReservationBatch(stockItems, orderId, userId);
+-      this.logger.log(`Confirmed stock reservation for order ${orderId}`);
+-      return;
+-    }
++      // Create EARNED transaction and update wallet
++      await this.loyaltyService.addLoyaltyCash(
++        userId,
++        loyaltyEarnAed,
++        order.id,
++        `Earned from Order #${order.orderNumber}`,
++      );
+ 
+-    if (newStatus === OrderStatus.REFUNDED) {
+-      await this.stockService.restoreStockBatch(stockItems, orderId, userId);
+-      this.logger.log(`Restored stock for refunded order ${orderId}`);
+-      return;
++      return this.formatOrderResponse(updatedOrder);
+     }
+ 
+-    if (newStatus !== OrderStatus.CANCELLED) return;
+-
+-    const isPreConfirm = oldStatus === OrderStatus.PENDING || oldStatus === OrderStatus.PAYMENT_PENDING;
+-    const isPostConfirm =
+-      oldStatus === OrderStatus.PROCESSING ||
+-      oldStatus === OrderStatus.PAID ||
+-      oldStatus === OrderStatus.SHIPPED;
+-
+-    if (isPreConfirm) {
+-      await this.stockService.releaseReservationBatch(stockItems, orderId, userId);
+-      this.logger.log(`Released stock reservation for cancelled order ${orderId}`);
+-    } else if (isPostConfirm) {
+-      await this.stockService.restoreStockBatch(stockItems, orderId, userId);
+-      this.logger.log(`Restored stock for cancelled order ${orderId}`);
+-    }
+-  }
+-
+-  private buildOrderStatusUpdateData(
+-    newStatus: OrderStatus,
+-    oldStatus: OrderStatus,
+-    paymentStatus: PaymentStatus,
+-    notes?: string,
+-  ): any {
+-    const updateData: any = {
+-      status: newStatus,
+-      statusHistory: {
+-        create: {
+-          status: newStatus,
+-          notes: notes || `Status changed from ${oldStatus} to ${newStatus}`,
+-        },
+-      },
+-    };
+-    if (newStatus === OrderStatus.PROCESSING && paymentStatus === PaymentStatus.PENDING) {
+-      updateData.paymentStatus = PaymentStatus.PAID;
+-      updateData.paidAt = new Date();
+-    }
+-    if (newStatus === OrderStatus.REFUNDED) {
+-      updateData.paymentStatus = PaymentStatus.REFUNDED;
+-    }
+-    return updateData;
++    return this.formatOrderResponse(order);
+   }
+ 
+   /**
+@@ -567,9 +500,60 @@ export class OrdersService {
+       .filter((item): item is typeof item & { productId: number } => item.productId != null)
+       .map(item => ({ productId: item.productId, quantity: item.quantity }));
+ 
+-    await this.handleStockTransition(newStatus, oldStatus, stockItems, orderId, userId);
++    // Handle stock lifecycle based on status transition
++    if (newStatus === OrderStatus.PROCESSING && oldStatus === OrderStatus.PAYMENT_PENDING) {
++      // Payment confirmed → confirm reservation (deduct from stockQty and reservedQty)
++      if (stockItems.length > 0) {
++        await this.stockService.confirmReservationBatch(stockItems, orderId, userId);
++        this.logger.log(`Confirmed stock reservation for order ${orderId}`);
++      }
++    } else if (newStatus === OrderStatus.CANCELLED) {
++      if (
++        oldStatus === OrderStatus.PENDING ||
++        oldStatus === OrderStatus.PAYMENT_PENDING
++      ) {
++        // Cancelled before payment confirmed → release reservation
++        if (stockItems.length > 0) {
++          await this.stockService.releaseReservationBatch(stockItems, orderId, userId);
++          this.logger.log(`Released stock reservation for cancelled order ${orderId}`);
++        }
++      } else if (
++        oldStatus === OrderStatus.PROCESSING ||
++        oldStatus === OrderStatus.PAID ||
++        oldStatus === OrderStatus.SHIPPED
++      ) {
++        // Cancelled after payment confirmed → restore stock
++        if (stockItems.length > 0) {
++          await this.stockService.restoreStockBatch(stockItems, orderId, userId);
++          this.logger.log(`Restored stock for cancelled order ${orderId}`);
++        }
++      }
++    } else if (newStatus === OrderStatus.REFUNDED) {
++      // Refund → restore stock
++      if (stockItems.length > 0) {
++        await this.stockService.restoreStockBatch(stockItems, orderId, userId);
++        this.logger.log(`Restored stock for refunded order ${orderId}`);
++      }
++    }
+ 
+-    const updateData = this.buildOrderStatusUpdateData(newStatus, oldStatus, order.paymentStatus, notes);
++    // Update order status and optional payment fields
++    const updateData: any = {
++      status: newStatus,
++      statusHistory: {
++        create: {
++          status: newStatus,
++          notes: notes || `Status changed from ${oldStatus} to ${newStatus}`,
++        },
++      },
++    };
++
++    if (newStatus === OrderStatus.PROCESSING && order.paymentStatus === PaymentStatus.PENDING) {
++      updateData.paymentStatus = PaymentStatus.PAID;
++      updateData.paidAt = new Date();
++    }
++    if (newStatus === OrderStatus.REFUNDED) {
++      updateData.paymentStatus = PaymentStatus.REFUNDED;
++    }
+ 
+     const updatedOrder = await this.prisma.order.update({
+       where: { id: orderId },
+@@ -595,16 +579,18 @@ export class OrdersService {
+       where: { key },
+     });
+ 
+-    // Auto-create with default value
+-    setting ??= await this.prisma.siteSetting.create({
+-      data: {
+-        key,
+-        value: '0.05',
+-        type: 'number',
+-        group: 'loyalty',
+-        label: 'Loyalty Earn Percent (e.g., 0.05 = 5%)',
+-      },
+-    });
++    if (!setting) {
++      // Auto-create with default value
++      setting = await this.prisma.siteSetting.create({
++        data: {
++          key,
++          value: '0.05',
++          type: 'number',
++          group: 'loyalty',
++          label: 'Loyalty Earn Percent (e.g., 0.05 = 5%)',
++        },
++      });
++    }
+ 
+     const parsed = Number.parseFloat(setting.value);
+     return Number.isNaN(parsed) ? 0.05 : parsed;
+@@ -615,51 +601,32 @@ export class OrdersService {
+       where: { userId },
+       include: {
+         items: true,
++        shippingAddress: true,
+       },
+       orderBy: { createdAt: 'desc' },
+     });
+ 
+-    const shippingIds = Array.from(
+-      new Set(orders.map((o) => o.shippingAddressId).filter(Boolean) as string[]),
+-    );
+-    const shippingAddresses = shippingIds.length
+-      ? await this.prisma.address.findMany({ where: { id: { in: shippingIds } } })
+-      : [];
+-    const addrMap = new Map(shippingAddresses.map((a) => [a.id, a]));
+-
+-    return orders.map(order =>
+-      this.formatOrderResponse({
+-        ...order,
+-        shippingAddress: order.shippingAddressId ? addrMap.get(order.shippingAddressId) ?? null : null,
+-      }),
+-    );
++    return orders.map(order => this.formatOrderResponse(order));
+   }
+ 
+   async getOrderById(userId: string, orderId: string) {
+-    const baseOrder = await this.prisma.order.findFirst({
++    const order = await this.prisma.order.findFirst({
+       where: { id: orderId, userId },
+       include: {
+         items: true,
++        shippingAddress: true,
++        billingAddress: true,
+         statusHistory: {
+           orderBy: { createdAt: 'desc' },
+         },
+       },
+     });
+ 
+-    if (!baseOrder) {
++    if (!order) {
+       throw new NotFoundException('Order not found');
+     }
+ 
+-    const [shippingAddress, billingAddress] = await Promise.all([
+-      baseOrder.shippingAddressId
+-        ? this.prisma.address.findUnique({ where: { id: baseOrder.shippingAddressId } }).catch(() => null)
+-        : null,
+-      baseOrder.billingAddressId
+-        ? this.prisma.address.findUnique({ where: { id: baseOrder.billingAddressId } }).catch(() => null)
+-        : null,
+-    ]);
+-
+-    return this.formatOrderResponse({ ...baseOrder, shippingAddress, billingAddress });
++    return this.formatOrderResponse(order);
+   }
+ 
+   async getAllOrders(page = 1, limit = 20) {
+@@ -671,6 +638,7 @@ export class OrdersService {
+         take: limit,
+         include: {
+           items: true,
++          shippingAddress: true,
+           user: {
+             select: { id: true, email: true, firstName: true, lastName: true },
+           },
+@@ -680,21 +648,8 @@ export class OrdersService {
+       this.prisma.order.count(),
+     ]);
+ 
+-    const shippingIds = Array.from(
+-      new Set(orders.map((o) => o.shippingAddressId).filter(Boolean) as string[]),
+-    );
+-    const shippingAddresses = shippingIds.length
+-      ? await this.prisma.address.findMany({ where: { id: { in: shippingIds } } })
+-      : [];
+-    const addrMap = new Map(shippingAddresses.map((a) => [a.id, a]));
+-
+     return {
+-      data: orders.map(order =>
+-        this.formatOrderResponse({
+-          ...order,
+-          shippingAddress: order.shippingAddressId ? addrMap.get(order.shippingAddressId) ?? null : null,
+-        }),
+-      ),
++      data: orders.map(order => this.formatOrderResponse(order)),
+       meta: {
+         total,
+         page,
+@@ -704,15 +659,18 @@ export class OrdersService {
+     };
+   }
+ 
+-  private async calculateShippingCost(method: ShippingMethod, subtotal: number = 0): Promise<number> {
+-    // PICKUP is always free; every other method uses the admin-configured shipping fee.
+-    // The fee is mandatory and centrally managed via SiteSetting `shipping_fee`
+-    // (default AED 10, auto-seeded on first read).
+-    // If `shipping_free_threshold` > 0 and order subtotal meets it, shipping is waived.
+-    if (method === ShippingMethod.PICKUP) return 0;
+-    const threshold = await this.settingsService.getFreeShippingThreshold();
+-    if (threshold > 0 && subtotal >= threshold) return 0;
+-    return this.settingsService.getShippingFee();
++  private calculateShippingCost(method: ShippingMethod): number {
++    switch (method) {
++      case ShippingMethod.EXPRESS:
++        return 25;
++      case ShippingMethod.OVERNIGHT:
++        return 50;
++      case ShippingMethod.PICKUP:
++        return 0;
++      case ShippingMethod.STANDARD:
++      default:
++        return 10;
++    }
+   }
+ 
+   private async generateOrderNumber(): Promise<string> {
+diff --git a/backend/src/products/products.service.ts b/backend/src/products/products.service.ts
+index ab29c04..6970ba0 100644
+--- a/backend/src/products/products.service.ts
++++ b/backend/src/products/products.service.ts
+@@ -353,7 +353,9 @@ export class ProductsService {
+         displayOrder: img.displayOrder,
+       })) || [],
+       stock: product.stockQty ?? 0,
+-      inStock: (product.stockQty ?? 0) > 0,
++      reservedQty: product.reservedQty ?? 0,
++      availableQty: Math.max(0, (product.stockQty ?? 0) - (product.reservedQty ?? 0)),
++      inStock: ((product.stockQty ?? 0) - (product.reservedQty ?? 0)) > 0,
+       stockQuantity: product.stockQty ?? 0,
+       material: product.material,
+       color: product.colour,
+@@ -367,13 +369,13 @@ export class ProductsService {
+       availability: (() => {
+         if (product.isActive === false) return 'INACTIVE';
+         if (product.isDiscontinued === true) return 'DISCONTINUED';
+-        if ((product.stockQty ?? 0) <= 0) return 'OUT_OF_STOCK';
++        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'OUT_OF_STOCK';
+         return 'AVAILABLE';
+       })(),
+       status: (() => {
+         if (product.isActive === false) return 'draft';
+         if (product.isDiscontinued === true) return 'archived';
+-        if ((product.stockQty ?? 0) <= 0) return 'out-of-stock';
++        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'out-of-stock';
+         return 'active';
+       })(),
+       createdAt: product.createdAt,
+@@ -658,7 +660,7 @@ export class ProductsService {
+         attributes: s.variantAttributes || {},
+         price: s.pricing?.price_incl_vat_aed ? Number.parseFloat(s.pricing.price_incl_vat_aed.toString()) : 0,
+         stockQty: s.stockQty ?? 0,
+-        inStock: (s.stockQty ?? 0) > 0,
++        inStock: ((s.stockQty ?? 0) - (s.reservedQty ?? 0)) > 0,
+         primaryImage: s.images?.[0]?.media_asset_id || null,
+         isCurrent: s.id === product.id,
+       }));
+@@ -714,7 +716,9 @@ export class ProductsService {
+         displayOrder: img.displayOrder,
+       })) || [],
+       stockQty: product.stockQty ?? 0,
+-      inStock: (product.stockQty ?? 0) > 0,
++      reservedQty: product.reservedQty ?? 0,
++      availableQty: Math.max(0, (product.stockQty ?? 0) - (product.reservedQty ?? 0)),
++      inStock: ((product.stockQty ?? 0) - (product.reservedQty ?? 0)) > 0,
+       lowStockAlert: product.lowStockAlert ?? 5,
+       material: product.material,
+       color: product.colour,
+@@ -724,12 +728,12 @@ export class ProductsService {
+       isActive: product.isActive,
+       isDiscontinued: product.isDiscontinued ?? false,
+       // Single source of truth for the catalog/admin UI. Combines isActive,
+-      // isDiscontinued and stockQty into one of: AVAILABLE, OUT_OF_STOCK,
++      // isDiscontinued and available stock into one of: AVAILABLE, OUT_OF_STOCK,
+       // DISCONTINUED, INACTIVE.
+       availability: (() => {
+         if (product.isActive === false) return 'INACTIVE';
+         if (product.isDiscontinued === true) return 'DISCONTINUED';
+-        if ((product.stockQty ?? 0) <= 0) return 'OUT_OF_STOCK';
++        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'OUT_OF_STOCK';
+         return 'AVAILABLE';
+       })(),
+       // Legacy admin status string (kept for compatibility with the products
+@@ -737,7 +741,7 @@ export class ProductsService {
+       status: (() => {
+         if (product.isActive === false) return 'draft';
+         if (product.isDiscontinued === true) return 'archived';
+-        if ((product.stockQty ?? 0) <= 0) return 'out-of-stock';
++        if (((product.stockQty ?? 0) - (product.reservedQty ?? 0)) <= 0) return 'out-of-stock';
+         return 'active';
+       })(),
+       createdAt: product.createdAt,
+@@ -1033,8 +1037,11 @@ export class ProductsService {
+   private async upsertProductPricing(tx: any, productId: number, dto: any, hasExisting: boolean): Promise<void> {
+     if (dto.price === undefined && dto.compareAtPrice === undefined && dto.costPrice === undefined) return;
+     const pricingData: any = {};
+-    if (dto.price !== undefined) pricingData.price_incl_vat_aed = dto.price;
+-    if (dto.compareAtPrice !== undefined) pricingData.price_excl_vat_aed = dto.compareAtPrice;
++    if (dto.price !== undefined) {
++      pricingData.price_incl_vat_aed = dto.price;
++      // Always keep excl-VAT in sync with incl-VAT (5% VAT)
++      pricingData.price_excl_vat_aed = Math.round((dto.price / 1.05) * 100) / 100;
++    }
+     // Allow explicitly clearing cost price by passing null, or saving it when provided.
+     if (dto.costPrice !== undefined) pricingData.cost_price_aed = dto.costPrice ?? null;
+     if (hasExisting) {
+diff --git a/frontend-react/index.html b/frontend-react/index.html
+index 06c946a..d5b21ee 100644
+--- a/frontend-react/index.html
++++ b/frontend-react/index.html
+@@ -4,7 +4,7 @@
+     <meta charset="UTF-8" />
+     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>Solo E-Commerce</title>
++    <title>Collation Formation Curation</title>
+     <link rel="preconnect" href="https://fonts.googleapis.com" />
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+diff --git a/frontend-react/src/App.tsx b/frontend-react/src/App.tsx
+index ceddbfe..c3a2ec5 100644
+--- a/frontend-react/src/App.tsx
++++ b/frontend-react/src/App.tsx
+@@ -179,6 +179,7 @@ export default function App() {
+           <Route path="navigation" element={<AdminNavigationPage />} />
+           <Route path="collections" element={<AdminCollectionsPage />} />
+           <Route path="pages" element={<AdminCmsPagesPage />} />
++          <Route path="landing-pages" element={<Navigate to="/admin/pages" replace />} />
+           <Route path="audit-log" element={<AdminAuditLogPage />} />
+         </Route>
+       </Routes>
+diff --git a/frontend-react/src/api/promo.ts b/frontend-react/src/api/promo.ts
+index f12c627..34bbb4a 100644
+--- a/frontend-react/src/api/promo.ts
++++ b/frontend-react/src/api/promo.ts
+@@ -44,9 +44,10 @@ export const promoApi = {
+   async validate(body: ValidatePromoRequest): Promise<PromoValidationResult> {
+     const { data } = await api.post('/promo-codes/validate', body);
+     // Normalise backend field names to match PromoValidationResult
++    const rawDiscount = data.discount ?? data.discountAmount ?? 0;
+     return {
+       valid: data.valid ?? false,
+-      discount: data.discount ?? data.discountAmount ?? 0,
++      discount: Number(rawDiscount) || 0,
+       discountType: data.discountType ?? (data.type === 'PERCENTAGE' ? 'percentage' : 'fixed'),
+       message: data.message ?? data.description,
+     };
+diff --git a/frontend-react/src/components/layout/Footer.tsx b/frontend-react/src/components/layout/Footer.tsx
+index b3654a1..c071702 100644
+--- a/frontend-react/src/components/layout/Footer.tsx
++++ b/frontend-react/src/components/layout/Footer.tsx
+@@ -45,7 +45,7 @@ export default function Footer() {
+     <footer className={styles.footer}>
+       <div className={styles['footer-grid']}>
+         <div className={styles['footer-about']}>
+-          <h3>SOLO</h3>
++          <img src="/logo.png" alt="Collation Formation Curation" style={{ height: '56px', width: 'auto', marginBottom: '0.75rem' }} />
+           <p>
+             Premium kitchenware and home essentials. Curated collections for the modern home.
+           </p>
+@@ -87,7 +87,7 @@ export default function Footer() {
+           <span style={{ color: '#555' }}>|</span>
+           <Link to="/pages/contact" style={{ color: '#aaa' }}>Contact</Link>
+         </div>
+-        © {new Date().getFullYear()} Solo E-Commerce. All rights reserved.
++        © {new Date().getFullYear()} Collation Formation Curation. All rights reserved.
+       </div>
+     </footer>
+   );
+diff --git a/frontend-react/src/components/layout/Header.module.css b/frontend-react/src/components/layout/Header.module.css
+index 81e804c..4739fd1 100644
+--- a/frontend-react/src/components/layout/Header.module.css
++++ b/frontend-react/src/components/layout/Header.module.css
+@@ -92,7 +92,7 @@
+   line-height: 1;
+ }
+ 
+-@media (max-width: 768px) {
++@media (max-width: 1024px) {
+   .header-top-links { display: none; }
+   .header-nav { display: none; }
+ }
+@@ -108,16 +108,22 @@
+ }
+ 
+ .header-logo a {
+-  font-size: 24px;
+-  font-weight: 700;
+-  letter-spacing: 2px;
+-  text-transform: uppercase;
+-  color: var(--color-primary);
++  display: flex;
++  align-items: center;
+   transition: opacity var(--transition-fast);
++  text-decoration: none;
+ }
+ .header-logo a:hover {
+   opacity: 0.8;
+ }
++.logo-img {
++  height: 48px;
++  width: 48px;
++  object-fit: contain;
++  display: block;
++  flex-shrink: 0;
++  border-radius: 4px;
++}
+ 
+ .header-search {
+   flex: 1;
+@@ -301,19 +307,23 @@
+ }
+ 
+ .mobile-menu-btn {
+-  display: none;
++  display: block;
+   background: none;
+   border: none;
+   font-size: 24px;
+   padding: 8px;
++  cursor: pointer;
+   border-radius: var(--radius-sm);
+   transition: background var(--transition-fast);
++  flex-shrink: 0;
++  line-height: 1;
++  order: -1;
+ }
+ .mobile-menu-btn:hover {
+   background: var(--color-bg-alt);
+ }
+ 
+-@media (max-width: 768px) {
++@media (max-width: 1024px) {
+   .header-main {
+     padding: 0 12px;
+     gap: 8px;
+@@ -327,8 +337,12 @@
+   }
+ 
+   .header-logo a {
+-    font-size: 18px;
+-    letter-spacing: 2px;
++    gap: 0;
++  }
++
++  .logo-img {
++    height: 40px;
++    width: 40px;
+   }
+ 
+   .header-actions {
+diff --git a/frontend-react/src/components/layout/Header.tsx b/frontend-react/src/components/layout/Header.tsx
+index 4fdcd2c..e07e009 100644
+--- a/frontend-react/src/components/layout/Header.tsx
++++ b/frontend-react/src/components/layout/Header.tsx
+@@ -1,32 +1,28 @@
+-import { useState, useEffect, useRef, useCallback, type FormEvent } from 'react';
++import { useState, useEffect, useRef, useCallback } from 'react';
+ import { Link, useNavigate, useLocation } from 'react-router-dom';
+ import { useAuth } from '../../contexts/AuthContext';
+ import { useCart } from '../../contexts/CartContext';
++import { useCatalog } from '../../contexts/CatalogContext';
+ import { announcementsApi, type AnnouncementDto } from '../../api/announcements';
+ import { useNavMenu } from '../../hooks/useNavMenu';
+-import HamburgerButton from '../navigation/HamburgerButton';
+ import MenuDrawer from '../navigation/MenuDrawer';
+ import styles from './Header.module.css';
+ 
+ export default function Header() {
+-  const { isAuthenticated, isAdmin, logout } = useAuth();
++  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+   const { itemCount } = useCart();
++  const { categories } = useCatalog();
++  const mainNav = useNavMenu('main-nav');
+   const navigate = useNavigate();
+   const location = useLocation();
+   const [search, setSearch] = useState('');
+   const [menuOpen, setMenuOpen] = useState(false);
+-  const hamburgerRef = useRef<HTMLDivElement>(null);
+-  const [scrolled, setScrolled] = useState(false);
+ 
+   // Announcements rotation
+   const [announcements, setAnnouncements] = useState<AnnouncementDto[]>([]);
+   const [currentIdx, setCurrentIdx] = useState(0);
+   const [fade, setFade] = useState(true);
+-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+-
+-  // CMS-driven navigation menus (managed via Admin → Navigation)
+-  const mainNavItems = useNavMenu('main-nav');
+-  const topLinks = useNavMenu('top-links');
++  const timerRef = useRef<ReturnType<typeof setInterval>>();
+ 
+   useEffect(() => {
+     announcementsApi.getActive().then(setAnnouncements).catch(() => {});
+@@ -43,27 +39,10 @@ export default function Header() {
+   useEffect(() => {
+     if (announcements.length <= 1) return;
+     timerRef.current = setInterval(rotate, 4000);
+-    return () => {
+-      if (timerRef.current !== null) {
+-        clearInterval(timerRef.current);
+-      }
+-    };
++    return () => clearInterval(timerRef.current);
+   }, [announcements.length, rotate]);
+ 
+-  // Close drawer on navigation
+-  useEffect(() => {
+-    setMenuOpen(false);
+-  }, [location.pathname, location.search]);
+-
+-  // Subtle shadow on scroll
+-  useEffect(() => {
+-    const onScroll = () => setScrolled(window.scrollY > 10);
+-    onScroll();
+-    window.addEventListener('scroll', onScroll, { passive: true });
+-    return () => window.removeEventListener('scroll', onScroll);
+-  }, []);
+-
+-  const handleSearch = (e: FormEvent<HTMLFormElement>) => {
++  const handleSearch = (e: React.FormEvent) => {
+     e.preventDefault();
+     if (search.trim()) {
+       navigate(`/search?q=${encodeURIComponent(search.trim())}`);
+@@ -77,7 +56,7 @@ export default function Header() {
+   };
+ 
+   return (
+-    <header className={`${styles.header} ${scrolled ? styles.scrolled : ''}`}>
++    <header className={styles.header}>
+       <div className={styles['header-top']}>
+         {announcements.length > 0 && (
+           <span
+@@ -104,75 +83,54 @@ export default function Header() {
+         )}
+       </div>
+       <div className={styles['header-main']}>
+-        <div ref={hamburgerRef} className={styles['hamburger-wrap']}>
+-          <HamburgerButton
+-            isOpen={menuOpen}
+-            onToggle={() => setMenuOpen((o) => !o)}
+-          />
+-        </div>
++        <button className={styles['mobile-menu-btn']} onClick={() => setMenuOpen(!menuOpen)}>
++          ☰
++        </button>
+         <div className={styles['header-logo']}>
+-          <Link to="/">SOLO</Link>
++          <Link to="/">
++            <img src="/cfc-logo.jpeg" alt="Collation Formation Curation" className={styles['logo-img']} />
++          </Link>
+         </div>
+         <form className={styles['header-search']} onSubmit={handleSearch}>
+           <input
+             type="text"
+             placeholder="Search products..."
+             value={search}
+-            onChange={(e) => setSearch(e.target.value)}
++            onChange={e => setSearch(e.target.value)}
+           />
+           <button type="submit">🔍</button>
+         </form>
+         <div className={styles['header-actions']}>
+           {isAuthenticated ? (
+             <>
+-              <Link to="/account" className={styles['account-link']}>
+-                Account
++              <Link to="/account">
++                {user?.firstName || 'Account'}
+               </Link>
+-              {isAdmin && (
+-                <Link to="/admin" className={styles['admin-link']}>
+-                  Admin
+-                </Link>
+-              )}
+-              <button onClick={handleLogout} className={styles['logout-btn']}>
+-                Logout
+-              </button>
++              {isAdmin && <Link to="/admin">Admin</Link>}
++              <button onClick={handleLogout}>Logout</button>
+             </>
+           ) : (
+-            <Link to="/login" className={styles['account-link']}>
+-              Sign In
+-            </Link>
++            <Link to="/login">Sign In</Link>
+           )}
+-          <Link to="/favorites" className={styles['icon-link']}>
+-            ♡
+-          </Link>
+-          <Link
+-            to="/cart"
+-            className={styles['icon-link']}
+-            style={{ position: 'relative' }}
+-          >
++          <Link to="/favorites">♡</Link>
++          <Link to="/cart" style={{ position: 'relative' }}>
+             🛒
+-            {itemCount > 0 && (
+-              <span className={styles['cart-count']}>{itemCount}</span>
+-            )}
++            {itemCount > 0 && <span className={styles['cart-count']}>{itemCount}</span>}
+           </Link>
+         </div>
+       </div>
+-
+-      <MenuDrawer
+-        isOpen={menuOpen}
+-        onClose={() => setMenuOpen(false)}
+-        returnFocusRef={hamburgerRef}
+-      />
+-
+-      {mainNavItems.length > 0 && (
+-        <nav className={styles['header-nav']} aria-label="Main navigation">
+-          <ul className={styles['header-nav-list']}>
+-            {mainNavItems.map((item) => (
++      <MenuDrawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
++      <nav className={styles['header-nav']}>
++        <ul>
++          <li><Link to="/" className={location.pathname === '/' ? styles.active : ''}>Home</Link></li>
++          {mainNav.length > 0 ? (
++            mainNav.slice(0, 8).map((item) => (
+               <li key={item.id}>
+                 <Link
+                   to={item.url || '#'}
+                   target={item.openInNewTab ? '_blank' : undefined}
+                   rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
++                  className={item.url && location.pathname === item.url ? styles.active : ''}
+                 >
+                   {item.label}
+                   {item.badge && (
+@@ -185,10 +143,25 @@ export default function Header() {
+                   )}
+                 </Link>
+               </li>
+-            ))}
+-          </ul>
+-        </nav>
+-      )}
++            ))
++          ) : (
++            <>
++              {categories.filter(c => c.isActive !== false).slice(0, 6).map(cat => (
++                <li key={cat.id}>
++                  <Link
++                    to={`/category/${cat.slug || cat.id}`}
++                    className={location.pathname.includes(`/category/${cat.slug || cat.id}`) ? styles.active : ''}
++                  >
++                    {cat.name}
++                  </Link>
++                </li>
++              ))}
++              <li><Link to="/new-arrivals">New Arrivals</Link></li>
++              <li><Link to="/best-sellers">Best Sellers</Link></li>
++            </>
++          )}
++        </ul>
++      </nav>
+     </header>
+   );
+ }
+diff --git a/frontend-react/src/components/layout/MobileDrawer.tsx b/frontend-react/src/components/layout/MobileDrawer.tsx
+index 23779dd..6dd696c 100644
+--- a/frontend-react/src/components/layout/MobileDrawer.tsx
++++ b/frontend-react/src/components/layout/MobileDrawer.tsx
+@@ -1,9 +1,9 @@
+ import { useEffect, useState } from 'react';
+ import { Link } from 'react-router-dom';
+-import { useAuthStore } from '@/stores/auth';
+-import { categoriesApi } from '@/api/categories';
+-import { useNavMenu } from '@/hooks/useNavMenu';
+-import type { CategoryDto } from '@/types';
++import { useAuth } from '../../contexts/AuthContext';
++import { categoriesApi } from '../../api/categories';
++import { useNavMenu } from '../../hooks/useNavMenu';
++import type { CategoryDto } from '../../types';
+ 
+ interface MobileDrawerProps {
+   open: boolean;
+@@ -11,7 +11,7 @@ interface MobileDrawerProps {
+ }
+ 
+ export default function MobileDrawer({ open, onClose }: Readonly<MobileDrawerProps>) {
+-  const { isAuthenticated, user, logout } = useAuthStore();
++  const { isAuthenticated, user, logout } = useAuth();
+   const [categories, setCategories] = useState<CategoryDto[]>([]);
+   const [catExpanded, setCatExpanded] = useState(false);
+   const mainNavItems = useNavMenu('main-nav');
+@@ -46,7 +46,7 @@ export default function MobileDrawer({ open, onClose }: Readonly<MobileDrawerPro
+       >
+         {/* Header */}
+         <div className="h-48 bg-gradient-to-b from-[#1A1A1A] via-[#2D2D2D] to-[#1A1A1A] flex flex-col items-center justify-center px-6">
+-          <span className="text-2xl font-bold tracking-widest text-white mb-4">SOLO</span>
++          <img src="/cfc-logo.jpeg" alt="Collation Formation Curation" className="h-12 w-12 object-contain mb-4 rounded" />
+           <Link
+             to={isAuthenticated ? '/account' : '/login'}
+             onClick={onClose}
+diff --git a/frontend-react/src/components/porto/PortoSections.tsx b/frontend-react/src/components/porto/PortoSections.tsx
+index c43166a..fcc4934 100644
+--- a/frontend-react/src/components/porto/PortoSections.tsx
++++ b/frontend-react/src/components/porto/PortoSections.tsx
+@@ -36,7 +36,7 @@ export function HeroSection({ banners = [] }: Readonly<{ banners?: BannerDto[] }
+       )}
+       <div className={styles['hero-overlay']} />
+       <div className={styles['hero-content']}>
+-        <h1>{slide?.title || 'Welcome to Solo Ecommerce'}</h1>
++        <h1>{slide?.title || 'Welcome to Collation Formation Curation'}</h1>
+         <p>{slide?.subtitle || 'Discover premium products for your lifestyle'}</p>
+         {slide?.ctaUrl ? (
+           <Link to={slide.ctaUrl} className={styles['hero-cta']}>
+diff --git a/frontend-react/src/config/index.ts b/frontend-react/src/config/index.ts
+index f352013..2a2c3cd 100644
+--- a/frontend-react/src/config/index.ts
++++ b/frontend-react/src/config/index.ts
+@@ -2,7 +2,7 @@
+ export const config = {
+   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '/api',
+   stripePublishableKey: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? '',
+-  appName: 'Solo',
++  appName: 'Collation Formation Curation',
+   currency: 'AED',
+   defaultCountry: 'AE',
+ } as const;
+diff --git a/frontend-react/src/pages/CheckoutPage.tsx b/frontend-react/src/pages/CheckoutPage.tsx
+index 7129af8..e4d10d8 100644
+--- a/frontend-react/src/pages/CheckoutPage.tsx
++++ b/frontend-react/src/pages/CheckoutPage.tsx
+@@ -186,7 +186,9 @@ function OrderSummaryPanel(props: Readonly<OrderSummaryPanelProps>) {
+             style={{ padding: '8px 16px', fontSize: 13, fontWeight: 600, border: '1px solid #ddd', borderRadius: 6, background: '#fff', cursor: 'pointer' }}>Apply</button>
+         </div>
+         {promoResult?.valid && (
+-          <p style={{ fontSize: 14, color: '#16a34a', marginBottom: 12 }}>Discount: −{config.currency} {discount.toFixed(2)}</p>
++          <p style={{ fontSize: 14, color: '#16a34a', marginBottom: 12 }}>
++            {discount > 0 ? `Discount: −${config.currency} ${discount.toFixed(2)}` : 'Promo code applied!'}
++          </p>
+         )}
+         {loyaltyEnabled && loyaltyBalance > 0 && (
+           <div style={{ background: '#faf6ed', border: '1px solid #e8d5a0', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+@@ -304,11 +306,11 @@ function CheckoutInner({ isMobile }: Readonly<{ isMobile: boolean }>) {
+   const [savedAddresses, setSavedAddresses] = useState<AddressDto[]>([]);
+   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+ 
+-  const subtotal = cartTotal; // VAT-inclusive line total
++  const subtotal = Number(cartTotal) || 0; // VAT-inclusive line total
+   const vatRate = vatPercent / 100;
+   const subtotalExclVat = Math.round((subtotal / (1 + vatRate)) * 100) / 100;
+   const vatAmount = Math.round((subtotal - subtotalExclVat) * 100) / 100;
+-  const discount = promoResult?.valid ? promoResult.discount : 0;
++  const discount = promoResult?.valid ? (Number(promoResult.discount) || 0) : 0;
+   const redeemAmount = Math.min(
+     Number.parseFloat(loyaltyRedeem) || 0,
+     loyaltyBalance,
+@@ -377,11 +379,12 @@ function CheckoutInner({ isMobile }: Readonly<{ isMobile: boolean }>) {
+     try {
+       const res = await promoApi.validate({ code: promoCode, orderAmount: subtotal });
+       setPromoResult(res);
+-      if (res.valid) toast.success('Promo code applied!');
+-      else toast.error(res.message ?? 'Invalid promo code');
++      toast.success('Promo code applied!');
+     } catch (err: any) {
+       const msg = err?.response?.data?.message ?? 'Could not validate promo code';
+-      toast.error(msg);
++      const message = Array.isArray(msg) ? msg[0] : msg;
++      toast.error(message);
++      setPromoResult(null);
+     }
+   };
+ 
+diff --git a/frontend-react/src/pages/ContactPage.tsx b/frontend-react/src/pages/ContactPage.tsx
+index 0461444..e4df264 100644
+--- a/frontend-react/src/pages/ContactPage.tsx
++++ b/frontend-react/src/pages/ContactPage.tsx
+@@ -6,7 +6,7 @@ import api from '@/api/client';
+  * WhatsApp or Email. Both channels send to the same admin contact details.
+  */
+ const ADMIN_WHATSAPP = '971557133051';        // wa.me format (no '+')
+-const ADMIN_EMAIL = 'info@solotestsite.site'; // change here to update destination
++const ADMIN_EMAIL = 'info@cfcgcc.com'; // change here to update destination
+ 
+ interface FormState {
+   name: string;
+diff --git a/frontend-react/src/pages/FaqPage.tsx b/frontend-react/src/pages/FaqPage.tsx
+index 7fcf99d..94ca3e0 100644
+--- a/frontend-react/src/pages/FaqPage.tsx
++++ b/frontend-react/src/pages/FaqPage.tsx
+@@ -136,7 +136,7 @@ const FAQS: QA[] = [
+           +971 55 713 3051
+         </a>
+         , or by email at{' '}
+-        <a href="mailto:info@solotestsite.site">info@solotestsite.site</a>.
++        <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a>.
+       </>
+     ),
+   },
+diff --git a/frontend-react/src/pages/PrivacyPolicyPage.tsx b/frontend-react/src/pages/PrivacyPolicyPage.tsx
+index bd64555..f5700aa 100644
+--- a/frontend-react/src/pages/PrivacyPolicyPage.tsx
++++ b/frontend-react/src/pages/PrivacyPolicyPage.tsx
+@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
+       intro={
+         <>
+           <p>
+-            Solo, operating on <strong>solotestsite.site</strong>, is strongly committed to
++            Collation Formation Curation, operating on <strong>cfcgcc.com</strong>, is strongly committed to
+             respecting the privacy of all individuals using our website, mobile application,
+             and online retail services.
+           </p>
+@@ -201,7 +201,7 @@ export default function PrivacyPolicyPage() {
+         {
+           heading: 'Limitation of Liability',
+           body: [
+-            'To the maximum extent permitted by applicable law, Solo, its affiliates, partners, employees, officers, directors, service providers, or insurers shall not be liable for any indirect, incidental, special, exemplary, consequential, or punitive damages arising from the collection, use, transfer, processing, or storage of personal information, or from your access to and use of our website, mobile application, products, or services.',
++            'To the maximum extent permitted by applicable law, Collation Formation Curation, its affiliates, partners, employees, officers, directors, service providers, or insurers shall not be liable for any indirect, incidental, special, exemplary, consequential, or punitive damages arising from the collection, use, transfer, processing, or storage of personal information, or from your access to and use of our website, mobile application, products, or services.',
+           ],
+         },
+         {
+@@ -216,7 +216,7 @@ export default function PrivacyPolicyPage() {
+           body: [
+             'We welcome your questions, comments, and concerns about privacy. You may contact our Customer Care team using the details below:',
+             <ul key="contact">
+-              <li>Email: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a></li>
++              <li>Email: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a></li>
+               <li>WhatsApp / Phone: <a href="tel:+971557133051">+971 55 713 3051</a></li>
+               <li>Address: VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, United Arab Emirates</li>
+             </ul>,
+diff --git a/frontend-react/src/pages/ProductDetailPage.tsx b/frontend-react/src/pages/ProductDetailPage.tsx
+index 017cf65..3b80851 100644
+--- a/frontend-react/src/pages/ProductDetailPage.tsx
++++ b/frontend-react/src/pages/ProductDetailPage.tsx
+@@ -7,9 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
+ import { useCart } from '../contexts/CartContext';
+ import { useFavorites } from '../contexts/FavoritesContext';
+ import ProductCarousel from '../components/porto/ProductCarousel';
+-import VariantSelector from '../components/product/VariantSelector';
+ import styles from './ProductDetailPage.module.css';
+-import { trackViewItem, trackAddToCart } from '@/lib/analytics';
+ 
+ export default function ProductDetailPage() {
+   const { id } = useParams<{ id: string }>();
+@@ -20,7 +18,6 @@ export default function ProductDetailPage() {
+   const [product, setProduct] = useState<ProductDto | null>(null);
+   const [related, setRelated] = useState<ProductDto[]>([]);
+   const [loading, setLoading] = useState(true);
+-  const [switching, setSwitching] = useState(false);
+   const [selectedImage, setSelectedImage] = useState(0);
+   const [quantity, setQuantity] = useState(1);
+   const [activeTab, setActiveTab] = useState('description');
+@@ -29,79 +26,58 @@ export default function ProductDetailPage() {
+ 
+   useEffect(() => {
+     if (!id) return;
+-    let cancelled = false;
+-    // First load shows full spinner; subsequent variant switches keep the
+-    // current product visible and just mark it as "switching" for instant feel.
+-    setSwitching(true);
+-
+-    productsApi.getById(id)
+-      .then(p => {
+-        if (cancelled) return;
+-        setProduct(p);
+-        setSelectedImage(0);
+-        setQuantity(1);
+-        trackViewItem({
+-          item_id: p.id,
+-          item_name: p.name,
+-          item_brand: p.brand?.name,
+-          item_category: p.category?.name,
+-          item_category2: p.subcategory?.name,
+-          price: p.price,
+-        });
+-      })
+-      .finally(() => {
+-        if (cancelled) return;
+-        setLoading(false);
+-        setSwitching(false);
+-      });
++    setLoading(true);
++    setSelectedImage(0);
++    setQuantity(1);
++    Promise.all([
++      productsApi.getById(id),
++      productsApi.getRelated(id, 4).catch(() => []),
++    ]).then(([p, rel]) => {
++      setProduct(p);
++      setRelated(rel);
++    }).finally(() => setLoading(false));
++  }, [id]);
+ 
+-    // Related products load independently — they don't block the swap.
+-    productsApi.getRelated(id, 4)
+-      .then(rel => { if (!cancelled) setRelated(rel); })
+-      .catch(() => { /* ignore */ });
++  // Inject SEO meta tags when product loads
++  useEffect(() => {
++    if (!product) return;
++    const prevTitle = document.title;
++    document.title = product.metaTitle || `${product.name}${product.brand ? ' | ' + product.brand.name : ''} – CFC`;
++
++    let metaDesc = document.querySelector<HTMLMetaElement>('meta[name="description"]');
++    if (!metaDesc) {
++      metaDesc = document.createElement('meta');
++      metaDesc.name = 'description';
++      document.head.appendChild(metaDesc);
++    }
++    const prevDesc = metaDesc.content;
++    metaDesc.content = product.metaDescription || product.shortDescription || '';
+ 
+-    return () => { cancelled = true; };
+-  }, [id]);
++    return () => {
++      document.title = prevTitle;
++      if (metaDesc) metaDesc.content = prevDesc;
++    };
++  }, [product]);
+ 
+-  if (loading && !product) return <div className="loading-spinner" />;
++  if (loading) return <div className="loading-spinner" />;
+   if (!product) return <div className={styles['detail-page']}><p>Product not found.</p></div>;
+ 
+-  let images: string[];
+-  if (product.galleryImageUrls?.length) {
+-    images = product.galleryImageUrls;
+-  } else {
+-    const fromImages = product.images?.map(i => i.url || i.media_asset_id).filter(Boolean) as string[] | undefined;
+-    if (fromImages?.length) {
+-      images = fromImages;
+-    } else {
+-      images = product.imageUrl ? [product.imageUrl] : [];
+-    }
+-  }
++  const images = product.galleryImageUrls?.length
++    ? product.galleryImageUrls
++    : product.images?.map(i => i.url || i.media_asset_id).filter(Boolean) as string[]
++    || (product.imageUrl ? [product.imageUrl] : []);
+ 
+   const currentImage = images[selectedImage] || '/placeholder.svg';
+   const hasDiscount = product.oldPrice && product.oldPrice > product.price;
+   const saving = hasDiscount ? product.oldPrice! - product.price : 0;
+-  const isOutOfStock = product.inStock === false;
+-  const whatsappPhone = '971557133051';
+-  const skuSuffix = product.sku ? ` (SKU: ${product.sku})` : '';
+-  const whatsappMessage = `Hi, I'm interested in a special order for: ${product.name}${skuSuffix}. Is this available?`;
+-  const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+ 
+   const handleAddToCart = async () => {
+-    if (adding) return;
++    if (!isAuthenticated || adding) return;
+     setAdding(true);
+     try {
+       for (let i = 0; i < quantity; i++) {
+         await addItem(product.id);
+       }
+-      trackAddToCart({
+-        item_id: product.id,
+-        item_name: product.name,
+-        item_brand: product.brand?.name,
+-        item_category: product.category?.name,
+-        item_category2: product.subcategory?.name,
+-        price: product.price,
+-      }, quantity);
+       setAddedToCart(true);
+       toast.success(`${product.name} added to cart`);
+       setTimeout(() => setAddedToCart(false), 2500);
+@@ -113,15 +89,7 @@ export default function ProductDetailPage() {
+   };
+ 
+   return (
+-    <div
+-      className={styles['detail-page']}
+-      style={{
+-        opacity: switching ? 0.55 : 1,
+-        transition: 'opacity 120ms ease',
+-        pointerEvents: switching ? 'none' : 'auto',
+-      }}
+-      aria-busy={switching}
+-    >
++    <div className={styles['detail-page']}>
+       <div className={styles.breadcrumb}>
+         <Link to="/">Home</Link> / {product.category && (
+           <><Link to={`/category/${product.category.slug || product.category.id}`}>{product.category.name}</Link> / </>
+@@ -135,24 +103,17 @@ export default function ProductDetailPage() {
+             <div className={styles.thumbnails}>
+               {images.map((img, i) => (
+                 <button
+-                  key={img}
++                  key={i}
+                   className={i === selectedImage ? styles.active : ''}
+                   onClick={() => setSelectedImage(i)}
+                 >
+-                  <img src={img} alt={`${product.name} ${i + 1}`} loading="lazy" width={80} height={80} />
++                  <img src={img} alt={`${product.name} ${i + 1}`} />
+                 </button>
+               ))}
+             </div>
+           )}
+           <div className={styles['main-image']}>
+-            <img
+-              src={currentImage}
+-              alt={product.name}
+-              loading="eager"
+-              fetchPriority="high"
+-              width={600}
+-              height={600}
+-            />
++            <img src={currentImage} alt={product.name} />
+           </div>
+         </div>
+ 
+@@ -178,66 +139,26 @@ export default function ProductDetailPage() {
+             {product.stock != null && product.inStock !== false && ` (${product.stock} available)`}
+           </div>
+ 
+-          {product.variants && product.variants.length > 1 && (
+-            <VariantSelector
+-              variants={product.variants}
+-              axes={product.productGroup?.variantAxes ?? ['color']}
+-            />
+-          )}
+-
+           {product.shortDescription && (
+             <p className={styles.description}>{product.shortDescription}</p>
+           )}
+ 
+-          {!isOutOfStock && (
+-            <div className={styles['quantity-row']}>
+-              <div className={styles['quantity-control']}>
+-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
+-                <span>{quantity}</span>
+-                <button onClick={() => setQuantity(quantity + 1)}>+</button>
+-              </div>
+-            </div>
+-          )}
+-
+-          {isOutOfStock && (
+-            <div className={styles['oos-notice']}>
+-              This item is currently out of stock. You can still chat with us on WhatsApp to arrange a special order.
++          <div className={styles['quantity-row']}>
++            <div className={styles['quantity-control']}>
++              <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
++              <span>{quantity}</span>
++              <button onClick={() => setQuantity(quantity + 1)}>+</button>
+             </div>
+-          )}
++          </div>
+ 
+           <div className={styles['action-buttons']}>
+-            {isOutOfStock ? (
+-              <a
+-                className={styles['btn-whatsapp']}
+-                href={whatsappUrl}
+-                target="_blank"
+-                rel="noopener noreferrer"
+-                aria-label="Contact seller on WhatsApp for a special order"
+-              >
+-                <svg
+-                  className={styles['btn-whatsapp-icon']}
+-                  viewBox="0 0 24 24"
+-                  fill="currentColor"
+-                  aria-hidden="true"
+-                  focusable="false"
+-                >
+-                  <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.413c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886a9.86 9.86 0 001.516 5.26l-.999 3.648 3.972-1.041zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
+-                </svg>
+-                <span>Contact Seller on WhatsApp</span>
+-              </a>
+-            ) : (
+-              <button
+-                className={`${styles['btn-cart']} ${addedToCart ? styles['btn-cart-added'] : ''}`}
+-                onClick={handleAddToCart}
+-                disabled={adding}
+-              >
+-                {(() => {
+-                  if (addedToCart) return '✓ Added!';
+-                  if (adding) return 'Adding...';
+-                  return 'Add to Cart';
+-                })()}
+-              </button>
+-            )}
++            <button
++              className={`${styles['btn-cart']} ${addedToCart ? styles['btn-cart-added'] : ''}`}
++              onClick={handleAddToCart}
++              disabled={!isAuthenticated || adding || product.inStock === false}
++            >
++              {!isAuthenticated ? 'Sign in to Buy' : product.inStock === false ? 'Out of Stock' : addedToCart ? '✓ Added!' : adding ? 'Adding...' : 'Add to Cart'}
++            </button>
+             {isAuthenticated && (
+               <button
+                 className={`${styles['btn-fav']} ${isFavorite(product.id) ? styles.active : ''}`}
+@@ -280,15 +201,15 @@ export default function ProductDetailPage() {
+           {activeTab === 'specs' && product.specifications && Array.isArray(product.specifications) && (
+             <table className={styles['specs-table']}>
+               <tbody>
+-                {(product.specifications as Array<{ key: string; value: string }>).map((s) => (
+-                  <tr key={s.key}><td>{s.key}</td><td>{s.value}</td></tr>
++                {(product.specifications as Array<{ key: string; value: string }>).map((s, i) => (
++                  <tr key={i}><td>{s.key}</td><td>{s.value}</td></tr>
+                 ))}
+               </tbody>
+             </table>
+           )}
+           {activeTab === 'highlights' && product.highlights && (
+             <ul style={{ paddingLeft: 20 }}>
+-              {product.highlights.map((h) => <li key={h}>{h}</li>)}
++              {product.highlights.map((h, i) => <li key={i}>{h}</li>)}
+             </ul>
+           )}
+         </div>
+diff --git a/frontend-react/src/pages/TermsPage.tsx b/frontend-react/src/pages/TermsPage.tsx
+index b19682a..21aca86 100644
+--- a/frontend-react/src/pages/TermsPage.tsx
++++ b/frontend-react/src/pages/TermsPage.tsx
+@@ -9,13 +9,13 @@ export default function TermsPage() {
+         <>
+           <p>
+             By accessing, registering, browsing, purchasing from, or continuing to use{' '}
+-            <strong>solotestsite.site</strong>, including our website, mobile application,
++            <strong>cfcgcc.com</strong>, including our website, mobile application,
+             or any related online services, you agree to be bound by these Terms &amp;
+             Conditions and any other policies or legal documents published on our website.
+           </p>
+           <p>
+             Please read these Terms &amp; Conditions carefully before placing an order
+-            through our website. By submitting an order on Solo, you agree to be bound by
++            through our website. By submitting an order on Collation Formation Curation, you agree to be bound by
+             these Terms &amp; Conditions with immediate effect.
+           </p>
+           <p>
+@@ -31,18 +31,18 @@ export default function TermsPage() {
+           body: [
+             <ul key="defs">
+               <li><strong>Applicable Laws:</strong> means the applicable rules, regulations, and laws of the United Arab Emirates.</li>
+-              <li><strong>Solo Services:</strong> means the use of any services, information, product details, features, content, or retail services available on our website.</li>
++              <li><strong>Collation Formation Curation Services:</strong> means the use of any services, information, product details, features, content, or retail services available on our website.</li>
+               <li><strong>Goods or Products:</strong> means any goods, products, or items available for sale on our website.</li>
+               <li><strong>Customer, you, or your:</strong> means any person who browses, registers, places an order, or purchases products from our website.</li>
+-              <li><strong>Website, Platform, or Solo:</strong> means our retail website, solotestsite.site, including any mobile application or related digital platform operated by us.</li>
+-              <li><strong>we, us, or our:</strong> means Solo, operating the retail website solotestsite.site, including its employees, representatives, contractors, agents, and service providers.</li>
++              <li><strong>Website, Platform, or Collation Formation Curation:</strong> means our retail website, cfcgcc.com, including any mobile application or related digital platform operated by us.</li>
++              <li><strong>we, us, or our:</strong> means Collation Formation Curation, operating the retail website cfcgcc.com, including its employees, representatives, contractors, agents, and service providers.</li>
+             </ul>,
+           ],
+         },
+         {
+           heading: '2. Online Retail Website',
+           body: [
+-            'Solo is an online retail website. We sell products directly to customers through our website. When you place an order on our website, the contract of sale is between you and Solo.',
++            'Collation Formation Curation is an online retail website. We sell products directly to customers through our website. When you place an order on our website, the contract of sale is between you and Collation Formation Curation.',
+             'We are responsible for processing your order, arranging delivery, handling customer service, and managing returns, refunds, or replacements in accordance with these Terms & Conditions and our applicable policies.',
+           ],
+         },
+@@ -56,7 +56,7 @@ export default function TermsPage() {
+         {
+           heading: '4. No Misuse or False Representation',
+           body: [
+-            'You may not publicly represent or imply that Solo, or any of its employees, representatives, or partners has sponsored, approved, endorsed, or authorised any use of our name, website, products, services, content, or materials without our prior written approval.',
++            'You may not publicly represent or imply that Collation Formation Curation, or any of its employees, representatives, or partners has sponsored, approved, endorsed, or authorised any use of our name, website, products, services, content, or materials without our prior written approval.',
+             'We reserve the right to take legal action against any unauthorised use, false representation, misuse, or fraudulent use of our website, brand, content, or services.',
+           ],
+         },
+@@ -81,10 +81,10 @@ export default function TermsPage() {
+         {
+           heading: '7. Intellectual Property Rights',
+           body: [
+-            'The website and all of its content, features, and functionality, including but not limited to text, product descriptions, images, graphics, videos, logos, icons, designs, layouts, software, and other materials, are owned by or licensed to Solo.',
++            'The website and all of its content, features, and functionality, including but not limited to text, product descriptions, images, graphics, videos, logos, icons, designs, layouts, software, and other materials, are owned by or licensed to Collation Formation Curation.',
+             'All such content is protected by copyright, trademark, trade secret, and other intellectual property laws.',
+             'You may not copy, reproduce, distribute, modify, display, publish, sell, or exploit any part of our website or content without our prior written approval.',
+-            <>If you believe that your intellectual property rights have been infringed on our website, please contact us immediately at: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a>.</>,
++            <>If you believe that your intellectual property rights have been infringed on our website, please contact us immediately at: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a>.</>,
+           ],
+         },
+         {
+@@ -105,11 +105,11 @@ export default function TermsPage() {
+             </ul>,
+             'You represent and warrant that any content, feedback, review, or comment you submit is accurate, lawful, and does not violate the rights of any third party.',
+             'We reserve the right to review, reject, edit, or remove any content posted by you at any time, with or without notice.',
+-            'You agree to indemnify and hold Solo harmless from any claims, damages, losses, or expenses arising from content, comments, reviews, or materials submitted by you.',
++            'You agree to indemnify and hold Collation Formation Curation harmless from any claims, damages, losses, or expenses arising from content, comments, reviews, or materials submitted by you.',
+           ],
+         },
+         {
+-          heading: '9. Solo Liability',
++          heading: '9. Collation Formation Curation Liability',
+           body: [
+             'We will make reasonable efforts to provide a reliable and uninterrupted retail service to our customers.',
+             'However, we do not guarantee that the website will always be available, uninterrupted, error-free, or free from technical issues.',
+@@ -171,7 +171,7 @@ export default function TermsPage() {
+             <strong key="14b">14.2 Return, Refund, or Replacement</strong>,
+             'We aim to provide a smooth customer experience and may accept returns, refunds, or replacements in accordance with our return policy. Return eligibility may depend on the product type, condition, reason for return, packaging, and the time passed since delivery.',
+             <strong key="14c">14.3 Return Procedure</strong>,
+-            <>To request a return, please contact us through email at <a href="mailto:info@solotestsite.site">info@solotestsite.site</a> or phone <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
++            <>To request a return, please contact us through email at <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a> or phone <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
+             'When submitting a return request, please provide: order number, product name, reason for return, photos or videos (if the product is damaged, defective, incorrect, or incomplete), and your contact details. If your return request is approved, we will provide instructions for collection, drop-off, or return shipment.',
+             <strong key="14d">14.4 Return Policy</strong>,
+             'All returns are subject to prior approval. Unauthorised returns may be refused or returned to the customer at the customer\'s expense.',
+@@ -212,7 +212,7 @@ export default function TermsPage() {
+         {
+           heading: '17. Defect or Damage to Ordered Goods',
+           body: [
+-            <>If you receive a damaged, defective, incorrect, or incomplete product, you must notify us as soon as possible at: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a> or <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
++            <>If you receive a damaged, defective, incorrect, or incomplete product, you must notify us as soon as possible at: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a> or <a href="tel:+971557133051">+971 55 713 3051</a>.</>,
+             'We may request photos, videos, order details, packaging images, or other evidence to review the issue.',
+             'If the defect or damage is confirmed, we may offer a replacement, repair, refund, store credit, or another suitable remedy in accordance with applicable law and our return policy.',
+             'We are not responsible for damage caused by misuse, improper installation, unauthorised repair, alteration, negligence, or failure to follow product instructions.',
+@@ -231,7 +231,7 @@ export default function TermsPage() {
+         {
+           heading: '19. Liability',
+           body: [
+-            'To the fullest extent permitted by applicable law, Solo, including its employees, representatives, contractors, service providers, directors, officers, suppliers, subcontractors, or licensors, shall not be liable for:',
++            'To the fullest extent permitted by applicable law, Collation Formation Curation, including its employees, representatives, contractors, service providers, directors, officers, suppliers, subcontractors, or licensors, shall not be liable for:',
+             <ul key="liab">
+               <li>Loss of profits, loss of data, loss of business, loss of goodwill, or failure to realise anticipated savings.</li>
+               <li>Indirect, incidental, special, consequential, exemplary, or punitive damages.</li>
+@@ -262,7 +262,7 @@ export default function TermsPage() {
+           body: [
+             'To contact us regarding these Terms & Conditions, orders, returns, complaints, or customer service matters, please use the details below:',
+             <ul key="notices">
+-              <li>Email: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a></li>
++              <li>Email: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a></li>
+               <li>Phone / WhatsApp: <a href="tel:+971557133051">+971 55 713 3051</a></li>
+             </ul>,
+           ],
+@@ -289,7 +289,7 @@ export default function TermsPage() {
+         {
+           heading: '26. Entire Agreement',
+           body: [
+-            'These Terms & Conditions, together with our Privacy Policy and any other policies published on our website, form the entire agreement between you and Solo regarding your use of solotestsite.site and your purchase of products from us.',
++            'These Terms & Conditions, together with our Privacy Policy and any other policies published on our website, form the entire agreement between you and Collation Formation Curation regarding your use of cfcgcc.com and your purchase of products from us.',
+             'They replace any previous agreements, understandings, communications, or representations, whether written or verbal.',
+           ],
+         },
+@@ -304,8 +304,8 @@ export default function TermsPage() {
+           body: [
+             'For any questions, concerns, complaints, order support, returns, or notices, you may contact us at:',
+             <ul key="contact">
+-              <li>Website: solotestsite.site</li>
+-              <li>Email: <a href="mailto:info@solotestsite.site">info@solotestsite.site</a></li>
++              <li>Website: cfcgcc.com</li>
++              <li>Email: <a href="mailto:info@cfcgcc.com">info@cfcgcc.com</a></li>
+               <li>Phone / WhatsApp: <a href="tel:+971557133051">+971 55 713 3051</a></li>
+               <li>Address: VUET0399 Compass Building - Al Hulaila, Al Hulaila Industrial Zone-FZ, Ras Al Khaimah, United Arab Emirates</li>
+             </ul>,
+diff --git a/frontend-react/src/pages/admin/Admin.module.css b/frontend-react/src/pages/admin/Admin.module.css
+index 42a0e93..9bf94fa 100644
+--- a/frontend-react/src/pages/admin/Admin.module.css
++++ b/frontend-react/src/pages/admin/Admin.module.css
+@@ -135,9 +135,8 @@
+ 
+ .admin-shell[data-theme="light"] .field select option { background: #fff; color: #1e293b; }
+ 
+-.admin-shell[data-theme="light"] .admin-logo,
+ .admin-shell[data-theme="light"] .admin-logo a {
+-  background: linear-gradient(135deg, var(--admin-accent), var(--admin-cyan));
++  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+   -webkit-background-clip: text;
+   -webkit-text-fill-color: transparent;
+   background-clip: text;
+@@ -232,28 +231,33 @@
+ }
+ 
+ .admin-logo {
+-  padding: 24px 28px 20px;
+-  font-size: 20px;
+-  font-weight: 700;
+-  letter-spacing: 3px;
++  padding: 20px 28px 16px;
++  font-size: 26px;
++  font-weight: 800;
++  letter-spacing: 6px;
+   border-bottom: 1px solid var(--admin-glass-border);
+   display: flex;
+-  align-items: center;
+-  gap: 10px;
++  flex-direction: column;
++  gap: 3px;
+   text-transform: uppercase;
+-  background: linear-gradient(135deg, var(--admin-accent), var(--admin-cyan));
+-  -webkit-background-clip: text;
+-  -webkit-text-fill-color: transparent;
+-  background-clip: text;
+ }
+ 
+ .admin-logo a {
+-  background: linear-gradient(135deg, var(--admin-accent), var(--admin-cyan));
++  background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+   -webkit-background-clip: text;
+   -webkit-text-fill-color: transparent;
+   background-clip: text;
+   text-decoration: none;
+-  font-weight: 900;
++  font-weight: 800;
++}
++
++.admin-logo-sub {
++  font-size: 9px;
++  font-weight: 500;
++  letter-spacing: 3px;
++  text-transform: uppercase;
++  color: var(--admin-text-dim);
++  -webkit-text-fill-color: var(--admin-text-dim);
+ }
+ 
+ .admin-nav {
+diff --git a/frontend-react/src/pages/admin/AdminCmsPagesPage.tsx b/frontend-react/src/pages/admin/AdminCmsPagesPage.tsx
+index c3a7cac..6dd277d 100644
+--- a/frontend-react/src/pages/admin/AdminCmsPagesPage.tsx
++++ b/frontend-react/src/pages/admin/AdminCmsPagesPage.tsx
+@@ -1,13 +1,16 @@
+ import { useState, useEffect } from 'react';
++import { Link } from 'react-router-dom';
+ import { cmsApi, type HomePageConfig, type HomeSection, type CategoryLanding, type CategoryLandingSection } from '@/api/cms';
++import { navigationApi, type NavigationMenu } from '@/api/navigation';
+ import styles from './Admin.module.css';
+ 
+-type Tab = 'home' | 'landings';
++type Tab = 'home' | 'landings' | 'nav-footer';
+ 
+ export default function AdminCmsPagesPage() {
+   const [tab, setTab] = useState<Tab>('home');
+   const [home, setHome] = useState<HomePageConfig | null>(null);
+   const [landings, setLandings] = useState<CategoryLanding[]>([]);
++  const [navMenus, setNavMenus] = useState<NavigationMenu[]>([]);
+   const [activeLanding, setActiveLanding] = useState<CategoryLanding | null>(null);
+ 
+   // Section editor (used for both home + landing sections)
+@@ -28,8 +31,9 @@ export default function AdminCmsPagesPage() {
+   const loadHome = () => cmsApi.getHome().then(setHome).catch(() => setHome(null));
+   const loadLandings = () => cmsApi.listLandings().then(setLandings).catch(() => {});
+   const loadLanding = (id: string) => cmsApi.getLanding(id).then(setActiveLanding).catch(() => {});
++  const loadNavMenus = () => navigationApi.getMenus().then(setNavMenus).catch(() => {});
+ 
+-  useEffect(() => { loadHome(); loadLandings(); }, []);
++  useEffect(() => { loadHome(); loadLandings(); loadNavMenus(); }, []);
+ 
+   // ── Sections ──────────────────────────────────────────────
+   const openNewSection = (scope: 'home' | 'landing') => {
+@@ -140,14 +144,14 @@ export default function AdminCmsPagesPage() {
+ 
+       <div className={styles['admin-body']}>
+         <div style={{ display: 'flex', gap: 0, marginBottom: 16, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--admin-glass-border)', width: 'fit-content' }}>
+-          {(['home', 'landings'] as Tab[]).map((t) => (
++          {(['home', 'landings', 'nav-footer'] as Tab[]).map((t) => (
+             <button key={t} type="button" onClick={() => setTab(t)}
+               style={{
+                 padding: '10px 24px', fontWeight: 600, fontSize: 13, cursor: 'pointer', border: 'none',
+                 background: tab === t ? 'var(--admin-accent)' : 'var(--admin-glass)',
+                 color: tab === t ? '#fff' : 'var(--admin-text-dim)', textTransform: 'capitalize',
+               }}>
+-              {t === 'home' ? 'Homepage' : 'Category Landings'}
++              {t === 'home' ? 'Homepage' : t === 'landings' ? 'Category Landings' : 'Navigation & Footer'}
+             </button>
+           ))}
+         </div>
+@@ -256,9 +260,91 @@ export default function AdminCmsPagesPage() {
+             </div>
+           </div>
+         )}
+-      </div>
++        {tab === 'nav-footer' && (
++          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
++
++            {/* Top Navigation Card */}
++            <div style={{ background: 'var(--admin-glass)', border: '1px solid var(--admin-glass-border)', borderRadius: 12, padding: 24 }}>
++              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
++                <span style={{ fontSize: 28 }}>🧭</span>
++                <div>
++                  <div style={{ fontWeight: 700, fontSize: 15 }}>Top Navigation Menu</div>
++                  <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 2 }}>
++                    Category bar shown below the header on desktop
++                  </div>
++                </div>
++              </div>
++              <p style={{ fontSize: 13, color: 'var(--admin-text-dim)', lineHeight: 1.6, marginBottom: 16 }}>
++                The top category navigation bar is automatically driven by your product categories.<br />
++                You can also create a custom <strong style={{ color: 'var(--admin-text)' }}>main-nav</strong> navigation menu to override it with curated links.
++              </p>
++              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12, color: 'var(--admin-text-muted)' }}>
++                {navMenus.filter(m => m.key === 'main-nav').map(m => (
++                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
++                    <span>main-nav</span>
++                    <span style={{ color: m.isActive ? '#4ade80' : '#f87171' }}>{m.isActive ? '● Active' : '○ Inactive'}</span>
++                  </div>
++                ))}
++                {!navMenus.some(m => m.key === 'main-nav') && (
++                  <span style={{ color: '#f59e0b' }}>⚠ No main-nav menu yet — categories are used automatically</span>
++                )}
++              </div>
++              <Link to="/admin/navigation" style={{ display: 'inline-block', padding: '9px 18px', background: 'var(--admin-accent)', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
++                Manage Navigation →
++              </Link>
++            </div>
++
++            {/* Footer Links Card */}
++            <div style={{ background: 'var(--admin-glass)', border: '1px solid var(--admin-glass-border)', borderRadius: 12, padding: 24 }}>
++              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
++                <span style={{ fontSize: 28 }}>🔗</span>
++                <div>
++                  <div style={{ fontWeight: 700, fontSize: 15 }}>Footer Links</div>
++                  <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 2 }}>
++                    Link columns shown at the bottom of every page
++                  </div>
++                </div>
++              </div>
++              <p style={{ fontSize: 13, color: 'var(--admin-text-dim)', lineHeight: 1.6, marginBottom: 16 }}>
++                Create a navigation menu with key <strong style={{ color: 'var(--admin-text)' }}>footer-nav</strong> in the Navigation admin.<br />
++                Each top-level item becomes a column header, and its children become the links below it.
++              </p>
++              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12, color: 'var(--admin-text-muted)' }}>
++                {navMenus.filter(m => m.key === 'footer-nav').map(m => (
++                  <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
++                    <span>footer-nav</span>
++                    <span style={{ color: m.isActive ? '#4ade80' : '#f87171' }}>{m.isActive ? '● Active' : '○ Inactive'}</span>
++                  </div>
++                ))}
++                {!navMenus.some(m => m.key === 'footer-nav') && (
++                  <span style={{ color: '#f59e0b' }}>⚠ No footer-nav menu yet — default static links are shown</span>
++                )}
++              </div>
++              <Link to="/admin/navigation" style={{ display: 'inline-block', padding: '9px 18px', background: 'var(--admin-accent)', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
++                Manage Footer Links →
++              </Link>
++            </div>
+ 
+-      {/* Section drawer */}
++            {/* Burger / Mobile Drawer Card */}
++            <div style={{ background: 'var(--admin-glass)', border: '1px solid var(--admin-glass-border)', borderRadius: 12, padding: 24, gridColumn: '1 / -1' }}>
++              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
++                <span style={{ fontSize: 28 }}>☰</span>
++                <div>
++                  <div style={{ fontWeight: 700, fontSize: 15 }}>Mobile Menu (Burger Drawer)</div>
++                  <div style={{ fontSize: 12, color: 'var(--admin-text-muted)', marginTop: 2 }}>
++                    "Shop by Category" drawer — opened by the hamburger button on all screen sizes
++                  </div>
++                </div>
++              </div>
++              <p style={{ fontSize: 13, color: 'var(--admin-text-dim)', lineHeight: 1.6 }}>
++                The mobile drawer automatically loads all active categories and subcategories from your product catalog.
++                It also includes static "Shop By" links (Best Sellers, New Arrivals, Featured, On Sale) and
++                account links depending on whether the customer is signed in. No manual configuration needed.
++              </p>
++            </div>
++          </div>
++        )}
++      </div>
+       {sectionDrawer && (
+         <>
+           <button type="button" aria-label="Close" className={styles['drawer-backdrop']} onClick={() => setSectionDrawer(false)} />
+diff --git a/frontend-react/src/pages/admin/AdminLayout.tsx b/frontend-react/src/pages/admin/AdminLayout.tsx
+index 3d901b9..d3849e3 100644
+--- a/frontend-react/src/pages/admin/AdminLayout.tsx
++++ b/frontend-react/src/pages/admin/AdminLayout.tsx
+@@ -29,7 +29,10 @@ export default function AdminLayout() {
+   return (
+     <div className={styles['admin-shell']} data-theme={theme}>
+       <aside className={styles['admin-sidebar']}>
+-        <div className={styles['admin-logo']}><a href="/">SOLO</a> Admin</div>
++        <div className={styles['admin-logo']}>
++          <a href="/">CFC</a>
++          <span className={styles['admin-logo-sub']}>Admin Portal</span>
++        </div>
+         <ul className={styles['admin-nav']}>
+           <li><NavLink to="/admin" end className={({ isActive }) => isActive ? styles.active : ''}>Dashboard</NavLink></li>
+           <li><NavLink to="/admin/analytics" className={({ isActive }) => isActive ? styles.active : ''}>Analytics</NavLink></li>
+@@ -39,26 +42,28 @@ export default function AdminLayout() {
+           <li><NavLink to="/admin/product-groups" className={({ isActive }) => isActive ? styles.active : ''}>Product Groups</NavLink></li>
+           <li><NavLink to="/admin/categories" className={({ isActive }) => isActive ? styles.active : ''}>Categories</NavLink></li>
+           <li><NavLink to="/admin/brands" className={({ isActive }) => isActive ? styles.active : ''}>Brands</NavLink></li>
++          <li><NavLink to="/admin/collections" className={({ isActive }) => isActive ? styles.active : ''}>Collections</NavLink></li>
+ 
+           <li className={styles['admin-nav-group']}>Sales</li>
+           <li><NavLink to="/admin/orders" className={({ isActive }) => isActive ? styles.active : ''}>Orders</NavLink></li>
+           <li><NavLink to="/admin/bulk-orders" className={({ isActive }) => isActive ? styles.active : ''}>Bulk Orders</NavLink></li>
+           <li><NavLink to="/admin/returns" className={({ isActive }) => isActive ? styles.active : ''}>Returns</NavLink></li>
+           <li><NavLink to="/admin/customers" className={({ isActive }) => isActive ? styles.active : ''}>Customers</NavLink></li>
++          <li><NavLink to="/admin/payments" className={({ isActive }) => isActive ? styles.active : ''}>Payment Methods</NavLink></li>
+ 
+           <li className={styles['admin-nav-group']}>Content</li>
+           <li><NavLink to="/admin/banners" className={({ isActive }) => isActive ? styles.active : ''}>Banners</NavLink></li>
+-  <li><NavLink to="/admin/announcements" className={({ isActive }) => isActive ? styles.active : ''}>Announcements</NavLink></li>
+-  <li><NavLink to="/admin/navigation" className={({ isActive }) => isActive ? styles.active : ''}>Navigation</NavLink></li>
++          <li><NavLink to="/admin/pages" className={({ isActive }) => isActive ? styles.active : ''}>CMS Pages</NavLink></li>
++          <li><NavLink to="/admin/navigation" className={({ isActive }) => isActive ? styles.active : ''}>Navigation &amp; Footer</NavLink></li>
++          <li><NavLink to="/admin/announcements" className={({ isActive }) => isActive ? styles.active : ''}>Announcements</NavLink></li>
+ 
+           <li className={styles['admin-nav-group']}>Settings</li>
+           <li><NavLink to="/admin/promo-codes" className={({ isActive }) => isActive ? styles.active : ''}>Promo Codes</NavLink></li>
+           <li><NavLink to="/admin/loyalty" className={({ isActive }) => isActive ? styles.active : ''}>Loyalty Program</NavLink></li>
+           <li><NavLink to="/admin/vat" className={({ isActive }) => isActive ? styles.active : ''}>VAT</NavLink></li>
+           <li><NavLink to="/admin/shipping" className={({ isActive }) => isActive ? styles.active : ''}>Shipping</NavLink></li>
+-          <li><NavLink to="/admin/payments" className={({ isActive }) => isActive ? styles.active : ''}>Payments</NavLink></li>
+ 
+-          <li className={styles['admin-nav-group']}>Security</li>
++          <li className={styles['admin-nav-group']}>System</li>
+           <li><NavLink to="/admin/audit-log" className={({ isActive }) => isActive ? styles.active : ''}>Audit Trail</NavLink></li>
+         </ul>
+         <div className={styles['theme-toggle-wrap']}>
+diff --git a/frontend-react/src/pages/admin/AdminNavigationPage.tsx b/frontend-react/src/pages/admin/AdminNavigationPage.tsx
+index b7bf616..9882576 100644
+--- a/frontend-react/src/pages/admin/AdminNavigationPage.tsx
++++ b/frontend-react/src/pages/admin/AdminNavigationPage.tsx
+@@ -262,7 +262,42 @@ export default function AdminNavigationPage() {
+                 </div>
+                 <div className={styles['field']}>
+                   <label htmlFor="item-badge-color">Badge Color</label>
+-                  <input id="item-badge-color" value={itemForm.badgeColor ?? ''} onChange={(e) => fi('badgeColor', e.target.value)} placeholder="#ef4444" />
++                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
++                    <input
++                      id="item-badge-color"
++                      type="color"
++                      value={/^#[0-9a-fA-F]{6}$/.test(itemForm.badgeColor ?? '') ? itemForm.badgeColor : '#dc3545'}
++                      onChange={(e) => fi('badgeColor', e.target.value)}
++                      style={{ width: 44, height: 38, padding: 2, border: '1px solid var(--admin-border)', borderRadius: 6, background: 'transparent', cursor: 'pointer' }}
++                    />
++                    <input
++                      type="text"
++                      value={itemForm.badgeColor ?? ''}
++                      onChange={(e) => fi('badgeColor', e.target.value)}
++                      placeholder="#dc3545"
++                      style={{ flex: 1 }}
++                    />
++                    <div style={{ display: 'flex', gap: 4 }}>
++                      {['#dc3545', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#000000'].map((c) => (
++                        <button
++                          key={c}
++                          type="button"
++                          onClick={() => fi('badgeColor', c)}
++                          title={c}
++                          aria-label={`Use ${c}`}
++                          style={{ width: 22, height: 22, background: c, border: itemForm.badgeColor === c ? '2px solid var(--admin-text)' : '1px solid var(--admin-border)', borderRadius: 4, cursor: 'pointer', padding: 0 }}
++                        />
++                      ))}
++                    </div>
++                  </div>
++                  {itemForm.badge && (
++                    <div style={{ marginTop: 6, fontSize: 12, color: 'var(--admin-muted)' }}>
++                      Preview:{' '}
++                      <span style={{ display: 'inline-block', padding: '2px 6px', borderRadius: 3, color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: '0.5px', background: itemForm.badgeColor || '#dc3545' }}>
++                        {itemForm.badge}
++                      </span>
++                    </div>
++                  )}
+                 </div>
+               </div>
+               <div className={styles['field']}>
+diff --git a/scripts/load_remaining_images.py b/scripts/load_remaining_images.py
+index 9931ddc..1eb763d 100644
+--- a/scripts/load_remaining_images.py
++++ b/scripts/load_remaining_images.py
+@@ -28,7 +28,7 @@ from azure.storage.blob import BlobServiceClient, ContentSettings
+ # ── CONFIG ─────────────────────────────────────────────────────────
+ 
+ DB_CONFIG = {
+-    'host': 'pg-qlyb5greec2io.postgres.database.azure.com',
++    'host': os.environ.get('PG_HOST', 'pg-zuicxoppffzie.postgres.database.azure.com'),
+     'port': 5432,
+     'dbname': 'solo_ecommerce',
+     'user': 'soloadmin',
+diff --git a/scripts/load_remaining_progress.json b/scripts/load_remaining_progress.json
+index 83bc023..b663cc8 100644
+--- a/scripts/load_remaining_progress.json
++++ b/scripts/load_remaining_progress.json
+@@ -1,45 +1,175 @@
+ {
+   "done_product_ids": [
++    "970",
++    "971",
++    "972",
++    "973",
++    "974",
++    "975",
++    "976",
++    "977",
++    "979",
++    "980",
+     "981",
++    "982",
++    "984",
++    "985",
++    "986",
++    "988",
+     "989",
+-    "998",
+-    "1000",
+-    "1001",
++    "990",
++    "991",
++    "992",
++    "993",
++    "994",
++    "995",
++    "996",
++    "997",
++    "999",
++    "1002",
++    "1003",
+     "1005",
+     "1006",
++    "1007",
++    "1008",
++    "1009",
++    "1010",
++    "1011",
++    "1013",
++    "1014",
++    "1015",
++    "1016",
++    "1017",
+     "1018",
+     "1019",
+     "1021",
++    "1022",
++    "1023",
++    "1024",
++    "1025",
+     "1026",
++    "1027",
++    "1028",
+     "1030",
++    "1031",
+     "1032",
++    "1033",
+     "1035",
++    "1036",
++    "1037",
++    "1038",
+     "1039",
+     "1040",
+-    "1044",
++    "1041",
++    "1042",
+     "1046",
++    "1048",
++    "1049",
++    "1050",
++    "1051",
++    "1052",
++    "1053",
+     "1054",
++    "1055",
++    "1056",
++    "1057",
++    "1058",
++    "1059",
++    "1060",
++    "1061",
++    "1062",
++    "1063",
++    "1065",
+     "1069",
+     "1070",
+     "1071",
++    "1072",
+     "1073",
+     "1074",
+     "1075",
++    "1076",
+     "1077",
++    "1078",
++    "1080",
++    "1081",
++    "1082",
++    "1083",
++    "1085",
++    "1086",
++    "1087",
++    "1088",
++    "1090",
++    "1091",
++    "1093",
++    "1094",
++    "1095",
++    "1096",
++    "1098",
++    "1099",
++    "1100",
++    "1101",
++    "1102",
++    "1103",
++    "1104",
++    "1106",
++    "1107",
++    "1108",
++    "1109",
++    "1110",
++    "1111",
++    "1112",
+     "1113",
+-    "1162",
+-    "1163",
+-    "1164",
+-    "1165",
++    "1114",
++    "1115",
++    "1116",
++    "1117",
++    "1118",
++    "1119",
++    "1120",
++    "1121",
++    "1122",
++    "1123",
++    "1124",
++    "1125",
++    "1126",
++    "1127",
++    "1128",
++    "1129",
++    "1130",
++    "1131",
++    "1132",
++    "1133",
++    "1134",
++    "1136",
++    "1137",
++    "1138",
++    "1139",
++    "1140",
++    "1141",
++    "1142",
++    "1143",
++    "1144",
++    "1145",
++    "1147",
++    "1148",
++    "1149",
++    "1152",
++    "1155",
++    "1156",
++    "1157",
++    "1158",
++    "1159",
++    "1160",
++    "1167",
+     "1168",
+     "1169",
+     "1170",
+     "1171"
+   ],
+   "stats": {
+-    "products_done": 35,
+-    "images_uploaded": 55,
+-    "images_skipped": 2,
+-    "errors": 16
++    "products_done": 165,
++    "images_uploaded": 401,
++    "images_skipped": 57,
++    "errors": 12
+   }
+ }
+\ No newline at end of file
+diff --git a/scripts/scrape_product_images.py b/scripts/scrape_product_images.py
+index 28032bb..8d09a75 100644
+--- a/scripts/scrape_product_images.py
++++ b/scripts/scrape_product_images.py
+@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
+ 
+ # ── CONFIG ─────────────────────────────────────────────────────────
+ DB_CONFIG = {
+-    'host': 'pg-qlyb5greec2io.postgres.database.azure.com',
++    'host': os.environ.get('PG_HOST', 'pg-zuicxoppffzie.postgres.database.azure.com'),
+     'port': 5432,
+     'dbname': 'solo_ecommerce',
+     'user': 'soloadmin',
+@@ -487,12 +487,12 @@ def process_product_images(conn, container_client, blob_service, matched, sessio
+                 )
+ 
+                 # Create media_assets record
+-                cur.execute("""
++                cur.execute('''
+                     INSERT INTO media_assets (
+-                        id, key, folder, filename, mime_type, size_bytes,
+-                        alt_text, is_deleted, created_at, updated_at
++                        id, key, folder, filename, "mimeType", "sizeBytes",
++                        "altText", "isDeleted", "createdAt", "updatedAt"
+                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, false, NOW(), NOW())
+-                """, (
++                ''', (
+                     file_uuid,
+                     f'{BLOB_FOLDER}/{filename}',
+                     BLOB_FOLDER,
+@@ -524,7 +524,7 @@ def process_product_images(conn, container_client, blob_service, matched, sessio
+ 
+             except Exception as e:
+                 print(f'  Error for SKU {sku} image {display_order}: {e}', flush=True)
+-                cur.execute("ROLLBACK TO SAVEPOINT img_sp")
++                conn.rollback()
+                 errors += 1
+                 continue
+ 
+@@ -652,16 +652,14 @@ def main():
+     blob_service = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
+     container_client = blob_service.get_container_client(CONTAINER)
+ 
+-    # Clear existing product images first
++    # Filter matched to products that have NO images yet (do not delete existing rows)
+     cur = conn.cursor()
+-    cur.execute("SELECT COUNT(*) FROM product_images")
+-    existing = cur.fetchone()[0]
+-    if existing > 0:
+-        print(f'  Clearing {existing} existing product_images records...', flush=True)
+-        cur.execute("DELETE FROM product_images")
+-        # Also clean up orphaned media assets
+-        cur.execute("DELETE FROM media_assets WHERE folder = 'products'")
+-        conn.commit()
++    cur.execute("SELECT DISTINCT product_id FROM product_images")
++    products_with_images_set = {row[0] for row in cur.fetchall()}
++    before_filter = len(matched)
++    matched = {sku: data for sku, data in matched.items()
++               if data['product']['id'] not in products_with_images_set}
++    print(f'  Filtered out {before_filter - len(matched)} products that already have images. Remaining to process: {len(matched)}', flush=True)
+ 
+     images_uploaded, errors = process_product_images(
+         conn, container_client, blob_service, matched, session

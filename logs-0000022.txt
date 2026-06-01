@@ -1,0 +1,22 @@
+{"TimeStamp": "2026-05-17T06:17:51.69609", "Log": "Connecting to the container 'solo-backend'..."}
+{"TimeStamp": "2026-05-17T06:17:51.76472", "Log": "Successfully Connected to container: 'solo-backend' [Revision: 'backend-zuicxoppffzie--0000022', Replica: 'backend-zuicxoppffzie--0000022-685448fd-24b58']"}
+{"TimeStamp": "2026-05-17T06:17:30.2209275+00:00", "Log": "Azure Monitor / OpenTelemetry enabled"}
+{"TimeStamp": "2026-05-17T06:17:31.6217332+00:00", "Log": "Module parse failed: 'return' outside of function (123:0)"}
+{"TimeStamp": "2026-05-17T06:17:31.6217785+00:00", "Log": "was processed with these loaders:"}
+{"TimeStamp": "2026-05-17T06:17:31.6217825+00:00", "Log": "* ./node_modules/ts-loader/index.js"}
+{"TimeStamp": "2026-05-17T06:17:31.6217869+00:00", "Log": "may need an additional loader to handle the result of these loaders."}
+{"TimeStamp": "2026-05-17T06:17:31.6217953+00:00", "Log": "__metadata(\"design:paramtypes\", [typeof (_a = typeof prisma_service_1.PrismaService !== \"undefined\" && prisma_service_1.PrismaService) === \"function\" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== \"undefined\" && config_1.ConfigService) === \"function\" ? _b : Object])"}
+{"TimeStamp": "2026-05-17T06:17:31.6218026+00:00", "Log": "], ProductsService);"}
+{"TimeStamp": "2026-05-17T06:17:31.6218072+00:00", "Log": "return Array.from(out.values());"}
+{"TimeStamp": "2026-05-17T06:17:31.621811+00:00", "Log": "collectSubcategoryList(product, any);"}
+{"TimeStamp": "2026-05-17T06:17:31.6218358+00:00", "Log": "Array < { id: number, name: string } > {"}
+{"TimeStamp": "2026-05-17T06:17:31.6218403+00:00", "Log": "at Object.__decorate (/app/dist/main.js:3086:7)"}
+{"TimeStamp": "2026-05-17T06:17:31.6218449+00:00", "Log": "at __webpack_require__ (/app/dist/main.js:19981:42)"}
+{"TimeStamp": "2026-05-17T06:17:31.6218494+00:00", "Log": "at Object.<anonymous> (/app/dist/main.js:3066:28)"}
+{"TimeStamp": "2026-05-17T06:17:31.6218531+00:00", "Log": "at __webpack_require__ (/app/dist/main.js:19981:42)"}
+{"TimeStamp": "2026-05-17T06:17:31.6218567+00:00", "Log": "at Object.<anonymous> (/app/dist/main.js:118:27)"}
+{"TimeStamp": "2026-05-17T06:17:31.6218605+00:00", "Log": "at __webpack_require__ (/app/dist/main.js:19981:42)"}
+{"TimeStamp": "2026-05-17T06:17:31.6218641+00:00", "Log": "at /app/dist/main.js:20004:22"}
+{"TimeStamp": "2026-05-17T06:17:31.6218695+00:00", "Log": "at /app/dist/main.js:20122:3"}
+{"TimeStamp": "2026-05-17T06:17:31.6218733+00:00", "Log": "at Object.<anonymous> (/app/dist/main.js:20124:12)"}
+{"TimeStamp": "2026-05-17T06:17:31.6218776+00:00", "Log": "at Module._compile (node:internal/modules/cjs/loader:1521:14)"}

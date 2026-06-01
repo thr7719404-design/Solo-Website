@@ -87,15 +87,26 @@ export interface CustomerDto {
   role: string;
   emailVerified: boolean;
   isActive: boolean;
+  status?: 'ACTIVE' | 'UNVERIFIED' | 'INACTIVE';
   createdAt?: string;
   lastLoginAt?: string;
   orderCount?: number;
   totalSpent?: number;
+  loyaltyBalanceAed?: number;
+  defaultCity?: string | null;
+  lastOrderAt?: string | null;
+  addressesCount?: number;
 }
 
 export interface CustomerDetailsDto extends CustomerDto {
   addresses: CustomerAddressDto[];
   orders: CustomerOrderSummaryDto[];
+  loyalty?: {
+    balanceAed: number;
+    pendingBalanceAed: number;
+    totalEarnedAed: number;
+    totalRedeemedAed: number;
+  };
 }
 
 export interface CustomerAddressDto {

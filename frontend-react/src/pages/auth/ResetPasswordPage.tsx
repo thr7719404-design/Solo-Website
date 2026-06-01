@@ -44,12 +44,12 @@ export default function ResetPasswordPage() {
         {status === 'error' && <div className={styles['error-msg']}>Failed to reset password. The link may have expired.</div>}
         <form onSubmit={submit}>
           <div className={styles['form-group']}>
-            <label htmlFor="new-password">New Password</label>
-            <input id="new-password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoFocus />
+            <label>New Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} autoFocus />
           </div>
           <div className={styles['form-group']}>
-            <label htmlFor="confirm-password">Confirm Password</label>
-            <input id="confirm-password" type="password" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={8} />
+            <label>Confirm Password</label>
+            <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} required minLength={8} />
           </div>
           {password && confirm && password !== confirm && (
             <div className={styles['error-msg']}>Passwords do not match</div>

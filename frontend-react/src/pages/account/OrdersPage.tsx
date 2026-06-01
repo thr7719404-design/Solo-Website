@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { accountApi } from '@/api/account';
-import { downloadOrderInvoice } from '@/api/invoices';
 import { config } from '@/config';
-import toast from 'react-hot-toast';
 import type { OrderDto } from '@/types';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -94,20 +92,7 @@ export default function OrdersPage() {
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                 <span className="text-sm text-gray-500">{order.itemsCount ?? (order.items ?? []).length} item{(order.itemsCount ?? (order.items ?? []).length) !== 1 ? 's' : ''}</span>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      downloadOrderInvoice(order.id, order.orderNumber).catch(() => toast.error('Failed to download invoice'));
-                    }}
-                    className="text-xs font-semibold text-[#B8860B] hover:underline"
-                  >
-                    Invoice PDF
-                  </button>
-                  <span className="text-sm font-bold text-gray-900">{config.currency} {Number(order.total).toFixed(2)}</span>
-                </div>
+                <span className="text-sm font-bold text-gray-900">{config.currency} {Number(order.total).toFixed(2)}</span>
               </div>
             </Link>
           ))}

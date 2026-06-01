@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ── CONFIG ─────────────────────────────────────────────────────────
 DB_CONFIG = {
-    'host': 'pg-qlyb5greec2io.postgres.database.azure.com',
+    'host': os.environ.get('PG_HOST', 'pg-zuicxoppffzie.postgres.database.azure.com'),
     'port': 5432,
     'dbname': 'solo_ecommerce',
     'user': 'soloadmin',
@@ -487,12 +487,12 @@ def process_product_images(conn, container_client, blob_service, matched, sessio
                 )
 
                 # Create media_assets record
-                cur.execute("""
+                cur.execute('''
                     INSERT INTO media_assets (
-                        id, key, folder, filename, mime_type, size_bytes,
-                        alt_text, is_deleted, created_at, updated_at
+                        id, key, folder, filename, "mimeType", "sizeBytes",
+                        "altText", "isDeleted", "createdAt", "updatedAt"
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, false, NOW(), NOW())
-                """, (
+                ''', (
                     file_uuid,
                     f'{BLOB_FOLDER}/{filename}',
                     BLOB_FOLDER,
@@ -524,7 +524,7 @@ def process_product_images(conn, container_client, blob_service, matched, sessio
 
             except Exception as e:
                 print(f'  Error for SKU {sku} image {display_order}: {e}', flush=True)
-                cur.execute("ROLLBACK TO SAVEPOINT img_sp")
+                conn.rollback()
                 errors += 1
                 continue
 
@@ -652,16 +652,14 @@ def main():
     blob_service = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
     container_client = blob_service.get_container_client(CONTAINER)
 
-    # Clear existing product images first
+    # Filter matched to products that have NO images yet (do not delete existing rows)
     cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM product_images")
-    existing = cur.fetchone()[0]
-    if existing > 0:
-        print(f'  Clearing {existing} existing product_images records...', flush=True)
-        cur.execute("DELETE FROM product_images")
-        # Also clean up orphaned media assets
-        cur.execute("DELETE FROM media_assets WHERE folder = 'products'")
-        conn.commit()
+    cur.execute("SELECT DISTINCT product_id FROM product_images")
+    products_with_images_set = {row[0] for row in cur.fetchall()}
+    before_filter = len(matched)
+    matched = {sku: data for sku, data in matched.items()
+               if data['product']['id'] not in products_with_images_set}
+    print(f'  Filtered out {before_filter - len(matched)} products that already have images. Remaining to process: {len(matched)}', flush=True)
 
     images_uploaded, errors = process_product_images(
         conn, container_client, blob_service, matched, session
