@@ -1,5 +1,5 @@
 # Runtime-only image using pre-built dist + locally generated prisma client
-FROM node:20-alpine
+FROM node:26-alpine
 
 RUN apk add --no-cache openssl
 

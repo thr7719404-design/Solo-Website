@@ -1,5 +1,5 @@
 # ─── Build stage ────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 
 # Build tools for native modules (argon2, etc.) + openssl for Prisma
 RUN apk add --no-cache python3 make g++ openssl openssl-dev
@@ -19,7 +19,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # ─── Production stage ──────────────────────────────────────────
-FROM node:20-alpine
+FROM node:26-alpine
 
 RUN apk add --no-cache openssl
 
